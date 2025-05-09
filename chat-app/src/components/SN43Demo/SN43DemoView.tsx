@@ -11,6 +11,7 @@ import ConfigPanel from './ConfigPanel';
 import UserInterface from './UserInterface';
 import HistoryPanel from './HistoryPanel';
 import ShenyuDebugPanel from './ShenyuDebugPanel';
+import AgentConfigPanel from './AgentConfigPanel';
 import { sn43API } from './api';
 
 /**
@@ -321,6 +322,22 @@ const SN43DemoView: React.FC = () => {
             >
               调试面板
             </button>
+            <button
+              onClick={() => setActiveTab('agent')}
+              className={`tab ${activeTab === 'agent' ? 'active' : ''}`}
+              style={{
+                padding: 'var(--space-sm) var(--space-md)',
+                backgroundColor: activeTab === 'agent' ? 'var(--secondary-bg)' : 'transparent',
+                color: activeTab === 'agent' ? 'var(--brand-color)' : 'var(--text-light-gray)',
+                border: 'none',
+                borderBottom: activeTab === 'agent' ? '2px solid var(--brand-color)' : '2px solid transparent',
+                cursor: 'pointer',
+                fontWeight: activeTab === 'agent' ? 'bold' : 'normal',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              Agent配置
+            </button>
           </div>
           
           {/* 标签页内容 */}
@@ -358,11 +375,18 @@ const SN43DemoView: React.FC = () => {
                 onUpdateIsPreviewLoading={handleIsPreviewLoadingChange}
                 onConfigModified={handleConfigModified}
               />
-            ) : (
+            ) : activeTab === 'debug' ? (
               <ShenyuDebugPanel 
                 userInputs={userInputs}
                 adminInputs={adminInputs}
                 promptBlocks={promptBlocks}
+              />
+            ) : (
+              <AgentConfigPanel 
+                onControlsGenerated={(controls) => {
+                  console.log('Agent生成的控件:', controls);
+                  // 可以将生成的控件应用到userInputs等配置中
+                }}
               />
             )}
           </div>

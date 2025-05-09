@@ -9,6 +9,7 @@ interface ControlsContainerProps {
   promptBlocks: PromptBlock[];
   controlsTemplate?: string;
   onControlValuesChange?: (values: Record<string, any>) => void;
+  presetControls?: ControlDefinition[]; // 预设控件定义，优先级高于API生成
 }
 
 /**
@@ -24,7 +25,8 @@ const ControlsContainer: React.FC<ControlsContainerProps> = ({
   adminInputs,
   promptBlocks,
   controlsTemplate,
-  onControlValuesChange
+  onControlValuesChange,
+  presetControls
 }) => {
   // 控件定义和值的状态
   const [controls, setControls] = useState<ControlDefinition[]>([]);
@@ -32,10 +34,38 @@ const ControlsContainer: React.FC<ControlsContainerProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // 当用户输入、管理员输入或提示词块变化时，生成新的控件
+  // 当预设控件、用户输入、管理员输入或提示词块变化时，生成新的控件
   useEffect(() => {
-    generateControls();
-  }, [userInputs, adminInputs, promptBlocks, controlsTemplate]);
+    if (presetControls && presetControls.length > 0) {
+      initializeWithPresetControls(presetControls);
+    } else {
+      generateControls();
+    }
+  }, [userInputs, adminInputs, promptBlocks, controlsTemplate, presetControls]);
+  
+  // 使用预设控件初始化
+  const initializeWithPresetControls = (controlDefs: ControlDefinition[]) => {
+    // 更新控件定义
+    setControls(controlDefs);
+    
+    // 为预设控件创建初始值
+    const initialValues: Record<string, any> = {};
+    controlDefs.forEach(control => {
+      initialValues[control.id] = control.defaultValue || 
+        (control.type === 'number' ? 0 : 
+         control.type === 'checkbox' ? false : 
+         control.type === 'select' && control.options?.length ? control.options[0].value : 
+         '');
+    });
+    
+    // 更新控件值
+    setControlValues(initialValues);
+    
+    // 通知父组件控件值变化
+    if (onControlValuesChange) {
+      onControlValuesChange(initialValues);
+    }
+  };
   
   // 生成控件
   const generateControls = async () => {
