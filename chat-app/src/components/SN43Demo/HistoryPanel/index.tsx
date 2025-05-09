@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SN43History } from '../types';
+import { sn43API } from '../api';
 
 interface HistoryPanelProps {
   storageKey?: string;
@@ -39,45 +40,17 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
     setError(null);
     
     try {
-      // TODO: 实际环境中，应该从服务器或本地存储加载历史记录
-      // 这里使用模拟数据
-      await new Promise(resolve => setTimeout(resolve, 300)); // 模拟加载时间
+      // 使用API加载历史记录
+      const response = await sn43API.loadHistories();
       
-      // 创建一些示例历史记录数据
-      const mockHistories: SN43History[] = [
-        {
-          id: '1',
-          timestamp: Date.now() - 3600000, // 1小时前
-          userInputs: { inputA1: '市场调研', inputA2: '智能手表' },
-          adminInputs: { inputB1: '竞品分析' },
-          promptBlocks: [{ text: '分析智能手表市场...' }],
-          result: '这是一份市场分析结果...',
-          selectedJsonFile: 'marketing_assistant.json'
-        },
-        {
-          id: '2',
-          timestamp: Date.now() - 86400000, // 1天前
-          userInputs: { inputA1: '技术文档', inputA2: 'React组件' },
-          adminInputs: { inputB1: '代码示例' },
-          promptBlocks: [{ text: '编写React组件文档...' }],
-          result: '这是React组件的文档...',
-          selectedJsonFile: 'technical_writing.json'
-        },
-        {
-          id: '3',
-          timestamp: Date.now() - 172800000, // 2天前
-          userInputs: { inputA1: '故事创作', inputA2: '科幻小说' },
-          adminInputs: { inputB1: '未来世界' },
-          promptBlocks: [{ text: '创作科幻小说情节...' }],
-          result: '这是一个科幻故事...',
-          selectedJsonFile: 'storytelling.json'
-        }
-      ];
-      
-      setHistories(mockHistories);
+      if (response.success && response.data) {
+        setHistories(response.data);
+      } else {
+        throw new Error(response.error || '无法加载历史记录');
+      }
     } catch (error) {
       console.error('加载历史记录失败:', error);
-      setError('无法加载历史记录');
+      setError(error instanceof Error ? error.message : '无法加载历史记录');
     } finally {
       setIsLoading(false);
     }
@@ -105,13 +78,19 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
     if (!historyToDelete) return;
     
     try {
-      // TODO: 实际环境中，应该从服务器或本地存储删除历史记录
-      // 这里直接更新本地状态
-      setHistories(prev => prev.filter(h => h.id !== historyToDelete));
+      // 使用API删除历史记录
+      const response = await sn43API.deleteHistory(historyToDelete);
       
-      // 如果删除的是当前选中的历史记录，取消选中
-      if (activeHistoryId === historyToDelete) {
-        setActiveHistoryId(null);
+      if (response.success) {
+        // 更新本地状态
+        setHistories(prev => prev.filter(h => h.id !== historyToDelete));
+        
+        // 如果删除的是当前选中的历史记录，取消选中
+        if (activeHistoryId === historyToDelete) {
+          setActiveHistoryId(null);
+        }
+      } else {
+        throw new Error(response.error || '删除历史记录失败');
       }
       
       // 重置删除状态
@@ -119,8 +98,7 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
       setShowDeleteConfirm(false);
     } catch (error) {
       console.error('删除历史记录失败:', error);
-      // 使用console.error代替alert
-      console.error('删除历史记录失败');
+      setError(error instanceof Error ? error.message : '删除历史记录失败');
       setShowDeleteConfirm(false);
     }
   };

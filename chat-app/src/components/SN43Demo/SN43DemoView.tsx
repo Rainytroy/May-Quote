@@ -4,11 +4,13 @@ import {
   AdminInputs, 
   PromptBlock, 
   ExecutionStatus,
-  SN43History
+  SN43History,
+  SN43ConfigFile
 } from './types';
 import ConfigPanel from './ConfigPanel';
 import UserInterface from './UserInterface';
 import HistoryPanel from './HistoryPanel';
+import { sn43API } from './api';
 
 /**
  * SN43Demo主视图组件
@@ -45,10 +47,20 @@ const SN43DemoView: React.FC = () => {
   // 加载配置
   const loadSettings = async () => {
     try {
-      // TODO: 从May数据存储中加载配置
       console.log('正在加载设置...');
       
-      // 默认配置
+      // 如果有选择的JSON文件，加载这个文件的配置
+      if (selectedJsonFile) {
+        const response = await sn43API.loadConfigFile(selectedJsonFile);
+        if (response.success && response.data) {
+          setUserInputs(response.data.userInputs);
+          setAdminInputs(response.data.adminInputs);
+          setPromptBlocks(response.data.promptBlocks);
+          return;
+        }
+      }
+      
+      // 如果没有选择的文件或加载失败，使用默认配置
       setUserInputs({});
       setAdminInputs({});
       setPromptBlocks([{ text: '' }]);
@@ -61,11 +73,34 @@ const SN43DemoView: React.FC = () => {
   // 保存配置
   const saveSettings = async () => {
     try {
-      // TODO: 保存配置到May数据存储
       console.log('正在保存设置...');
       
-      alert('配置已成功保存！');
-      setIsConfigModified(false);
+      // 如果没有选择的文件，提示用户
+      if (!selectedJsonFile) {
+        alert('请先选择一个配置文件或创建新的配置文件');
+        return;
+      }
+      
+      // 创建配置对象
+      const config: SN43ConfigFile = {
+        name: selectedJsonFile.replace('.json', ''),
+        description: `${selectedJsonFile}的配置`,
+        language: 'zh',
+        userInputs,
+        adminInputs,
+        promptBlocks,
+        version: '1.0.0'
+      };
+      
+      // 使用API保存配置
+      const response = await sn43API.saveConfigFile(selectedJsonFile, config);
+      
+      if (response.success) {
+        alert('配置已成功保存！');
+        setIsConfigModified(false);
+      } else {
+        throw new Error(response.error || '保存配置失败');
+      }
     } catch (error) {
       console.error('保存配置失败:', error);
       alert('保存配置失败: ' + (error instanceof Error ? error.message : '未知错误'));

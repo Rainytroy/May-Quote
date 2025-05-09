@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserInputs, AdminInputs, PromptBlock, ExecutionStatus } from '../types';
+import { sn43API } from '../api';
 
 interface UserInterfaceProps {
   userInputs: UserInputs;
@@ -55,6 +56,11 @@ const UserInterface: React.FC<UserInterfaceProps> = ({
     setLocalUserInputs(updatedInputs);
   };
   
+  // 同步props到本地状态
+  useEffect(() => {
+    setLocalUserInputs({...userInputs});
+  }, [userInputs]);
+  
   // 提交问卷
   const handleSubmit = async () => {
     setExecutionStatus(ExecutionStatus.PREPARING);
@@ -81,31 +87,32 @@ const UserInterface: React.FC<UserInterfaceProps> = ({
       // 执行调用流程
       setExecutionStatus(ExecutionStatus.EXECUTING);
       
-      // TODO: 实现API调用逻辑
-      // 临时模拟异步调用
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // 使用API执行SN43请求
+      const response = await sn43API.execute({
+        userInputs: localUserInputs,
+        adminInputs: adminInputs,
+        promptBlocks: promptBlocks,
+        configFile: selectedJsonFile
+      });
       
-      // 假设这是API返回的结果
-      const exampleResult = `## 执行结果
-
-这是根据以下配置生成的结果:
-
-### 用户输入:
-${Object.entries(localUserInputs).map(([key, value]) => `- ${key}: ${value}`).join('\n')}
-
-### 管理员配置:
-${Object.entries(adminInputs).map(([key, value]) => `- ${key}: ${value}`).join('\n')}
-
-### 使用的提示词块:
-${promptBlocks.map((block, index) => `#### 块 ${index + 1}:\n${block.text}`).join('\n\n')}
-
-### 选择的配置文件:
-${selectedJsonFile || '(无)'}
-`;
-      
-      // 设置执行完成
-      setExecutionStatus(ExecutionStatus.COMPLETED);
-      onExecutionComplete(exampleResult);
+      if (response.success && response.data) {
+        // 设置执行完成
+        setExecutionStatus(ExecutionStatus.COMPLETED);
+        onExecutionComplete(response.data.result);
+        
+        // 保存历史记录
+        await sn43API.saveHistory({
+          id: `exec-${Date.now()}`,
+          timestamp: Date.now(),
+          userInputs: localUserInputs,
+          adminInputs: adminInputs,
+          promptBlocks: promptBlocks,
+          selectedJsonFile: selectedJsonFile,
+          result: response.data.result
+        });
+      } else {
+        throw new Error(response.error || '执行请求失败');
+      }
       
     } catch (error) {
       console.error('执行错误:', error);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SN43ConfigFile } from '../types';
+import { sn43API } from '../api';
 
 interface JsonFileSelectorProps {
   selectedFile: string;
@@ -25,15 +26,6 @@ const JsonFileSelector: React.FC<JsonFileSelectorProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // 模拟的配置文件数据，实际应该从API或文件系统加载
-  const sampleJsonFiles = [
-    'default_zh.json',
-    'default_en.json',
-    'marketing_assistant.json',
-    'technical_writing.json',
-    'storytelling.json'
-  ];
-  
   // 初始化时加载文件列表
   useEffect(() => {
     loadJsonFiles();
@@ -45,14 +37,18 @@ const JsonFileSelector: React.FC<JsonFileSelectorProps> = ({
     setError(null);
     
     try {
-      // TODO: 实际环境中，应该从服务器或本地文件系统加载文件列表
-      // 这里使用模拟数据
-      await new Promise(resolve => setTimeout(resolve, 500)); // 模拟加载时间
-      setJsonFiles(sampleJsonFiles);
+      // 使用API加载文件列表
+      const response = await sn43API.loadConfigFiles();
       
-      // 如果没有选中的文件但有文件列表，自动选中第一个
-      if (!selectedFile && sampleJsonFiles.length > 0) {
-        handleSelectFile(sampleJsonFiles[0]);
+      if (response.success && response.data) {
+        setJsonFiles(response.data);
+        
+        // 如果没有选中的文件但有文件列表，自动选中第一个
+        if (!selectedFile && response.data.length > 0) {
+          handleSelectFile(response.data[0]);
+        }
+      } else {
+        throw new Error(response.error || '加载配置文件列表失败');
       }
     } catch (error) {
       console.error('加载JSON文件列表失败:', error);
@@ -71,36 +67,18 @@ const JsonFileSelector: React.FC<JsonFileSelectorProps> = ({
       // 通知父组件选中的文件名
       onSelectFile(filename);
       
-      // TODO: 实际应该从文件系统或服务器加载文件内容
-      // 这里使用模拟数据
-      await new Promise(resolve => setTimeout(resolve, 300)); // 模拟加载时间
+      // 使用API加载配置文件内容
+      const response = await sn43API.loadConfigFile(filename);
       
-      // 为不同文件生成示例配置
-      const mockConfig: SN43ConfigFile = {
-        name: filename.replace('.json', ''),
-        description: `这是${filename}的配置文件描述`,
-        language: filename.includes('_zh') ? 'zh' : 'en',
-        userInputs: {
-          inputA1: filename.includes('marketing') ? '市场分析' : '',
-          inputA2: filename.includes('technical') ? '技术文档' : ''
-        },
-        adminInputs: {
-          inputB1: '管理员配置项1',
-          inputB2: '管理员配置项2'
-        },
-        promptBlocks: [
-          {
-            text: `这是${filename}的提示词内容示例。\n\n您可以在这里编辑提示词。`
-          }
-        ],
-        version: '1.0.0'
-      };
-      
-      // 通知父组件配置内容
-      onLoadConfig(mockConfig);
+      if (response.success && response.data) {
+        // 通知父组件配置内容
+        onLoadConfig(response.data);
+      } else {
+        throw new Error(response.error || `加载配置文件 ${filename} 失败`);
+      }
     } catch (error) {
       console.error('加载JSON文件失败:', error);
-      setError(`加载配置文件 ${filename} 失败`);
+      setError(error instanceof Error ? error.message : `加载配置文件 ${filename} 失败`);
     } finally {
       setIsLoading(false);
     }
