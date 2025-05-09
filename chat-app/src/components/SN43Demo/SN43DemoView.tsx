@@ -10,6 +10,7 @@ import {
 import ConfigPanel from './ConfigPanel';
 import UserInterface from './UserInterface';
 import HistoryPanel from './HistoryPanel';
+import ShenyuDebugPanel from './ShenyuDebugPanel';
 import { sn43API } from './api';
 
 /**
@@ -304,6 +305,22 @@ const SN43DemoView: React.FC = () => {
             >
               配置面板
             </button>
+            <button
+              onClick={() => setActiveTab('debug')}
+              className={`tab ${activeTab === 'debug' ? 'active' : ''}`}
+              style={{
+                padding: 'var(--space-sm) var(--space-md)',
+                backgroundColor: activeTab === 'debug' ? 'var(--secondary-bg)' : 'transparent',
+                color: activeTab === 'debug' ? 'var(--brand-color)' : 'var(--text-light-gray)',
+                border: 'none',
+                borderBottom: activeTab === 'debug' ? '2px solid var(--brand-color)' : '2px solid transparent',
+                cursor: 'pointer',
+                fontWeight: activeTab === 'debug' ? 'bold' : 'normal',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              调试面板
+            </button>
           </div>
           
           {/* 标签页内容 */}
@@ -325,7 +342,7 @@ const SN43DemoView: React.FC = () => {
                 onUpdateSelectedJsonFile={handleSelectedJsonFileChange}
                 onExecutionComplete={handleExecutionComplete}
               />
-            ) : (
+            ) : activeTab === 'admin' ? (
               <ConfigPanel
                 adminInputs={adminInputs}
                 userInputs={userInputs}
@@ -340,6 +357,12 @@ const SN43DemoView: React.FC = () => {
                 onUpdatePreviewText={handlePreviewTextChange}
                 onUpdateIsPreviewLoading={handleIsPreviewLoadingChange}
                 onConfigModified={handleConfigModified}
+              />
+            ) : (
+              <ShenyuDebugPanel 
+                userInputs={userInputs}
+                adminInputs={adminInputs}
+                promptBlocks={promptBlocks}
               />
             )}
           </div>
