@@ -50,9 +50,9 @@ const InputArea: React.FC<InputAreaProps> = ({
     }
   };
   
-  // 按键处理：Enter发送，Shift+Enter换行
+  // 按键处理：Enter换行，Shift+Enter发送
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -110,7 +110,7 @@ const InputArea: React.FC<InputAreaProps> = ({
         marginTop: 'var(--space-xs)',
         textAlign: 'right'
       }}>
-        按Enter发送，Shift+Enter换行
+        按Enter换行，Shift+Enter发送
       </div>
     </div>
   );
