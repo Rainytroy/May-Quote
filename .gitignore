@@ -3,10 +3,11 @@
 /.pnp
 .pnp.js
 
-# 项目文档 - 内部使用不推送到GitHub
+# 项目文档和参考资料 - 内部使用不推送到GitHub
 /docs
 May/docs/
 docs/
+/shenyu
 
 # 测试
 /coverage

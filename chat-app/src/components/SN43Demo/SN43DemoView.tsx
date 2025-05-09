@@ -5,6 +5,8 @@ import {
   PromptBlock, 
   ExecutionStatus 
 } from './types';
+import ConfigPanel from './ConfigPanel';
+import UserInterface from './UserInterface';
 
 /**
  * SN43Demo主视图组件
@@ -243,17 +245,38 @@ const SN43DemoView: React.FC = () => {
         {/* 标签页内容 */}
         <div className="tab-content" style={{ flex: 1 }}>
           {activeTab === 'user' ? (
-            <div className="user-interface">
-              <h1>用户界面</h1>
-              <p>正在开发中...</p>
-              {/* TODO: 实现UserInterface组件 */}
-            </div>
+            <UserInterface
+              userInputs={userInputs}
+              adminInputs={adminInputs}
+              promptBlocks={promptBlocks}
+              isEditing={isEditing}
+              outputResult={outputResult}
+              inputCounter={inputCounter}
+              isConfigModified={isConfigModified}
+              selectedJsonFile={selectedJsonFile}
+              onUpdateUserInputs={handleUserInputsChange}
+              onUpdateAdminInputs={handleAdminInputsChange}
+              onUpdatePromptBlocks={handlePromptBlocksChange}
+              onUpdateInputCounter={handleInputCounterChange}
+              onUpdateSelectedJsonFile={handleSelectedJsonFileChange}
+              onExecutionComplete={handleExecutionComplete}
+            />
           ) : (
-            <div className="config-panel">
-              <h1>配置面板</h1>
-              <p>正在开发中...</p>
-              {/* TODO: 实现ConfigPanel组件 */}
-            </div>
+            <ConfigPanel
+              adminInputs={adminInputs}
+              userInputs={userInputs}
+              promptBlocks={promptBlocks}
+              inputCounter={inputCounter}
+              previewText={previewText}
+              isPreviewLoading={isPreviewLoading}
+              onUpdateAdminInputs={handleAdminInputsChange}
+              onUpdateUserInputs={handleUserInputsChange}
+              onUpdatePromptBlocks={handlePromptBlocksChange}
+              onUpdateInputCounter={handleInputCounterChange}
+              onUpdatePreviewText={handlePreviewTextChange}
+              onUpdateIsPreviewLoading={handleIsPreviewLoadingChange}
+              onConfigModified={handleConfigModified}
+            />
           )}
         </div>
       </div>
