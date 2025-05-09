@@ -89,27 +89,46 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
     onSelect(history);
   };
   
-  // 删除历史记录
-  const handleDeleteHistory = async (historyId: string, event: React.MouseEvent) => {
+  // 删除确认对话框状态
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [historyToDelete, setHistoryToDelete] = useState<string | null>(null);
+  
+  // 显示删除确认
+  const confirmDelete = (historyId: string, event: React.MouseEvent) => {
     event.stopPropagation(); // 阻止冒泡到选择事件
-    
-    if (!confirm('确定要删除此历史记录吗？此操作不可恢复。')) {
-      return;
-    }
+    setHistoryToDelete(historyId);
+    setShowDeleteConfirm(true);
+  };
+  
+  // 删除历史记录
+  const handleDeleteHistory = async () => {
+    if (!historyToDelete) return;
     
     try {
       // TODO: 实际环境中，应该从服务器或本地存储删除历史记录
       // 这里直接更新本地状态
-      setHistories(prev => prev.filter(h => h.id !== historyId));
+      setHistories(prev => prev.filter(h => h.id !== historyToDelete));
       
       // 如果删除的是当前选中的历史记录，取消选中
-      if (activeHistoryId === historyId) {
+      if (activeHistoryId === historyToDelete) {
         setActiveHistoryId(null);
       }
+      
+      // 重置删除状态
+      setHistoryToDelete(null);
+      setShowDeleteConfirm(false);
     } catch (error) {
       console.error('删除历史记录失败:', error);
-      alert('删除历史记录失败');
+      // 使用console.error代替alert
+      console.error('删除历史记录失败');
+      setShowDeleteConfirm(false);
     }
+  };
+  
+  // 取消删除
+  const cancelDelete = () => {
+    setHistoryToDelete(null);
+    setShowDeleteConfirm(false);
   };
   
   // 创建日期格式化函数
@@ -181,6 +200,78 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
           </svg>
         )}
       </button>
+      
+      {/* 删除确认对话框 */}
+      {showDeleteConfirm && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 10
+        }}>
+          <div style={{
+            backgroundColor: 'var(--card-bg)',
+            borderRadius: 'var(--radius-md)',
+            padding: 'var(--space-md)',
+            width: '240px',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)'
+          }}>
+            <h4 style={{ 
+              margin: '0 0 var(--space-md) 0', 
+              color: 'var(--text-white)', 
+              textAlign: 'center' 
+            }}>
+              确认删除
+            </h4>
+            <p style={{ 
+              margin: '0 0 var(--space-md) 0', 
+              color: 'var(--text-light-gray)', 
+              textAlign: 'center',
+              fontSize: 'var(--font-sm)'
+            }}>
+              确定要删除此历史记录吗？此操作不可恢复。
+            </p>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: 'var(--space-md)'
+            }}>
+              <button
+                onClick={cancelDelete}
+                style={{
+                  backgroundColor: 'var(--secondary-bg)',
+                  color: 'var(--text-white)',
+                  border: 'none',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: 'var(--space-xs) var(--space-sm)',
+                  cursor: 'pointer'
+                }}
+              >
+                取消
+              </button>
+              <button
+                onClick={handleDeleteHistory}
+                style={{
+                  backgroundColor: 'var(--error-color)',
+                  color: 'var(--text-white)',
+                  border: 'none',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: 'var(--space-xs) var(--space-sm)',
+                  cursor: 'pointer'
+                }}
+              >
+                删除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* 历史记录面板内容 - 仅在展开时显示 */}
       {isExpanded && (
@@ -284,7 +375,7 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
                   
                   {/* 删除按钮 */}
                   <button
-                    onClick={(e) => handleDeleteHistory(history.id, e)}
+                    onClick={(e) => confirmDelete(history.id, e)}
                     style={{
                       position: 'absolute',
                       top: '8px',
