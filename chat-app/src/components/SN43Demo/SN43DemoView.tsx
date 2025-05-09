@@ -3,10 +3,12 @@ import {
   UserInputs, 
   AdminInputs, 
   PromptBlock, 
-  ExecutionStatus 
+  ExecutionStatus,
+  SN43History
 } from './types';
 import ConfigPanel from './ConfigPanel';
 import UserInterface from './UserInterface';
+import HistoryPanel from './HistoryPanel';
 
 /**
  * SN43Demo主视图组件
@@ -116,6 +118,20 @@ const SN43DemoView: React.FC = () => {
     // TODO: 更新历史记录
   };
   
+  // 选择历史记录
+  const handleSelectHistory = (history: SN43History) => {
+    // 设置状态
+    setUserInputs(history.userInputs);
+    setAdminInputs(history.adminInputs);
+    setPromptBlocks(history.promptBlocks);
+    setOutputResult(history.result || '');
+    setSelectedJsonFile(history.selectedJsonFile || '');
+    setIsEditing(true);
+    setIsConfigModified(false);
+    
+    console.log('已加载历史记录:', history.id);
+  };
+  
   // 开启新对话
   const startNewChat = () => {
     console.log('开始新对话');
@@ -198,86 +214,100 @@ const SN43DemoView: React.FC = () => {
       <div style={{ 
         flex: 1,
         display: 'flex',
-        flexDirection: 'column',
-        padding: 'var(--space-md)',
-        overflowY: 'auto'
+        overflow: 'hidden'
       }}>
-        {/* 标签页选择器 */}
-        <div className="tabs" style={{
-          display: 'flex',
-          borderBottom: '1px solid var(--border-color)',
-          marginBottom: 'var(--space-md)'
-        }}>
-          <button
-            onClick={() => setActiveTab('user')}
-            className={`tab ${activeTab === 'user' ? 'active' : ''}`}
-            style={{
-              padding: 'var(--space-sm) var(--space-md)',
-              backgroundColor: activeTab === 'user' ? 'var(--secondary-bg)' : 'transparent',
-              color: activeTab === 'user' ? 'var(--brand-color)' : 'var(--text-light-gray)',
-              border: 'none',
-              borderBottom: activeTab === 'user' ? '2px solid var(--brand-color)' : '2px solid transparent',
-              cursor: 'pointer',
-              fontWeight: activeTab === 'user' ? 'bold' : 'normal',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            用户界面
-          </button>
-          <button
-            onClick={() => setActiveTab('admin')}
-            className={`tab ${activeTab === 'admin' ? 'active' : ''}`}
-            style={{
-              padding: 'var(--space-sm) var(--space-md)',
-              backgroundColor: activeTab === 'admin' ? 'var(--secondary-bg)' : 'transparent',
-              color: activeTab === 'admin' ? 'var(--brand-color)' : 'var(--text-light-gray)',
-              border: 'none',
-              borderBottom: activeTab === 'admin' ? '2px solid var(--brand-color)' : '2px solid transparent',
-              cursor: 'pointer',
-              fontWeight: activeTab === 'admin' ? 'bold' : 'normal',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            配置面板
-          </button>
-        </div>
+        {/* 历史记录面板 */}
+        <HistoryPanel 
+          storageKey="sn43-history"
+          onSelect={handleSelectHistory}
+          onNewChat={startNewChat}
+        />
         
-        {/* 标签页内容 */}
-        <div className="tab-content" style={{ flex: 1 }}>
-          {activeTab === 'user' ? (
-            <UserInterface
-              userInputs={userInputs}
-              adminInputs={adminInputs}
-              promptBlocks={promptBlocks}
-              isEditing={isEditing}
-              outputResult={outputResult}
-              inputCounter={inputCounter}
-              isConfigModified={isConfigModified}
-              selectedJsonFile={selectedJsonFile}
-              onUpdateUserInputs={handleUserInputsChange}
-              onUpdateAdminInputs={handleAdminInputsChange}
-              onUpdatePromptBlocks={handlePromptBlocksChange}
-              onUpdateInputCounter={handleInputCounterChange}
-              onUpdateSelectedJsonFile={handleSelectedJsonFileChange}
-              onExecutionComplete={handleExecutionComplete}
-            />
-          ) : (
-            <ConfigPanel
-              adminInputs={adminInputs}
-              userInputs={userInputs}
-              promptBlocks={promptBlocks}
-              inputCounter={inputCounter}
-              previewText={previewText}
-              isPreviewLoading={isPreviewLoading}
-              onUpdateAdminInputs={handleAdminInputsChange}
-              onUpdateUserInputs={handleUserInputsChange}
-              onUpdatePromptBlocks={handlePromptBlocksChange}
-              onUpdateInputCounter={handleInputCounterChange}
-              onUpdatePreviewText={handlePreviewTextChange}
-              onUpdateIsPreviewLoading={handleIsPreviewLoadingChange}
-              onConfigModified={handleConfigModified}
-            />
-          )}
+        {/* 内容区域 */}
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          padding: 'var(--space-md)',
+          overflowY: 'auto'
+        }}>
+          {/* 标签页选择器 */}
+          <div className="tabs" style={{
+            display: 'flex',
+            borderBottom: '1px solid var(--border-color)',
+            marginBottom: 'var(--space-md)'
+          }}>
+            <button
+              onClick={() => setActiveTab('user')}
+              className={`tab ${activeTab === 'user' ? 'active' : ''}`}
+              style={{
+                padding: 'var(--space-sm) var(--space-md)',
+                backgroundColor: activeTab === 'user' ? 'var(--secondary-bg)' : 'transparent',
+                color: activeTab === 'user' ? 'var(--brand-color)' : 'var(--text-light-gray)',
+                border: 'none',
+                borderBottom: activeTab === 'user' ? '2px solid var(--brand-color)' : '2px solid transparent',
+                cursor: 'pointer',
+                fontWeight: activeTab === 'user' ? 'bold' : 'normal',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              用户界面
+            </button>
+            <button
+              onClick={() => setActiveTab('admin')}
+              className={`tab ${activeTab === 'admin' ? 'active' : ''}`}
+              style={{
+                padding: 'var(--space-sm) var(--space-md)',
+                backgroundColor: activeTab === 'admin' ? 'var(--secondary-bg)' : 'transparent',
+                color: activeTab === 'admin' ? 'var(--brand-color)' : 'var(--text-light-gray)',
+                border: 'none',
+                borderBottom: activeTab === 'admin' ? '2px solid var(--brand-color)' : '2px solid transparent',
+                cursor: 'pointer',
+                fontWeight: activeTab === 'admin' ? 'bold' : 'normal',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              配置面板
+            </button>
+          </div>
+          
+          {/* 标签页内容 */}
+          <div className="tab-content" style={{ flex: 1 }}>
+            {activeTab === 'user' ? (
+              <UserInterface
+                userInputs={userInputs}
+                adminInputs={adminInputs}
+                promptBlocks={promptBlocks}
+                isEditing={isEditing}
+                outputResult={outputResult}
+                inputCounter={inputCounter}
+                isConfigModified={isConfigModified}
+                selectedJsonFile={selectedJsonFile}
+                onUpdateUserInputs={handleUserInputsChange}
+                onUpdateAdminInputs={handleAdminInputsChange}
+                onUpdatePromptBlocks={handlePromptBlocksChange}
+                onUpdateInputCounter={handleInputCounterChange}
+                onUpdateSelectedJsonFile={handleSelectedJsonFileChange}
+                onExecutionComplete={handleExecutionComplete}
+              />
+            ) : (
+              <ConfigPanel
+                adminInputs={adminInputs}
+                userInputs={userInputs}
+                promptBlocks={promptBlocks}
+                inputCounter={inputCounter}
+                previewText={previewText}
+                isPreviewLoading={isPreviewLoading}
+                onUpdateAdminInputs={handleAdminInputsChange}
+                onUpdateUserInputs={handleUserInputsChange}
+                onUpdatePromptBlocks={handlePromptBlocksChange}
+                onUpdateInputCounter={handleInputCounterChange}
+                onUpdatePreviewText={handlePreviewTextChange}
+                onUpdateIsPreviewLoading={handleIsPreviewLoadingChange}
+                onConfigModified={handleConfigModified}
+              />
+            )}
+          </div>
         </div>
       </div>
       

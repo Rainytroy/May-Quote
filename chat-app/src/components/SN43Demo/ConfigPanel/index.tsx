@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { AdminInputs, UserInputs, PromptBlock } from '../types';
+import { AdminInputs, UserInputs, PromptBlock, SN43ConfigFile } from '../types';
+import JsonFileSelector from './JsonFileSelector';
 
 interface ConfigPanelProps {
   adminInputs: AdminInputs;
@@ -8,12 +9,14 @@ interface ConfigPanelProps {
   inputCounter: number;
   previewText: string;
   isPreviewLoading: boolean;
+  selectedJsonFile?: string;
   onUpdateAdminInputs: (inputs: AdminInputs) => void;
   onUpdateUserInputs: (inputs: UserInputs) => void;
   onUpdatePromptBlocks: (blocks: PromptBlock[]) => void;
   onUpdateInputCounter: (counter: number) => void;
   onUpdatePreviewText: (text: string) => void;
   onUpdateIsPreviewLoading: (isLoading: boolean) => void;
+  onUpdateSelectedJsonFile?: (file: string) => void;
   onConfigModified: () => void;
 }
 
@@ -33,12 +36,14 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
   inputCounter,
   previewText,
   isPreviewLoading,
+  selectedJsonFile,
   onUpdateAdminInputs,
   onUpdateUserInputs,
   onUpdatePromptBlocks,
   onUpdateInputCounter,
   onUpdatePreviewText,
   onUpdateIsPreviewLoading,
+  onUpdateSelectedJsonFile,
   onConfigModified
 }) => {
   // 当前选中的配置标签页
@@ -377,6 +382,26 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* 添加JSON文件选择器 */}
+            <div style={{ marginTop: 'var(--space-lg)' }}>
+              <JsonFileSelector
+                selectedFile={selectedJsonFile || ''}
+                onSelectFile={(filename) => {
+                  if (onUpdateSelectedJsonFile) {
+                    onUpdateSelectedJsonFile(filename);
+                    onConfigModified();
+                  }
+                }}
+                onLoadConfig={(config) => {
+                  // 加载配置文件内容
+                  onUpdateUserInputs(config.userInputs);
+                  onUpdateAdminInputs(config.adminInputs);
+                  onUpdatePromptBlocks(config.promptBlocks);
+                  onConfigModified();
+                }}
+              />
             </div>
           </div>
         )}
