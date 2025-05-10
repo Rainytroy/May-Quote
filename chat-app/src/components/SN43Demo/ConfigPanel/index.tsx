@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { AdminInputs, UserInputs, PromptBlock, SN43ConfigFile } from '../types';
+import { AdminInputs, UserInputs, PromptBlock, SN43ConfigFile, Card, GlobalPromptBlocks, CardPromptBlocks } from '../types';
 import JsonFileSelector from './JsonFileSelector';
+import MultiCardView from '../MultiCardView';
 
 interface ConfigPanelProps {
   adminInputs: AdminInputs;
@@ -154,14 +155,55 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
     onConfigModified();
   };
   
+  // 示例多卡片结构 - 用于预览
+  const [exampleCards, setExampleCards] = useState<Card[]>([
+    {
+      id: 'card1',
+      title: '角色卡片 1',
+      adminInputs: {
+        'inputB1': '角色名称 <def>艾瑞克</def>',
+        'inputB2': '角色职业 <def>法师</def>'
+      },
+      promptBlocks: {
+        'promptBlock1': '根据以下信息创建角色简介：\n名称: {#inputB1}\n职业: {#inputB2}',
+        'promptBlock2': '为{#promptBlock1}创建一段背景故事'
+      }
+    },
+    {
+      id: 'card2',
+      title: '角色卡片 2',
+      adminInputs: {
+        'inputB1': '角色名称 <def>莉娜</def>',
+        'inputB2': '角色职业 <def>剑士</def>'
+      },
+      promptBlocks: {
+        'promptBlock1': '根据以下信息创建角色简介：\n名称: {#inputB1}\n职业: {#inputB2}',
+        'promptBlock2': '为{#promptBlock1}创建一段背景故事'
+      }
+    }
+  ]);
+
+  // 示例全局提示词块 - 用于预览
+  const [exampleGlobalBlocks, setExampleGlobalBlocks] = useState<GlobalPromptBlocks>({
+    'finalSummary': '综合以下所有角色信息，创建一个他们之间可能的互动场景：\n{#card1.promptBlock2}\n{#card2.promptBlock2}'
+  });
+
+  // 预览模式：单卡片或多卡片
+  const [previewMode, setPreviewMode] = useState<'single' | 'multi'>('single');
+
   // 生成预览
   const generatePreview = async () => {
     onUpdateIsPreviewLoading(true);
     try {
-      // TODO: 实现预览生成逻辑，例如调用API生成预览
-      // 临时实现：直接将所有提示词拼接在一起
-      const preview = localPromptBlocks.map(block => block.text).join('\n\n');
-      onUpdatePreviewText(preview);
+      if (previewMode === 'single') {
+        // 单卡片模式预览 - 直接将所有提示词拼接在一起
+        const preview = localPromptBlocks.map(block => block.text).join('\n\n');
+        onUpdatePreviewText(preview);
+      } else {
+        // 多卡片模式预览 - 在这里不需要特别的处理，因为我们直接展示 exampleCards
+        // 更新时间戳以触发重渲染
+        setExampleCards(cards => [...cards]);
+      }
     } catch (error) {
       console.error('生成预览失败:', error);
     } finally {
@@ -396,9 +438,12 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                 }}
                 onLoadConfig={(config) => {
                   // 加载配置文件内容
-                  onUpdateUserInputs(config.userInputs);
-                  onUpdateAdminInputs(config.adminInputs);
-                  onUpdatePromptBlocks(config.promptBlocks);
+                  if (config.userInputs) onUpdateUserInputs(config.userInputs);
+                  if (config.adminInputs) onUpdateAdminInputs(config.adminInputs);
+                  if (config.promptBlocks) onUpdatePromptBlocks(config.promptBlocks);
+                  
+                  // TODO: 如果是多卡片模式，需要处理卡片数据的加载
+                  
                   onConfigModified();
                 }}
               />
@@ -513,21 +558,87 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
               </button>
             </div>
             
-            <div className="preview-content" style={{
-              backgroundColor: 'var(--card-bg)',
-              borderRadius: 'var(--radius-md)',
-              padding: 'var(--space-md)',
-              minHeight: '200px',
-              color: 'var(--text-white)',
-              border: '1px solid var(--border-color)',
-              whiteSpace: 'pre-wrap'
-            }}>
-              {previewText || (
-                <div style={{ color: 'var(--text-light-gray)', textAlign: 'center' }}>
-                  点击"生成预览"按钮查看效果
-                </div>
-              )}
+            {/* 预览模式切换 */}
+            <div style={{ marginBottom: 'var(--space-md)' }}>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center',
+                backgroundColor: 'var(--secondary-bg)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '2px',
+                width: 'fit-content'
+              }}>
+                <button
+                  onClick={() => setPreviewMode('single')}
+                  style={{
+                    padding: 'var(--space-xs) var(--space-sm)',
+                    backgroundColor: previewMode === 'single' ? 'var(--main-bg)' : 'transparent',
+                    color: previewMode === 'single' ? 'var(--text-white)' : 'var(--text-light-gray)',
+                    border: 'none',
+                    borderRadius: 'var(--radius-xs)',
+                    cursor: 'pointer',
+                    fontSize: 'var(--font-sm)'
+                  }}
+                >
+                  单卡片模式
+                </button>
+                <button
+                  onClick={() => setPreviewMode('multi')}
+                  style={{
+                    padding: 'var(--space-xs) var(--space-sm)',
+                    backgroundColor: previewMode === 'multi' ? 'var(--main-bg)' : 'transparent',
+                    color: previewMode === 'multi' ? 'var(--text-white)' : 'var(--text-light-gray)',
+                    border: 'none',
+                    borderRadius: 'var(--radius-xs)',
+                    cursor: 'pointer',
+                    fontSize: 'var(--font-sm)'
+                  }}
+                >
+                  多卡片模式
+                </button>
+              </div>
+              <div style={{ 
+                fontSize: 'var(--font-xs)', 
+                color: 'var(--text-light-gray)',
+                marginTop: 'var(--space-xs)',
+                marginLeft: 'var(--space-xs)'
+              }}>
+                {previewMode === 'single' 
+                  ? '显示传统单卡片结构预览' 
+                  : '显示支持多卡片结构的预览（由提示词自动生成）'}
+              </div>
             </div>
+
+            {/* 单卡片模式预览 */}
+            {previewMode === 'single' && (
+              <div className="preview-content" style={{
+                backgroundColor: 'var(--card-bg)',
+                borderRadius: 'var(--radius-md)',
+                padding: 'var(--space-md)',
+                minHeight: '200px',
+                color: 'var(--text-white)',
+                border: '1px solid var(--border-color)',
+                whiteSpace: 'pre-wrap'
+              }}>
+                {previewText || (
+                  <div style={{ color: 'var(--text-light-gray)', textAlign: 'center' }}>
+                    点击"生成预览"按钮查看效果
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 多卡片模式预览 */}
+            {previewMode === 'multi' && (
+              <div className="multi-card-preview">
+                {/* 多卡片视图组件 */}
+                <MultiCardView 
+                  cards={exampleCards} 
+                  globalPromptBlocks={exampleGlobalBlocks}
+                  isPreview={true}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>
