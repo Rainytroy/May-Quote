@@ -348,18 +348,19 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
         const label = labelMatch ? labelMatch[1].trim() : key;
         const defaultValue = defaultMatch ? defaultMatch[1] : '';
         
-        // 简单检测类型
-        let type: "text" | "textarea" | "number" | "select" | "checkbox" | "radio" = "text";
+        // 统一使用文本框类型
+        const type: "text" | "textarea" | "number" | "select" | "checkbox" | "radio" = "text";
         
-        if (valueStr.toLowerCase().includes('选择') || valueStr.toLowerCase().includes('select')) {
-          type = "select";
-        } else if (valueStr.toLowerCase().includes('多行') || valueStr.toLowerCase().includes('textarea')) {
-          type = "textarea";
-        } else if (valueStr.toLowerCase().includes('数字') || valueStr.toLowerCase().includes('number')) {
-          type = "number";
-        } else if (valueStr.toLowerCase().includes('是否') || valueStr.toLowerCase().includes('checkbox')) {
-          type = "checkbox";
-        }
+        // 注释掉自动类型检测逻辑 - 目前阶段只使用文本框
+        // if (valueStr.toLowerCase().includes('选择') || valueStr.toLowerCase().includes('select')) {
+        //   type = "select";
+        // } else if (valueStr.toLowerCase().includes('多行') || valueStr.toLowerCase().includes('textarea')) {
+        //   type = "textarea";
+        // } else if (valueStr.toLowerCase().includes('数字') || valueStr.toLowerCase().includes('number')) {
+        //   type = "number";
+        // } else if (valueStr.toLowerCase().includes('是否') || valueStr.toLowerCase().includes('checkbox')) {
+        //   type = "checkbox";
+        // }
         
         const control: ControlDefinition = {
           type,
@@ -370,14 +371,14 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
           placeholder: `请输入${label}`
         };
         
-        // 如果是选择类控件，添加选项
-        if (type === "select" || type === "radio" as any) {
-          control.options = [
-            { value: defaultValue, label: defaultValue },
-            { value: "选项2", label: "选项2" },
-            { value: "选项3", label: "选项3" }
-          ];
-        }
+        // 注释掉选择类控件选项设置 - 统一使用文本框
+        // if (type === "select" || type === "radio" as any) {
+        //   control.options = [
+        //     { value: defaultValue, label: defaultValue },
+        //     { value: "选项2", label: "选项2" },
+        //     { value: "选项3", label: "选项3" }
+        //   ];
+        // }
         
         controls.push(control);
       });
