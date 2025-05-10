@@ -262,6 +262,14 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
     try {
       const config = JSON.parse(jsonStr);
       
+      // 存储当前使用的adminInputs，用于后续生成控件
+      let currentAdminInputs: AdminInputs = {};
+      
+      // 检查配置文件是否有效
+      if (!config || typeof config !== 'object') {
+        throw new Error('无效的JSON格式');
+      }
+      
       // 处理多卡片结构
       if (config.cards && Array.isArray(config.cards) && config.cards.length > 0) {
         console.log('检测到多卡片结构');
@@ -270,34 +278,42 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
         const firstCard = config.cards[0];
         
         // 验证第一个卡片的结构
-        if (!firstCard.adminInputs || !firstCard.promptBlocks) {
+        if (!firstCard || typeof firstCard !== 'object') {
+          throw new Error('cards数组中的第一个卡片无效');
+        }
+        
+        if (!firstCard.adminInputs || typeof firstCard.adminInputs !== 'object' || 
+            !firstCard.promptBlocks || typeof firstCard.promptBlocks !== 'object') {
           throw new Error('卡片结构不正确，必须包含adminInputs和promptBlocks');
         }
         
         // 设置管理员输入 - 使用第一个卡片的数据
-        setAdminInputs(firstCard.adminInputs);
+        currentAdminInputs = { ...firstCard.adminInputs };
+        setAdminInputs(currentAdminInputs);
         
         // 设置提示词块 - 使用第一个卡片的数据
         const blocks: PromptBlock[] = [];
         Object.values(firstCard.promptBlocks).forEach((text: any) => {
           blocks.push({ text: typeof text === 'string' ? text : text.text || '' });
         });
-        setPromptBlocks(blocks);
         
         // 如果有全局提示词块，也添加到提示词块中
-        if (config.globalPromptBlocks) {
+        if (config.globalPromptBlocks && typeof config.globalPromptBlocks === 'object') {
           Object.values(config.globalPromptBlocks).forEach((text: any) => {
             blocks.push({ text: typeof text === 'string' ? text : text.text || '' });
           });
-          setPromptBlocks(blocks);
         }
+        
+        setPromptBlocks(blocks);
       }
-      // 处理单卡片结构
-      else if (config.adminInputs && config.promptBlocks) {
+      // 处理单卡片结构（旧格式）
+      else if (config.adminInputs && typeof config.adminInputs === 'object' && 
+               config.promptBlocks && typeof config.promptBlocks === 'object') {
         console.log('检测到单卡片结构');
         
         // 设置管理员输入
-        setAdminInputs(config.adminInputs);
+        currentAdminInputs = { ...config.adminInputs };
+        setAdminInputs(currentAdminInputs);
         
         // 设置提示词块
         const blocks: PromptBlock[] = [];
@@ -311,10 +327,20 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
         throw new Error('JSON结构不正确，必须包含adminInputs和promptBlocks，或是包含cards数组');
       }
       
-      // 从adminInputs生成控件定义
+      // 确保adminInputs存在且有内容
+      if (!currentAdminInputs || Object.keys(currentAdminInputs).length === 0) {
+        throw new Error('未找到有效的管理员输入字段(adminInputs)');
+      }
+      
+      // 从正确的adminInputs来源生成控件定义
       const controls: ControlDefinition[] = [];
       
-      Object.entries(config.adminInputs).forEach(([key, value]) => {
+      Object.entries(currentAdminInputs).forEach(([key, value]) => {
+        if (value === undefined || value === null) {
+          console.warn(`警告: adminInputs中的${key}值为undefined或null`);
+          return; // 跳过无效值
+        }
+        
         const valueStr = String(value);
         const labelMatch = valueStr.match(/^(.*?)<def>/);
         const defaultMatch = valueStr.match(/<def>(.*?)<\/def>/);
