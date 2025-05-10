@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ControlDefinition } from '../Controls/DynamicControl';
 import ControlsContainer from '../Controls/ControlsContainer';
 import { AdminInputs, PromptBlock } from '../types';
-import { getDefaultFirstStagePrompt, getDefaultSecondStagePrompt } from './promptTemplates';
+import { usePromptTemplates } from '../contexts/PromptTemplateContext'; // 导入Context Hook
 import { mayApi, MayAPI } from '../api/mayApi';
 
 // 交互记录类型
@@ -95,6 +95,9 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
     setInteractions(prev => [...prev, newEntry]);
   };
 
+  // 从Context获取当前激活的模板
+  const { activeTemplates } = usePromptTemplates();
+
   // 生成AI智能体
   const generateAgent = async () => {
     if (!userInput.trim()) {
@@ -105,8 +108,8 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
     setIsGenerating(true);
     
     try {
-      // 构建提示词
-      const prompt = getDefaultFirstStagePrompt().replace('{#input}', userInput);
+      // 构建提示词 - 使用Context中的第一阶段模板
+      const prompt = activeTemplates.firstStage.replace('{#input}', userInput);
       setCurrentPrompt(prompt);
       
       // 记录提示词
@@ -175,8 +178,8 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
     setIsGenerating(true);
     
     try {
-      // 构建第二阶段提示词
-      const prompt = getDefaultSecondStagePrompt()
+      // 构建第二阶段提示词 - 使用Context中的第二阶段模板
+      const prompt = activeTemplates.secondStage
         .replace('{#input}', adjustmentInput)
         .replace('{#promptResults1}', jsonOutput);
       
