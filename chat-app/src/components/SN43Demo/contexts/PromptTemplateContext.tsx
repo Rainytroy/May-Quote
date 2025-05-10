@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { getDefaultFirstStagePrompt, getDefaultSecondStagePrompt } from '../AgentConfigPanel/promptTemplates';
+import { getDefaultFirstStagePrompt, getDefaultSecondStagePrompt, TemplateType } from '../AgentConfigPanel/promptTemplates';
 import { openDatabase, generateId } from '../../../utils/storage-db'; // 导入数据库工具
 
 // 定义常量
@@ -24,23 +24,35 @@ interface PromptTemplateContextType {
   setActiveTemplate: (templateId: string) => Promise<void>; // 设置激活模板
   saveTemplate: (template: Omit<PromptTemplateSet, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }) => Promise<PromptTemplateSet | null>; // 保存（新建或更新）模板
   deleteTemplate: (templateId: string) => Promise<void>; // 删除模板
-  resetToDefaultTemplates: () => Promise<void>; // 重置当前激活模板为代码中的默认值
+  resetToDefaultTemplates: (templateType?: TemplateType) => Promise<void>; // 重置当前激活模板为指定版本的默认值
 }
 
 const PromptTemplateContext = createContext<PromptTemplateContextType | undefined>(undefined);
 
 export const PromptTemplateProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const defaultTemplates: PromptTemplateSet = {
+  // 原版提示词模板
+  const originalTemplate: PromptTemplateSet = {
     id: 'default',
-    name: '默认模板',
-    firstStage: getDefaultFirstStagePrompt(),
-    secondStage: getDefaultSecondStagePrompt(),
+    name: '原版提示词',
+    firstStage: getDefaultFirstStagePrompt(TemplateType.ORIGINAL),
+    secondStage: getDefaultSecondStagePrompt(TemplateType.ORIGINAL),
     createdAt: Date.now(),
     updatedAt: Date.now(),
     isDefault: true,
   };
 
-  const [activeTemplates, setActiveTemplates] = useState<PromptTemplateSet>(defaultTemplates);
+  // 迭代版提示词模板
+  const advancedTemplate: PromptTemplateSet = {
+    id: 'advanced',
+    name: '迭代版提示词',
+    firstStage: getDefaultFirstStagePrompt(TemplateType.ADVANCED),
+    secondStage: getDefaultSecondStagePrompt(TemplateType.ADVANCED),
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    isDefault: true,
+  };
+
+  const [activeTemplates, setActiveTemplates] = useState<PromptTemplateSet>(originalTemplate);
   const [savedTemplates, setSavedTemplates] = useState<PromptTemplateSet[]>([]);
 
   const DB_NAME = 'sn43-templates-db'; // 使用独立的数据库名称
@@ -86,29 +98,41 @@ export const PromptTemplateProvider: React.FC<{ children: React.ReactNode }> = (
         req.onerror = () => reject(req.error);
       });
       
-      // 确保默认模板存在于列表中，如果数据库为空则添加
+      // 确保默认模板存在于列表中
       let templatesToSet = allTemplates;
-      if (!templatesToSet.find(t => t.id === 'default')) {
-        templatesToSet = [defaultTemplates, ...templatesToSet];
-        // 如果数据库中没有默认模板，则添加它（这通常只在首次初始化时发生）
+      const hasOriginalTemplate = templatesToSet.find(t => t.id === 'default');
+      const hasAdvancedTemplate = templatesToSet.find(t => t.id === 'advanced');
+      
+      // 如果数据库中没有默认模板，则添加它们
+      if (!hasOriginalTemplate || !hasAdvancedTemplate) {
         const writeTx = db.transaction(PROMPT_TEMPLATE_STORE, 'readwrite');
         const writeStore = writeTx.objectStore(PROMPT_TEMPLATE_STORE);
-        writeStore.put(defaultTemplates);
+        
+        if (!hasOriginalTemplate) {
+          writeStore.put(originalTemplate);
+          templatesToSet = [originalTemplate, ...templatesToSet];
+        }
+        
+        if (!hasAdvancedTemplate) {
+          writeStore.put(advancedTemplate);
+          templatesToSet = [advancedTemplate, ...templatesToSet];
+        }
+        
         await new Promise(r => writeTx.oncomplete = r);
       }
       
       setSavedTemplates(templatesToSet.sort((a, b) => b.updatedAt - a.updatedAt));
 
       const activeId = localStorage.getItem(ACTIVE_TEMPLATE_ID_KEY) || 'default';
-      const active = templatesToSet.find(t => t.id === activeId) || defaultTemplates;
+      const active = templatesToSet.find(t => t.id === activeId) || originalTemplate;
       setActiveTemplates(active);
       
       db.close();
       console.log('提示词模板已加载:', templatesToSet, '激活模板:', active.name);
     } catch (error) {
       console.error('加载提示词模板失败:', error);
-      setSavedTemplates([defaultTemplates]); // 至少有默认模板
-      setActiveTemplates(defaultTemplates);
+      setSavedTemplates([originalTemplate]); // 至少有默认模板
+      setActiveTemplates(originalTemplate);
     }
   }, []);
 
@@ -184,9 +208,9 @@ export const PromptTemplateProvider: React.FC<{ children: React.ReactNode }> = (
       await new Promise(r => tx.oncomplete = r);
       db.close();
       
-      // 如果删除的是当前激活的模板，则重置为默认模板
+      // 如果删除的是当前激活的模板，则重置为原版模板
       if (activeTemplates.id === templateId) {
-        setActiveTemplates(defaultTemplates);
+        setActiveTemplates(originalTemplate);
         localStorage.setItem(ACTIVE_TEMPLATE_ID_KEY, 'default');
       }
       await loadTemplates(); // 重新加载列表
@@ -197,16 +221,17 @@ export const PromptTemplateProvider: React.FC<{ children: React.ReactNode }> = (
   };
 
   const setActiveTemplate = async (templateId: string) => {
-    const templateToActivate = savedTemplates.find(t => t.id === templateId) || defaultTemplates;
+    const templateToActivate = savedTemplates.find(t => t.id === templateId) || originalTemplate;
     setActiveTemplates(templateToActivate);
     localStorage.setItem(ACTIVE_TEMPLATE_ID_KEY, templateToActivate.id);
     console.log('激活的提示词模板已设置为:', templateToActivate.name);
   };
   
-  const resetToDefaultTemplates = async () => {
-    setActiveTemplates(defaultTemplates);
-    localStorage.setItem(ACTIVE_TEMPLATE_ID_KEY, 'default');
-    console.log('激活的提示词模板已重置为默认。');
+  const resetToDefaultTemplates = async (templateType?: TemplateType) => {
+    const template = templateType === TemplateType.ADVANCED ? advancedTemplate : originalTemplate;
+    setActiveTemplates(template);
+    localStorage.setItem(ACTIVE_TEMPLATE_ID_KEY, template.id);
+    console.log(`激活的提示词模板已重置为${template.name}。`);
   };
 
   return (

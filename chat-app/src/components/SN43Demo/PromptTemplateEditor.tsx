@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { usePromptTemplates, PromptTemplateSet } from './contexts/PromptTemplateContext';
+import { TemplateType } from './AgentConfigPanel/promptTemplates';
 
 interface PromptTemplateEditorProps {
   // 未来可能需要传入props来管理模板状态
@@ -37,10 +38,12 @@ const PromptTemplateEditor: React.FC<PromptTemplateEditorProps> = () => {
     loadTemplates();
   }, [loadTemplates]);
 
-  const handleResetDefaults = async () => {
-    await resetToDefaultTemplates(); 
+  const handleResetDefaults = async (templateType?: TemplateType) => {
+    await resetToDefaultTemplates(templateType); 
     setIsCreatingNew(false);
-    alert('当前激活的提示词模板已重置为默认值。');
+    
+    const templateName = templateType === TemplateType.ADVANCED ? '迭代版提示词' : '原版提示词';
+    alert(`当前激活的提示词模板已重置为${templateName}。`);
   };
 
   const handleSaveChanges = async () => {
@@ -285,20 +288,76 @@ const PromptTemplateEditor: React.FC<PromptTemplateEditorProps> = () => {
             >
               {isCreatingNew || activeTemplates.id === 'default' ? '另存为新模板' : '保存更改'}
             </button>
-            <button 
-              onClick={handleResetDefaults} 
-              style={{ 
-                padding: 'var(--space-xs) var(--space-sm)',
-                backgroundColor: 'var(--secondary-bg)',
-                color: 'var(--text-white)',
-                border: '1px solid var(--border-color)',
-                borderRadius: 'var(--radius-sm)',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              重置为默认
-            </button>
+            <div style={{position: 'relative'}}>
+              <button 
+                onClick={() => {
+                  const menu = document.getElementById('resetMenu');
+                  if (menu) {
+                    menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+                  }
+                }}
+                style={{ 
+                  padding: 'var(--space-xs) var(--space-sm)',
+                  backgroundColor: 'var(--secondary-bg)',
+                  color: 'var(--text-white)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 'var(--radius-sm)',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--space-xs)'
+                }}
+              >
+                重置为默认模板
+                <span style={{fontSize: '0.7em', marginTop: '2px'}}>▼</span>
+              </button>
+              <div 
+                id="resetMenu" 
+                style={{
+                  display: 'none',
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  zIndex: 10,
+                  backgroundColor: 'var(--card-bg)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 'var(--radius-sm)',
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                  width: '160px',
+                  overflow: 'hidden'
+                }}
+              >
+                <div 
+                  onClick={() => handleResetDefaults()}
+                  style={{
+                    padding: 'var(--space-sm) var(--space-md)',
+                    cursor: 'pointer',
+                    color: 'var(--text-white)',
+                    transition: 'background-color 0.15s',
+                    fontSize: 'var(--font-sm)'
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--secondary-bg)'}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  原版提示词
+                </div>
+                <div 
+                  onClick={() => handleResetDefaults(TemplateType.ADVANCED)}
+                  style={{
+                    padding: 'var(--space-sm) var(--space-md)',
+                    cursor: 'pointer',
+                    color: 'var(--text-white)',
+                    transition: 'background-color 0.15s',
+                    fontSize: 'var(--font-sm)'
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--secondary-bg)'}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  迭代版提示词
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         

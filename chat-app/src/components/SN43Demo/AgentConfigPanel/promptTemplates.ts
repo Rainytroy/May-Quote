@@ -2,10 +2,8 @@
  * 神谕 Agent 生成器使用的提示词模板
  */
 
-/**
- * 第一阶段提示词模板 - 用于初步生成JSON配置
- */
-export const AGENT_PROMPT_TEMPLATE_1 = `我需要根据用户的输入："{#input}"。来输出 json，这个 json 是一个问卷，用户会输入 inputB1-N，然后点击提交后，顺序调用 promptBlocks 数组中的字符串给到 ai，并依次把内容返回给用户。需要你帮我把要问用户的所有问题都写到 inputBn 中，而在 promptBlock 中不准问问题，以用户在 inputBn 的<def></def>标签中的内容，作为构建生成解决方案或者回答的promptBlock的输入，用1个或多个promptBlock来形成深度的回答。根据用户要求需要几个promptBlock来设计需要几个promptBlock以及每次的 promptBlock 中的提示词内容的前后逻辑通过添加{#promptBlockn}占位符引用上下文来保持一致，输出的时候输出 json，按照以下的范例和规则输出。
+// 原版提示词模板
+export const ORIGINAL_PROMPT_TEMPLATE_1 = `我需要根据用户的输入："{#input}"。来输出 json，这个 json 是一个问卷，用户会输入 inputB1-N，然后点击提交后，顺序调用 promptBlocks 数组中的字符串给到 ai，并依次把内容返回给用户。需要你帮我把要问用户的所有问题都写到 inputBn 中，而在 promptBlock 中不准问问题，以用户在 inputBn 的<def></def>标签中的内容，作为构建生成解决方案或者回答的promptBlock的输入，用1个或多个promptBlock来形成深度的回答。根据用户要求需要几个promptBlock来设计需要几个promptBlock以及每次的 promptBlock 中的提示词内容的前后逻辑通过添加{#promptBlockn}占位符引用上下文来保持一致，输出的时候输出 json，按照以下的范例和规则输出。
 
 你根据用户输入，认为他最可能的想达成什么目的。然后 inputB1-BN 是你分析要达成这个目的，还需要向用户澄清的 1-3 个关键输入因素（参数），<def></def>默认值中填入"用户看到该inputBn 内容后最可能填入的选项内容， 如 "inputB1": "文章主题 <def>关于技术发展的趋势</def>"，关于技术发展的趋势就是用户看到"文章主题"后最可能填入的选项内容" 
 
@@ -35,10 +33,7 @@ Json 文件范例如下：
  }
 }`;
 
-/**
- * 第二阶段提示词模板 - 用于优化JSON配置
- */
-export const AGENT_PROMPT_TEMPLATE_2 = `根据用户的输入："{#input}"，以及ai根据用户输入的初步设计的json文件："{#promptResults1}"，特别注意如果用户要求了promptBlock数量，要补全json中的promptBlock的数量并开发合适的提示词，满足用户对promptBlocks数量的要求（如果有），优化其他promptBlock中的提示词：因为 inputB1-N 是用户一次性输入的，因此 promptBlock1-N 都可以随时用占位符抓取到，应该用最优策略来写 promptBlock，除非客户有明确要求外，一般都要在 1 个 promptBlock 解决问题。而ai对每个promptblock的回答最多4000字左右，当判断客户需要的输出（比如长文章）时，则用多个promptBlock来多次分段输出，因此promptBlock2-n中必须包含至少1个promptBlock占位符和其内容说明，来保持上下文。 json文件本质是一个问卷，用户会输入 inputB1-N，<def></def>标签里面代表该输入的默认值。然后点击提交后，程序会顺序调用 promptBlock1-N中的字符串给到 ai，并依次把内容返回给用户。需要你优化promptBlock中的提示词：1，确保promptBlock1中的提示词引用了正确的用户输入{#inputBn}（但写提示词的时候不要把inputBn中<def>标签中的内容写进来，否则会跟inputBn内容冲突），确保后续的提示词正确地引用了它前面的上下文{#promptBlockn}或者用户的输入（如果需要），n为1-n的整数，代表了控件的编号，每个promptblock至少要有1个{}占位符，不管是input还是promptblock。以下是一个多 promptBlock 范例 
+export const ORIGINAL_PROMPT_TEMPLATE_2 = `根据用户的输入："{#input}"，以及ai根据用户输入的初步设计的json文件："{#promptResults1}"，特别注意如果用户要求了promptBlock数量，要补全json中的promptBlock的数量并开发合适的提示词，满足用户对promptBlocks数量的要求（如果有），优化其他promptBlock中的提示词：因为 inputB1-N 是用户一次性输入的，因此 promptBlock1-N 都可以随时用占位符抓取到，应该用最优策略来写 promptBlock，除非客户有明确要求外，一般都要在 1 个 promptBlock 解决问题。而ai对每个promptblock的回答最多4000字左右，当判断客户需要的输出（比如长文章）时，则用多个promptBlock来多次分段输出，因此promptBlock2-n中必须包含至少1个promptBlock占位符和其内容说明，来保持上下文。 json文件本质是一个问卷，用户会输入 inputB1-N，<def></def>标签里面代表该输入的默认值。然后点击提交后，程序会顺序调用 promptBlock1-N中的字符串给到 ai，并依次把内容返回给用户。需要你优化promptBlock中的提示词：1，确保promptBlock1中的提示词引用了正确的用户输入{#inputBn}（但写提示词的时候不要把inputBn中<def>标签中的内容写进来，否则会跟inputBn内容冲突），确保后续的提示词正确地引用了它前面的上下文{#promptBlockn}或者用户的输入（如果需要），n为1-n的整数，代表了控件的编号，每个promptblock至少要有1个{}占位符，不管是input还是promptblock。以下是一个多 promptBlock 范例 
  {
  "adminInputs": {
  "inputB1": " 动物 1 <def>猫</def>",
@@ -51,16 +46,112 @@ export const AGENT_PROMPT_TEMPLATE_2 = `根据用户的输入："{#input}"，以
  }
 }。多段文章上下文引用范例：{   "adminInputs": {     "inputB1": "文章主题 <def>关于技术发展的趋势</def>",     "inputB2": "每段的主要内容 <def>第一段介绍背景，第二段分析现状，第三段探讨影响，第四段预测未来，第五段总结</def>",     "inputB3": "文章风格 <def>正式且学术</def>",     "inputB4": "目标读者 <def>专业人士</def>",     "inputB5": "是否需要引用数据或案例 <def>是，需要最新的数据和相关案例</def>"   },   "promptBlocks": {     "promptBlock1": "根据提供的基本信息，生成第一段内容，主要介绍技术发展的趋势背景。主题：{#inputB1}，每段内容：{#inputB2}，风格：{#inputB3}，目标读者：{#inputB4}，数据引用：{#inputB5}",     "promptBlock2": "以下是第一段内容：{#promptBlock1}\\n\\n根据第一段内容和基本信息，生成第二段内容，主要分析技术发展的现状。",     "promptBlock3": "以下是前两段内容：{#promptBlock1}\\n{#promptBlock2}\\n\\n根据前两段内容和基本信息，生成第三段内容，主要探讨技术发展的影响。",     "promptBlock4": "以下是前三段内容：{#promptBlock1}\\n{#promptBlock2}\\n{#promptBlock3}\\n\\n根据前三段内容和基本信息，生成第四段内容，主要预测技术发展的未来趋势。",     "promptBlock5": "以下是前四段内容：{#promptBlock1}\\n{#promptBlock2}\\n{#promptBlock3}\\n{#promptBlock4}\\n\\n根据前四段内容和基本信息，生成第五段内容，总结全文并给出结论。"   } }。检查输出的每个promptblock至少要有1个{}占位符，写提示词的时候不要把inputBn中<def>标签中的内容写进来，否则会跟inputBn内容冲突。不管是input还是promptblock直接输出1个最终优化好的JSON文件，不要输出任何其他内容如说明和解释`;
 
+// 迭代版提示词模板（支持多卡片结构）
+export const ADVANCED_PROMPT_TEMPLATE_1 = `你是一个专业的问卷设计专家和提示词工程师。请分析以下用户输入：
+
+"{#input}"
+
+你的任务是创建一个JSON结构，用于生成交互式卡片界面，引导用户输入关键信息，然后利用这些信息通过AI生成高质量内容。
+
+请首先分析用户需求的复杂度和结构：
+1. 这个需求是否需要拆分为多个独立卡片处理？
+2. 每个卡片需要用户提供哪些关键输入？
+3. 处理这些输入需要几个步骤的提示词块？
+
+然后，根据分析设计JSON结构：
+
+如果用户需求适合单一卡片处理（简单问题或单一主题），生成标准的单卡片JSON：
+\`\`\`json
+{
+  "adminInputs": {
+    "inputB1": "问题1描述 <def>默认值1</def>",
+    ...
+  },
+  "promptBlocks": {
+    "promptBlock1": "基于输入构建的第一个提示词 {#inputB1} ...",
+    ...
+  }
+}
+\`\`\`
+
+如果用户需求适合多卡片处理（复杂问题、多个人物或场景等），生成扩展的多卡片JSON：
+\`\`\`json
+{
+  "cards": [
+    {
+      "id": "card1",
+      "title": "卡片1标题",
+      "adminInputs": {
+        "inputB1": "问题1描述 <def>默认值1</def>",
+        ...
+      },
+      "promptBlocks": {
+        "promptBlock1": "基于输入构建的第一个提示词 {#inputB1} ...",
+        ...
+      }
+    },
+    {
+      "id": "card2",
+      ...
+    }
+  ],
+  "globalPromptBlocks": {
+    "finalSummary": "整合多卡片结果的提示词 {#card1.promptBlock1} {#card2.promptBlock1} ..."
+  }
+}
+\`\`\`
+
+设计JSON时，遵循以下原则：
+1. 所有adminInputs必须包含默认值，用<def></def>标签包裹
+2. promptBlock中不应包含问题，只应包含指令和从adminInputs中引用的信息
+3. 后续promptBlock必须引用前面promptBlock的结果，使用{#promptBlock1}格式
+4. 多卡片场景下，可使用{#cardId.promptBlockId}格式跨卡片引用
+5. 确保每个卡片结构完整，具有明确的输入和输出逻辑
+
+只输出JSON，不要包含任何解释或额外文字。`;
+
+export const ADVANCED_PROMPT_TEMPLATE_2 = `请检查并优化以下JSON结构：
+
+{#promptBlock1}
+
+确保JSON结构满足以下标准：
+1. 语法正确，格式规范
+2. adminInputs中的所有问题清晰、简洁，且提供合理的默认值
+3. promptBlocks中的提示词指令明确，避免模糊表述
+4. 所有引用占位符使用正确（如{#inputB1}、{#promptBlock1}、{#card1.promptBlock1}）
+5. 多卡片结构下，卡片ID和引用关系准确无误
+6. 逻辑顺序合理，先处理基础信息，再处理派生或综合信息
+
+如有必要，请进行以下改进：
+- 合并类似功能的promptBlock，减少不必要的步骤
+- 拆分过于复杂的promptBlock，确保每个步骤专注于一个任务
+- 确保全局提示词块（如有）能有效整合各卡片的结果
+- 移除任何可能导致大模型混淆的表述
+
+优化后，返回完整的JSON结构，不添加任何注释或说明。`;
+
+/**
+ * 常量定义默认模板类型
+ */
+export enum TemplateType {
+  ORIGINAL = 'original',
+  ADVANCED = 'advanced'
+}
+
 /**
  * 获取默认的第一阶段提示词模板
  */
-export function getDefaultFirstStagePrompt(): string {
-  return AGENT_PROMPT_TEMPLATE_1;
+export function getDefaultFirstStagePrompt(type: TemplateType = TemplateType.ORIGINAL): string {
+  return type === TemplateType.ORIGINAL 
+    ? ORIGINAL_PROMPT_TEMPLATE_1 
+    : ADVANCED_PROMPT_TEMPLATE_1;
 }
 
 /**
  * 获取默认的第二阶段提示词模板
  */
-export function getDefaultSecondStagePrompt(): string {
-  return AGENT_PROMPT_TEMPLATE_2;
+export function getDefaultSecondStagePrompt(type: TemplateType = TemplateType.ORIGINAL): string {
+  return type === TemplateType.ORIGINAL 
+    ? ORIGINAL_PROMPT_TEMPLATE_2 
+    : ADVANCED_PROMPT_TEMPLATE_2;
 }
