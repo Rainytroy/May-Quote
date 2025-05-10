@@ -201,16 +201,62 @@ const AgentGenerator: React.FC<AgentGeneratorProps> = ({
   const applyJson = () => {
     try {
       // 尝试解析JSON
-      const controls = JSON.parse(generatedJson);
+      const jsonData = JSON.parse(generatedJson);
       
-      // 验证是否是数组
-      if (!Array.isArray(controls)) {
-        throw new Error('JSON必须是数组格式');
+      // 检查JSON结构并提取或处理控件数据
+      
+      // 多卡片结构处理
+      if (jsonData.cards && Array.isArray(jsonData.cards)) {
+        // 多卡片结构 - 确保每个卡片都有必要的字段
+        for (const card of jsonData.cards) {
+          if (!card.adminInputs || !card.promptBlocks) {
+            throw new Error('每个卡片必须包含adminInputs和promptBlocks字段');
+          }
+        }
+        
+        // 转换为控件 - 将多卡片结构序列化为JSON字符串，存储在textarea控件中
+        const jsonString = JSON.stringify(jsonData, null, 2);
+        const controls: ControlDefinition[] = [
+          {
+            type: "textarea",
+            id: "multiCardData",
+            label: "多卡片结构数据",
+            defaultValue: jsonString,
+            placeholder: "多卡片JSON数据"
+          }
+        ];
+        
+        // 通知父组件
+        onControlsGenerated(controls);
+        setError(null);
       }
-      
-      // 通知父组件
-      onControlsGenerated(controls);
-      setError(null);
+      // 单卡片结构处理
+      else if (jsonData.adminInputs && jsonData.promptBlocks) {
+        // 单卡片结构 - 转换为控件（序列化为JSON字符串）
+        const jsonString = JSON.stringify(jsonData, null, 2);
+        const controls: ControlDefinition[] = [
+          {
+            type: "textarea",
+            id: "singleCardData",
+            label: "单卡片结构数据",
+            defaultValue: jsonString,
+            placeholder: "单卡片JSON数据"
+          }
+        ];
+        
+        // 通知父组件
+        onControlsGenerated(controls);
+        setError(null);
+      }
+      // 控件数组结构处理（原有逻辑）
+      else if (Array.isArray(jsonData)) {
+        // 直接是控件数组
+        onControlsGenerated(jsonData);
+        setError(null);
+      }
+      else {
+        throw new Error('JSON结构不正确，必须包含adminInputs和promptBlocks，或是cards数组，或是控件数组');
+      }
     } catch (error) {
       console.error('应用JSON失败:', error);
       setError('无效的JSON格式: ' + (error instanceof Error ? error.message : '未知错误'));
