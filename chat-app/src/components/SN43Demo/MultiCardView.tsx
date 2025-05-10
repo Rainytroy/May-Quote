@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, GlobalPromptBlocks } from './types';
 
 interface MultiCardViewProps {
@@ -16,6 +16,24 @@ const MultiCardView: React.FC<MultiCardViewProps> = ({
   globalPromptBlocks,
   isPreview = false
 }) => {
+  // 保存每个提示词块的折叠状态
+  const [collapsedPrompts, setCollapsedPrompts] = useState<Record<string, boolean>>({});
+  
+  // 切换提示词块的折叠状态
+  const togglePromptCollapse = (cardId: string, promptId: string) => {
+    const key = `${cardId}-${promptId}`;
+    setCollapsedPrompts(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
+  
+  // 检查提示词块是否折叠
+  const isPromptCollapsed = (cardId: string, promptId: string) => {
+    const key = `${cardId}-${promptId}`;
+    // 默认是折叠状态
+    return collapsedPrompts[key] !== false;
+  };
   return (
     <div className="multi-card-view" style={{
       display: 'flex',
@@ -23,6 +41,152 @@ const MultiCardView: React.FC<MultiCardViewProps> = ({
       gap: 'var(--space-lg)',
       width: '100%'
     }}>
+      {/* 所有提示词块列表 */}
+      <div className="prompt-blocks-section" style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--space-md)',
+        marginBottom: 'var(--space-lg)'
+      }}>
+        <h2 style={{ 
+          color: 'var(--text-white)', 
+          fontSize: 'var(--font-md)',
+          margin: '0 0 var(--space-sm) 0'
+        }}>
+          提示词块
+        </h2>
+        
+        {cards.map(card => 
+          Object.entries(card.promptBlocks).map(([promptId, promptText]) => (
+            <div 
+              key={`${card.id}-${promptId}`} 
+              className="prompt-block-item"
+              style={{
+                backgroundColor: 'var(--card-bg)',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border-color)',
+                overflow: 'hidden'
+              }}
+            >
+              {/* 提示词块标题栏 - 可点击切换折叠状态 */}
+              <div 
+                onClick={() => togglePromptCollapse(card.id, promptId)}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: 'var(--space-sm) var(--space-md)',
+                  backgroundColor: 'var(--secondary-bg)',
+                  cursor: 'pointer',
+                  borderBottom: isPromptCollapsed(card.id, promptId) ? 'none' : '1px solid var(--border-color)'
+                }}
+              >
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  gap: 'var(--space-sm)'
+                }}>
+                  <span style={{ 
+                    color: 'var(--brand-color)',
+                    fontWeight: 'bold'
+                  }}>
+                    {promptId}
+                  </span>
+                  <span style={{ 
+                    color: 'var(--text-light-gray)',
+                    fontSize: 'var(--font-xs)'
+                  }}>
+                    卡片: {card.id}
+                  </span>
+                </div>
+                <div style={{
+                  color: 'var(--text-light-gray)',
+                  fontSize: 'var(--font-xs)'
+                }}>
+                  {isPromptCollapsed(card.id, promptId) ? '▼ 展开' : '▲ 折叠'}
+                </div>
+              </div>
+              
+              {/* 提示词块内容 - 仅在展开状态显示 */}
+              {!isPromptCollapsed(card.id, promptId) && (
+                <div style={{
+                  padding: 'var(--space-md)',
+                  color: 'var(--text-white)',
+                  whiteSpace: 'pre-wrap'
+                }}>
+                  {promptText}
+                </div>
+              )}
+            </div>
+          ))
+        )}
+        
+        {/* 展示全局提示词块 */}
+        {globalPromptBlocks && Object.entries(globalPromptBlocks).map(([promptId, promptText]) => (
+          <div 
+            key={`global-${promptId}`} 
+            className="prompt-block-item"
+            style={{
+              backgroundColor: 'var(--card-bg)',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-color)',
+              borderLeft: '4px solid var(--brand-color)',
+              overflow: 'hidden'
+            }}
+          >
+            {/* 全局提示词块标题栏 - 可点击切换折叠状态 */}
+            <div 
+              onClick={() => togglePromptCollapse('global', promptId)}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: 'var(--space-sm) var(--space-md)',
+                backgroundColor: 'var(--secondary-bg)',
+                cursor: 'pointer',
+                borderBottom: isPromptCollapsed('global', promptId) ? 'none' : '1px solid var(--border-color)'
+              }}
+            >
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center',
+                gap: 'var(--space-sm)'
+              }}>
+                <span style={{ 
+                  color: 'var(--brand-color)',
+                  fontWeight: 'bold'
+                }}>
+                  {promptId}
+                </span>
+                <span style={{ 
+                  color: 'var(--text-light-gray)',
+                  fontSize: 'var(--font-xs)'
+                }}>
+                  全局提示词
+                </span>
+              </div>
+              <div style={{
+                color: 'var(--text-light-gray)',
+                fontSize: 'var(--font-xs)'
+              }}>
+                {isPromptCollapsed('global', promptId) ? '▼ 展开' : '▲ 折叠'}
+              </div>
+            </div>
+            
+            {/* 全局提示词块内容 - 仅在展开状态显示 */}
+            {!isPromptCollapsed('global', promptId) && (
+              <div style={{
+                padding: 'var(--space-md)',
+                color: 'var(--text-white)',
+                whiteSpace: 'pre-wrap'
+              }}>
+                {promptText}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
       {/* 卡片列表 */}
       {cards.map((card, index) => (
         <div 
@@ -70,97 +234,51 @@ const MultiCardView: React.FC<MultiCardViewProps> = ({
             flexDirection: 'column',
             gap: 'var(--space-md)'
           }}>
-            {/* 管理员输入区域 */}
-            {!isPreview && (
-              <div className="card-admin-inputs">
-                <h4 style={{ 
-                  margin: '0 0 var(--space-sm) 0', 
-                  color: 'var(--text-white)',
-                  fontSize: 'var(--font-sm)',
-                  fontWeight: 'bold'
-                }}>
-                  管理员配置
-                </h4>
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 'var(--space-sm)'
-                }}>
-                  {Object.entries(card.adminInputs).map(([key, value]) => (
-                    <div 
-                      key={key} 
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 'var(--space-sm)'
-                      }}
-                    >
-                      <div style={{
-                        color: 'var(--text-light-gray)',
-                        minWidth: '120px',
-                        whiteSpace: 'nowrap'
-                      }}>
-                        {key}:
-                      </div>
-                      <div style={{
-                        backgroundColor: 'var(--main-bg)',
-                        color: 'var(--text-white)',
-                        padding: 'var(--space-xs) var(--space-sm)',
-                        borderRadius: 'var(--radius-sm)',
-                        width: '100%',
-                        border: '1px solid var(--border-color)'
-                      }}>
-                        {value}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* 提示词块 */}
-            <div className="card-prompt-blocks">
+            {/* 管理员输入区域 - 始终显示 */}
+            <div className="card-admin-inputs">
               <h4 style={{ 
                 margin: '0 0 var(--space-sm) 0', 
                 color: 'var(--text-white)',
                 fontSize: 'var(--font-sm)',
                 fontWeight: 'bold'
               }}>
-                提示词块
+                输入字段
               </h4>
               <div style={{
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 'var(--space-sm)'
               }}>
-                {Object.entries(card.promptBlocks).map(([key, value]) => (
+                {Object.entries(card.adminInputs).map(([key, value]) => (
                   <div 
                     key={key} 
                     style={{
                       display: 'flex',
-                      flexDirection: 'column',
-                      gap: 'var(--space-xs)'
+                      alignItems: 'center',
+                      gap: 'var(--space-sm)'
                     }}
                   >
                     <div style={{
-                      color: 'var(--brand-color)',
-                      fontSize: 'var(--font-xs)',
-                      fontWeight: 'bold'
+                      color: 'var(--text-light-gray)',
+                      minWidth: '120px',
+                      whiteSpace: 'nowrap'
                     }}>
-                      {key}
+                      {key}:
                     </div>
-                    <div style={{
-                      backgroundColor: 'var(--main-bg)',
-                      color: 'var(--text-white)',
-                      padding: 'var(--space-sm)',
-                      borderRadius: 'var(--radius-sm)',
-                      width: '100%',
-                      border: '1px solid var(--border-color)',
-                      whiteSpace: 'pre-wrap',
-                      minHeight: '80px'
-                    }}>
-                      {value}
-                    </div>
+                    <input
+                      type="text"
+                      defaultValue={value.toString().replace(/<def>(.*?)<\/def>/, '$1')}
+                      placeholder={`请输入${key}的值`}
+                      style={{
+                        backgroundColor: 'var(--main-bg)',
+                        color: 'var(--text-white)',
+                        padding: 'var(--space-xs) var(--space-sm)',
+                        borderRadius: 'var(--radius-sm)',
+                        width: '100%',
+                        border: '1px solid var(--border-color)',
+                        outline: 'none'
+                      }}
+                    />
                   </div>
                 ))}
               </div>
@@ -169,68 +287,7 @@ const MultiCardView: React.FC<MultiCardViewProps> = ({
         </div>
       ))}
 
-      {/* 全局提示词块 */}
-      {globalPromptBlocks && Object.keys(globalPromptBlocks).length > 0 && (
-        <div 
-          className="global-prompt-blocks"
-          style={{
-            backgroundColor: 'var(--card-bg)',
-            borderRadius: 'var(--radius-md)',
-            padding: 'var(--space-md)',
-            border: '1px solid var(--border-color)',
-            borderLeft: '4px solid var(--brand-color)'
-          }}
-        >
-          <h3 style={{ 
-            margin: '0 0 var(--space-md) 0', 
-            color: 'var(--text-white)',
-            fontSize: 'var(--font-md)',
-            fontWeight: 'bold'
-          }}>
-            全局提示词块
-          </h3>
-          
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 'var(--space-md)'
-          }}>
-            {Object.entries(globalPromptBlocks).map(([key, value]) => (
-              <div 
-                key={key} 
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 'var(--space-xs)'
-                }}
-              >
-                <div style={{
-                  color: 'var(--brand-color)',
-                  fontSize: 'var(--font-xs)',
-                  fontWeight: 'bold',
-                  display: 'flex',
-                  justifyContent: 'space-between'
-                }}>
-                  <span>{key}</span>
-                  <span style={{color: 'var(--text-light-gray)'}}>全局</span>
-                </div>
-                <div style={{
-                  backgroundColor: 'var(--main-bg)',
-                  color: 'var(--text-white)',
-                  padding: 'var(--space-sm)',
-                  borderRadius: 'var(--radius-sm)',
-                  width: '100%',
-                  border: '1px solid var(--border-color)',
-                  whiteSpace: 'pre-wrap',
-                  minHeight: '80px'
-                }}>
-                  {value}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* 移除重复的全局提示词块展示 - 已在上方的折叠面板中显示 */}
 
       {/* 空状态提示 */}
       {cards.length === 0 && (
