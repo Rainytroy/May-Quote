@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { usePromptTemplates, PromptTemplateSet } from './contexts/PromptTemplateContext';
-import { TemplateType } from './AgentConfigPanel/promptTemplates';
+import { TemplateType, getDefaultFirstStagePrompt, getDefaultSecondStagePrompt } from './AgentConfigPanel/promptTemplates';
 
 interface PromptTemplateEditorProps {
   // 未来可能需要传入props来管理模板状态
@@ -39,11 +39,23 @@ const PromptTemplateEditor: React.FC<PromptTemplateEditorProps> = () => {
   }, [loadTemplates]);
 
   const handleResetDefaults = async (templateType?: TemplateType) => {
-    await resetToDefaultTemplates(templateType); 
-    setIsCreatingNew(false);
+    // 获取对应类型的默认模板内容
+    const defaultContent = templateType === TemplateType.ADVANCED 
+      ? { 
+          firstStage: getDefaultFirstStagePrompt(TemplateType.ADVANCED),
+          secondStage: getDefaultSecondStagePrompt(TemplateType.ADVANCED)
+        }
+      : {
+          firstStage: getDefaultFirstStagePrompt(TemplateType.ORIGINAL),
+          secondStage: getDefaultSecondStagePrompt(TemplateType.ORIGINAL)
+        };
+    
+    // 直接更新当前编辑区的内容，而不是切换模板
+    setEditableFirstStage(defaultContent.firstStage);
+    setEditableSecondStage(defaultContent.secondStage);
     
     const templateName = templateType === TemplateType.ADVANCED ? '迭代版提示词' : '原版提示词';
-    alert(`当前激活的提示词模板已重置为${templateName}。`);
+    alert(`当前编辑内容已重置为${templateName}默认内容。需要点击保存应用更改。`);
   };
 
   const handleSaveChanges = async () => {
