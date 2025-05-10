@@ -262,20 +262,54 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
     try {
       const config = JSON.parse(jsonStr);
       
-      // 验证JSON结构
-      if (!config.adminInputs || !config.promptBlocks) {
-        throw new Error('JSON结构不正确，必须包含adminInputs和promptBlocks');
+      // 处理多卡片结构
+      if (config.cards && Array.isArray(config.cards) && config.cards.length > 0) {
+        console.log('检测到多卡片结构');
+        
+        // 使用第一个卡片的adminInputs和promptBlocks作为预览
+        const firstCard = config.cards[0];
+        
+        // 验证第一个卡片的结构
+        if (!firstCard.adminInputs || !firstCard.promptBlocks) {
+          throw new Error('卡片结构不正确，必须包含adminInputs和promptBlocks');
+        }
+        
+        // 设置管理员输入 - 使用第一个卡片的数据
+        setAdminInputs(firstCard.adminInputs);
+        
+        // 设置提示词块 - 使用第一个卡片的数据
+        const blocks: PromptBlock[] = [];
+        Object.values(firstCard.promptBlocks).forEach((text: any) => {
+          blocks.push({ text: typeof text === 'string' ? text : text.text || '' });
+        });
+        setPromptBlocks(blocks);
+        
+        // 如果有全局提示词块，也添加到提示词块中
+        if (config.globalPromptBlocks) {
+          Object.values(config.globalPromptBlocks).forEach((text: any) => {
+            blocks.push({ text: typeof text === 'string' ? text : text.text || '' });
+          });
+          setPromptBlocks(blocks);
+        }
       }
-      
-      // 设置管理员输入
-      setAdminInputs(config.adminInputs);
-      
-      // 设置提示词块
-      const blocks: PromptBlock[] = [];
-      Object.values(config.promptBlocks).forEach((text: any) => {
-        blocks.push({ text: typeof text === 'string' ? text : text.text || '' });
-      });
-      setPromptBlocks(blocks);
+      // 处理单卡片结构
+      else if (config.adminInputs && config.promptBlocks) {
+        console.log('检测到单卡片结构');
+        
+        // 设置管理员输入
+        setAdminInputs(config.adminInputs);
+        
+        // 设置提示词块
+        const blocks: PromptBlock[] = [];
+        Object.values(config.promptBlocks).forEach((text: any) => {
+          blocks.push({ text: typeof text === 'string' ? text : text.text || '' });
+        });
+        setPromptBlocks(blocks);
+      }
+      // 结构不正确
+      else {
+        throw new Error('JSON结构不正确，必须包含adminInputs和promptBlocks，或是包含cards数组');
+      }
       
       // 从adminInputs生成控件定义
       const controls: ControlDefinition[] = [];
