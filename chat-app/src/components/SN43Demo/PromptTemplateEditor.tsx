@@ -112,7 +112,7 @@ const PromptTemplateEditor: React.FC<PromptTemplateEditorProps> = () => {
     }}>
       {/* 侧边栏 - 模板列表 */}
       <div style={{
-        width: '200px',
+        width: '280px',
         borderRight: '1px solid var(--border-color)',
         display: 'flex',
         flexDirection: 'column',
@@ -201,7 +201,7 @@ const PromptTemplateEditor: React.FC<PromptTemplateEditorProps> = () => {
                 overflow: 'hidden', 
                 textOverflow: 'ellipsis',
                 fontSize: 'var(--font-sm)',
-                maxWidth: '75%',
+                maxWidth: '85%',
                 fontWeight: (template.id === selectedTemplateId || 
                             (template.id === activeTemplates.id && !isCreatingNew)) 
                            ? 'bold' 
