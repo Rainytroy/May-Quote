@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ControlDefinition } from '../Controls/DynamicControl';
 import ControlsContainer from '../Controls/ControlsContainer';
-import { AdminInputs, PromptBlock } from '../types';
+import { AdminInputs, PromptBlock, Card, GlobalPromptBlocks } from '../types';
 import { usePromptTemplates } from '../contexts/PromptTemplateContext'; // 导入Context Hook
 import { mayApi, MayAPI } from '../api/mayApi';
+import MultiCardView from '../MultiCardView';
 
 // 交互记录类型
 interface InteractionEntry {
@@ -44,6 +45,10 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
   const [adminInputs, setAdminInputs] = useState<AdminInputs>({});
   // 解析后的提示词块
   const [promptBlocks, setPromptBlocks] = useState<PromptBlock[]>([]);
+  // 完整的卡片结构
+  const [cards, setCards] = useState<Card[]>([]);
+  // 全局提示词块
+  const [globalPromptBlocks, setGlobalPromptBlocks] = useState<GlobalPromptBlocks>({});
   // 交互历史
   const [interactions, setInteractions] = useState<InteractionEntry[]>([]);
   // 当前处理的提示词
@@ -274,7 +279,17 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
       if (config.cards && Array.isArray(config.cards) && config.cards.length > 0) {
         console.log('检测到多卡片结构');
         
-        // 使用第一个卡片的adminInputs和promptBlocks作为预览
+        // 保存完整的卡片结构
+        setCards(config.cards);
+        
+        // 如果有全局提示词块，保存它们
+        if (config.globalPromptBlocks && typeof config.globalPromptBlocks === 'object') {
+          setGlobalPromptBlocks(config.globalPromptBlocks);
+        } else {
+          setGlobalPromptBlocks({}); // 重置为空对象
+        }
+        
+        // 使用第一个卡片的adminInputs和promptBlocks用于控件生成
         const firstCard = config.cards[0];
         
         // 验证第一个卡片的结构
@@ -297,13 +312,6 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
           blocks.push({ text: typeof text === 'string' ? text : text.text || '' });
         });
         
-        // 如果有全局提示词块，也添加到提示词块中
-        if (config.globalPromptBlocks && typeof config.globalPromptBlocks === 'object') {
-          Object.values(config.globalPromptBlocks).forEach((text: any) => {
-            blocks.push({ text: typeof text === 'string' ? text : text.text || '' });
-          });
-        }
-        
         setPromptBlocks(blocks);
       }
       // 处理单卡片结构（旧格式）
@@ -321,6 +329,17 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
           blocks.push({ text: typeof text === 'string' ? text : text.text || '' });
         });
         setPromptBlocks(blocks);
+        
+        // 转换为卡片结构并保存 - 兼容旧格式
+        const singleCard: Card = {
+          id: 'card1',
+          title: '配置卡片',
+          adminInputs: config.adminInputs,
+          promptBlocks: config.promptBlocks
+        };
+        
+        setCards([singleCard]);
+        setGlobalPromptBlocks({});
       }
       // 结构不正确
       else {
@@ -765,7 +784,7 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
         )}
       </div>
       
-      {/* 中间面板 - 控件预览 */}
+      {/* 中间面板 - 多卡片预览 */}
       <div className="middle-panel" style={{
         width: '33.3%',
         padding: 'var(--space-md)',
@@ -774,23 +793,20 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
         overflow: 'auto',
         borderRight: '1px solid var(--border-color)'
       }}>
-        <h2 style={{ color: 'var(--text-white)', marginBottom: 'var(--space-md)' }}>控件预览</h2>
+        <h2 style={{ color: 'var(--text-white)', marginBottom: 'var(--space-md)' }}>多卡片预览</h2>
         
-        {controlDefinitions.length > 0 ? (
-          <div className="controls-preview" style={{
+        {cards.length > 0 ? (
+          <div className="cards-preview" style={{
             backgroundColor: 'var(--secondary-bg)',
             padding: 'var(--space-md)',
             borderRadius: 'var(--radius-md)',
-            flex: 1
+            flex: 1,
+            overflow: 'auto'
           }}>
-            <ControlsContainer
-              userInputs={{}}
-              adminInputs={adminInputs}
-              promptBlocks={promptBlocks}
-              presetControls={controlDefinitions}
-              onControlValuesChange={(values) => {
-                console.log('Control values:', values);
-              }}
+            <MultiCardView 
+              cards={cards}
+              globalPromptBlocks={globalPromptBlocks}
+              isPreview={true}
             />
           </div>
         ) : (
