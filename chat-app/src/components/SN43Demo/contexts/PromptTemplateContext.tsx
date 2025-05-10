@@ -98,27 +98,61 @@ export const PromptTemplateProvider: React.FC<{ children: React.ReactNode }> = (
         req.onerror = () => reject(req.error);
       });
       
-      // 确保默认模板存在于列表中
+      // 确保默认模板存在于列表中且名称正确
       let templatesToSet = allTemplates;
       const hasOriginalTemplate = templatesToSet.find(t => t.id === 'default');
       const hasAdvancedTemplate = templatesToSet.find(t => t.id === 'advanced');
       
-      // 如果数据库中没有默认模板，则添加它们
-      if (!hasOriginalTemplate || !hasAdvancedTemplate) {
-        const writeTx = db.transaction(PROMPT_TEMPLATE_STORE, 'readwrite');
-        const writeStore = writeTx.objectStore(PROMPT_TEMPLATE_STORE);
-        
-        if (!hasOriginalTemplate) {
-          writeStore.put(originalTemplate);
-          templatesToSet = [originalTemplate, ...templatesToSet];
-        }
-        
-        if (!hasAdvancedTemplate) {
-          writeStore.put(advancedTemplate);
-          templatesToSet = [advancedTemplate, ...templatesToSet];
-        }
-        
+      // 检查是否需要更新或添加默认模板
+      const writeTx = db.transaction(PROMPT_TEMPLATE_STORE, 'readwrite');
+      const writeStore = writeTx.objectStore(PROMPT_TEMPLATE_STORE);
+      let needsUpdate = false;
+      
+      // 处理原版提示词模板
+      if (!hasOriginalTemplate) {
+        // 如果不存在，则添加
+        writeStore.put(originalTemplate);
+        templatesToSet = [originalTemplate, ...templatesToSet];
+        needsUpdate = true;
+      } else if (hasOriginalTemplate.name !== '原版提示词') {
+        // 如果存在但名称不正确，则更新
+        const updatedTemplate = {
+          ...hasOriginalTemplate,
+          name: '原版提示词'
+        };
+        writeStore.put(updatedTemplate);
+        // 更新本地列表中的名称
+        templatesToSet = templatesToSet.map(t => 
+          t.id === 'default' ? updatedTemplate : t
+        );
+        needsUpdate = true;
+      }
+      
+      // 处理迭代版提示词模板
+      if (!hasAdvancedTemplate) {
+        // 如果不存在，则添加
+        writeStore.put(advancedTemplate);
+        templatesToSet = [advancedTemplate, ...templatesToSet];
+        needsUpdate = true;
+      } else if (hasAdvancedTemplate.name !== '迭代版提示词') {
+        // 如果存在但名称不正确，则更新
+        const updatedTemplate = {
+          ...hasAdvancedTemplate,
+          name: '迭代版提示词'
+        };
+        writeStore.put(updatedTemplate);
+        // 更新本地列表中的名称
+        templatesToSet = templatesToSet.map(t => 
+          t.id === 'advanced' ? updatedTemplate : t
+        );
+        needsUpdate = true;
+      }
+      
+      // 完成事务
+      if (needsUpdate) {
         await new Promise(r => writeTx.oncomplete = r);
+      } else {
+        writeTx.abort(); // 如果没有需要更新的内容，中止事务
       }
       
       setSavedTemplates(templatesToSet.sort((a, b) => b.updatedAt - a.updatedAt));
