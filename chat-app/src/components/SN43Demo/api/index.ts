@@ -154,104 +154,28 @@ ${this.generateMockResult(keywords)}
       // 模拟网络延迟
       await delay(300);
       
-      // 为不同文件生成示例配置
-      let mockConfig: SN43ConfigFile;
-      
-      switch (filename) {
-        case 'marketing_assistant.json':
-          mockConfig = {
-            name: 'marketing_assistant',
-            description: '市场营销助手',
-            language: 'zh',
-            userInputs: {
-              inputA1: '产品名称',
-              inputA2: '目标市场',
-              inputA3: '营销预算'
-            },
+      // 生成符合新卡片结构的配置
+      const mockConfig: SN43ConfigFile = {
+        name: filename.replace('.json', ''),
+        description: `${filename}配置文件`,
+        language: filename.includes('_zh') ? 'zh' : 'en',
+        // 使用统一的cards结构
+        cards: [
+          {
+            id: 'card1',
+            title: '基础卡片',
             adminInputs: {
-              inputB1: '关键竞争对手',
-              inputB2: '营销策略重点'
+              inputB1: '输入参数1 <def>默认值1</def>',
+              inputB2: '输入参数2 <def>默认值2</def>'
             },
-            promptBlocks: [
-              {
-                text: '你是一位经验丰富的市场营销专家。基于以下信息，为{{inputA1}}制定针对{{inputA2}}的营销策略，预算为{{inputA3}}。\n\n重点关注{{inputB2}}，并分析与{{inputB1}}的差异化竞争策略。'
-              }
-            ],
-            version: '1.0.0'
-          };
-          break;
-          
-        case 'technical_writing.json':
-          mockConfig = {
-            name: 'technical_writing',
-            description: '技术文档写作',
-            language: 'zh',
-            userInputs: {
-              inputA1: '技术主题',
-              inputA2: '目标读者',
-              inputA3: '文档类型',
-              inputA4: '包含代码示例'
-            },
-            adminInputs: {
-              inputB1: '技术深度',
-              inputB2: '格式要求'
-            },
-            promptBlocks: [
-              {
-                text: '你是一位技术写作专家。请为{{inputA2}}撰写一份关于{{inputA1}}的{{inputA3}}。\n\n技术深度要求: {{inputB1}}。\n格式要求: {{inputB2}}。\n{{#inputA4}}请包含相关代码示例。{{/inputA4}}'
-              }
-            ],
-            version: '1.0.0'
-          };
-          break;
-          
-        case 'storytelling.json':
-          mockConfig = {
-            name: 'storytelling',
-            description: '故事创作助手',
-            language: 'zh',
-            userInputs: {
-              inputA1: '故事类型',
-              inputA2: '主角描述',
-              inputA3: '故事背景',
-              inputA4: '主要冲突'
-            },
-            adminInputs: {
-              inputB1: '故事长度',
-              inputB2: '写作风格',
-              inputB3: '目标受众'
-            },
-            promptBlocks: [
-              {
-                text: '你是一位富有创造力的故事作家。请创作一个{{inputA1}}类型的故事，主角是{{inputA2}}，故事发生在{{inputA3}}，主要冲突是{{inputA4}}。\n\n故事长度：{{inputB1}}。\n写作风格：{{inputB2}}。\n目标受众：{{inputB3}}。'
-              }
-            ],
-            version: '1.0.0'
-          };
-          break;
-          
-        default:
-          // 默认配置
-          mockConfig = {
-            name: filename.replace('.json', ''),
-            description: `这是${filename}的配置文件描述`,
-            language: filename.includes('_zh') ? 'zh' : 'en',
-            userInputs: {
-              inputA1: '',
-              inputA2: ''
-            },
-            adminInputs: {
-              inputB1: '',
-              inputB2: ''
-            },
-            promptBlocks: [
-              {
-                text: '请根据以下信息提供帮助：\n\n{{inputA1}}\n{{inputA2}}\n\n额外上下文：\n{{inputB1}}\n{{inputB2}}'
-              }
-            ],
-            version: '1.0.0'
-          };
-      }
+            promptBlocks: {
+              promptBlock1: '基于{#inputB1}提供相关信息',
+              promptBlock2: '根据{#promptBlock1}和{#inputB2}提供更多分析'
+            }
+          }
+        ],
+        version: '1.0.0'
+      };
       
       return {
         success: true,
@@ -421,12 +345,11 @@ ${this.generateMockResult(keywords)}
    * @returns 关键词列表
    */
   private extractKeywords(promptBlocks: PromptBlock[]): string[] {
-    // 简单实现：提取所有5个字符以上的词
     const text = promptBlocks.map(block => block.text).join(' ');
     const words = text.split(/\s+/);
     return words
-      .filter(word => word.length >= 5)
-      .slice(0, 10); // 最多10个关键词
+      .filter(word => word.length >= 3)
+      .slice(0, 5);
   }
   
   /**
@@ -435,23 +358,7 @@ ${this.generateMockResult(keywords)}
    * @returns 生成的文本
    */
   private generateMockResult(keywords: string[]): string {
-    if (keywords.length === 0) {
-      return '没有足够的信息来生成有意义的结果。';
-    }
-    
-    // 根据关键词生成不同段落
-    const paragraphs = [
-      `分析表明，${keywords[0] || '该主题'}在当前市场中具有重要地位。`,
-      `考虑到${keywords[1] || '现有条件'}，我们需要采取系统性的方法来解决这个问题。`,
-      `${keywords[2] || '相关数据'}显示出积极的发展趋势，这表明我们的方向是正确的。`,
-      `值得注意的是，${keywords[3] || '关键因素'}可能会对最终结果产生重大影响。`,
-      `总的来说，基于${keywords.slice(0, 3).join('、')}等因素的综合分析，我们可以得出以下结论：`,
-      `1. 持续关注${keywords[0] || '核心问题'}的发展变化`,
-      `2. 加强对${keywords[1] || '重要环节'}的投入`,
-      `3. 优化${keywords[2] || '关键流程'}以提高整体效率`
-    ];
-    
-    return paragraphs.join('\n\n');
+    return '模拟API返回结果 - 实际开发中将连接真实API';
   }
   
   /**
@@ -459,35 +366,7 @@ ${this.generateMockResult(keywords)}
    * @returns 示例历史记录列表
    */
   private getExampleHistories(): SN43History[] {
-    return [
-      {
-        id: '1',
-        timestamp: Date.now() - 3600000, // 1小时前
-        userInputs: { inputA1: '市场调研', inputA2: '智能手表' },
-        adminInputs: { inputB1: '竞品分析' },
-        promptBlocks: [{ text: '分析智能手表市场...' }],
-        result: '这是一份市场分析结果...',
-        selectedJsonFile: 'marketing_assistant.json'
-      },
-      {
-        id: '2',
-        timestamp: Date.now() - 86400000, // 1天前
-        userInputs: { inputA1: '技术文档', inputA2: 'React组件' },
-        adminInputs: { inputB1: '代码示例' },
-        promptBlocks: [{ text: '编写React组件文档...' }],
-        result: '这是React组件的文档...',
-        selectedJsonFile: 'technical_writing.json'
-      },
-      {
-        id: '3',
-        timestamp: Date.now() - 172800000, // 2天前
-        userInputs: { inputA1: '故事创作', inputA2: '科幻小说' },
-        adminInputs: { inputB1: '未来世界' },
-        promptBlocks: [{ text: '创作科幻小说情节...' }],
-        result: '这是一个科幻故事...',
-        selectedJsonFile: 'storytelling.json'
-      }
-    ];
+    return [];
   }
 }
 
