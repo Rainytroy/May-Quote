@@ -196,7 +196,11 @@ const PromptTemplateEditor: React.FC<PromptTemplateEditorProps> = () => {
                            : 'normal'
               }}>
                 {template.name}
-                {/* 移除内置标记显示 */}
+                {template.isDefault && <span style={{
+                  color: 'var(--text-light-gray)',
+                  fontSize: '0.8em',
+                  marginLeft: 'var(--space-xs)'
+                }}>（内置）</span>}
               </span>
               
               {!template.isDefault && (
@@ -259,7 +263,8 @@ const PromptTemplateEditor: React.FC<PromptTemplateEditorProps> = () => {
             value={editableName}
             onChange={(e) => setEditableName(e.target.value)}
             placeholder="输入模板名称"
-            disabled={!isCreatingNew && activeTemplates.isDefault && activeTemplates.id === 'default'}
+            readOnly={!isCreatingNew && activeTemplates.isDefault}
+            disabled={!isCreatingNew && activeTemplates.isDefault}
             style={{
               flex: 1,
               padding: 'var(--space-xs) var(--space-sm)',
@@ -274,90 +279,92 @@ const PromptTemplateEditor: React.FC<PromptTemplateEditorProps> = () => {
           <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
             <button 
               onClick={handleSaveChanges} 
-              disabled={!isCreatingNew && activeTemplates.isDefault && activeTemplates.id === 'default'}
+              disabled={!isCreatingNew && activeTemplates.isDefault}
               style={{
                 padding: 'var(--space-xs) var(--space-md)',
                 backgroundColor: 'var(--brand-color)',
                 color: 'var(--text-dark)',
                 border: 'none',
                 borderRadius: 'var(--radius-sm)',
-                cursor: (!isCreatingNew && activeTemplates.isDefault && activeTemplates.id === 'default') ? 'not-allowed' : 'pointer',
+                cursor: (!isCreatingNew && activeTemplates.isDefault) ? 'not-allowed' : 'pointer',
                 fontWeight: 'bold',
-                opacity: (!isCreatingNew && activeTemplates.isDefault && activeTemplates.id === 'default') ? 0.5 : 1
+                opacity: (!isCreatingNew && activeTemplates.isDefault) ? 0.5 : 1
               }}
             >
               {isCreatingNew || activeTemplates.id === 'default' ? '另存为新模板' : '保存更改'}
             </button>
-            <div style={{position: 'relative'}}>
-              <button 
-                onClick={() => {
-                  const menu = document.getElementById('resetMenu');
-                  if (menu) {
-                    menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-                  }
-                }}
-                style={{ 
-                  padding: 'var(--space-xs) var(--space-sm)',
-                  backgroundColor: 'var(--secondary-bg)',
-                  color: 'var(--text-white)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: 'var(--radius-sm)',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 'var(--space-xs)'
-                }}
-              >
-                重置为默认模板
-                <span style={{fontSize: '0.7em', marginTop: '2px'}}>▼</span>
-              </button>
-              <div 
-                id="resetMenu" 
-                style={{
-                  display: 'none',
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  zIndex: 10,
-                  backgroundColor: 'var(--card-bg)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: 'var(--radius-sm)',
-                  boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-                  width: '160px',
-                  overflow: 'hidden'
-                }}
-              >
-                <div 
-                  onClick={() => handleResetDefaults()}
-                  style={{
-                    padding: 'var(--space-sm) var(--space-md)',
-                    cursor: 'pointer',
-                    color: 'var(--text-white)',
-                    transition: 'background-color 0.15s',
-                    fontSize: 'var(--font-sm)'
+            {(!isCreatingNew && activeTemplates.isDefault) ? null : (
+              <div style={{position: 'relative'}}>
+                <button 
+                  onClick={() => {
+                    const menu = document.getElementById('resetMenu');
+                    if (menu) {
+                      menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+                    }
                   }}
-                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--secondary-bg)'}
-                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                >
-                  原版提示词
-                </div>
-                <div 
-                  onClick={() => handleResetDefaults(TemplateType.ADVANCED)}
-                  style={{
-                    padding: 'var(--space-sm) var(--space-md)',
-                    cursor: 'pointer',
+                  style={{ 
+                    padding: 'var(--space-xs) var(--space-sm)',
+                    backgroundColor: 'var(--secondary-bg)',
                     color: 'var(--text-white)',
-                    transition: 'background-color 0.15s',
-                    fontSize: 'var(--font-sm)'
+                    border: '1px solid var(--border-color)',
+                    borderRadius: 'var(--radius-sm)',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--space-xs)'
                   }}
-                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--secondary-bg)'}
-                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
-                  迭代版提示词
+                  重置为默认模板
+                  <span style={{fontSize: '0.7em', marginTop: '2px'}}>▼</span>
+                </button>
+                <div 
+                  id="resetMenu" 
+                  style={{
+                    display: 'none',
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    zIndex: 10,
+                    backgroundColor: 'var(--card-bg)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: 'var(--radius-sm)',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                    width: '160px',
+                    overflow: 'hidden'
+                  }}
+                >
+                  <div 
+                    onClick={() => handleResetDefaults()}
+                    style={{
+                      padding: 'var(--space-sm) var(--space-md)',
+                      cursor: 'pointer',
+                      color: 'var(--text-white)',
+                      transition: 'background-color 0.15s',
+                      fontSize: 'var(--font-sm)'
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--secondary-bg)'}
+                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    原版提示词
+                  </div>
+                  <div 
+                    onClick={() => handleResetDefaults(TemplateType.ADVANCED)}
+                    style={{
+                      padding: 'var(--space-sm) var(--space-md)',
+                      cursor: 'pointer',
+                      color: 'var(--text-white)',
+                      transition: 'background-color 0.15s',
+                      fontSize: 'var(--font-sm)'
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--secondary-bg)'}
+                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    迭代版提示词
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
         
@@ -414,6 +421,7 @@ const PromptTemplateEditor: React.FC<PromptTemplateEditorProps> = () => {
               }}
               placeholder="请在这里输入第一阶段提示词模板..."
               aria-label="第一阶段提示词编辑器"
+              readOnly={!isCreatingNew && activeTemplates.isDefault}
             />
           </div>
           
@@ -463,6 +471,7 @@ const PromptTemplateEditor: React.FC<PromptTemplateEditorProps> = () => {
               }}
               placeholder="请在这里输入第二阶段提示词模板..."
               aria-label="第二阶段提示词编辑器"
+              readOnly={!isCreatingNew && activeTemplates.isDefault}
             />
           </div>
         </div>

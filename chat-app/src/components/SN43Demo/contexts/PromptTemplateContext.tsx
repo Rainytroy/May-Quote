@@ -123,8 +123,8 @@ export const PromptTemplateProvider: React.FC<{ children: React.ReactNode }> = (
       
       setSavedTemplates(templatesToSet.sort((a, b) => b.updatedAt - a.updatedAt));
 
-      const activeId = localStorage.getItem(ACTIVE_TEMPLATE_ID_KEY) || 'default';
-      const active = templatesToSet.find(t => t.id === activeId) || originalTemplate;
+      const activeId = localStorage.getItem(ACTIVE_TEMPLATE_ID_KEY) || 'advanced';
+      const active = templatesToSet.find(t => t.id === activeId) || advancedTemplate;
       setActiveTemplates(active);
       
       db.close();
