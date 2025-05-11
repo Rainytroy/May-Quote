@@ -437,12 +437,31 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                   }
                 }}
                 onLoadConfig={(config) => {
-                  // 加载配置文件内容
-                  if (config.userInputs) onUpdateUserInputs(config.userInputs);
-                  if (config.adminInputs) onUpdateAdminInputs(config.adminInputs);
-                  if (config.promptBlocks) onUpdatePromptBlocks(config.promptBlocks);
-                  
-                  // TODO: 如果是多卡片模式，需要处理卡片数据的加载
+                  // 加载配置文件内容 - 适配新的卡片结构
+                  if (config.cards && config.cards.length > 0) {
+                    const firstCard = config.cards[0];
+                    
+                    // 从第一个卡片中提取管理员输入
+                    if (firstCard.adminInputs) {
+                      onUpdateAdminInputs(firstCard.adminInputs);
+                    }
+                    
+                    // 将卡片的promptBlocks转换为promptBlock数组
+                    if (firstCard.promptBlocks) {
+                      const blocks: PromptBlock[] = Object.entries(firstCard.promptBlocks).map(
+                        ([id, text]) => ({ 
+                          id, 
+                          text 
+                        })
+                      );
+                      onUpdatePromptBlocks(blocks);
+                    }
+                    
+                    // 用户输入保持不变，因为它们通常是实时输入的
+                    // 但可以预填充一些示例值
+                    const exampleUserInputs: UserInputs = {};
+                    onUpdateUserInputs(exampleUserInputs);
+                  }
                   
                   onConfigModified();
                 }}

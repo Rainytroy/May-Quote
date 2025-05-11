@@ -41,7 +41,115 @@ const MultiCardView: React.FC<MultiCardViewProps> = ({
       gap: 'var(--space-lg)',
       width: '100%'
     }}>
-      {/* 所有提示词块列表 */}
+      {/* 卡片列表 */}
+      {cards.map((card, index) => (
+        <div 
+          key={card.id || index} 
+          className="card-container"
+          style={{
+            backgroundColor: 'var(--card-bg)',
+            borderRadius: 'var(--radius-md)',
+            padding: 'var(--space-md)',
+            border: '1px solid var(--border-color)'
+          }}
+        >
+          {/* 卡片标题 */}
+          <div className="card-header" style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 'var(--space-md)',
+            borderBottom: '1px solid var(--border-color)',
+            paddingBottom: 'var(--space-sm)'
+          }}>
+            <h3 style={{ 
+              margin: 0, 
+              color: 'var(--text-white)',
+              fontSize: 'var(--font-md)',
+              fontWeight: 'bold'
+            }}>
+              {card.title || `卡片 #${index + 1}`}
+            </h3>
+            <div style={{
+              backgroundColor: 'var(--brand-color)',
+              color: 'var(--text-dark)',
+              fontSize: 'var(--font-xs)',
+              fontWeight: 'bold',
+              padding: '2px var(--space-xs)',
+              borderRadius: 'var(--radius-sm)'
+            }}>
+              {card.id}
+            </div>
+          </div>
+
+          {/* 卡片内容 */}
+          <div className="card-content" style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--space-md)'
+          }}>
+            {/* 管理员输入区域 - 始终显示 */}
+            <div className="card-admin-inputs">
+              <h4 style={{ 
+                margin: '0 0 var(--space-sm) 0', 
+                color: 'var(--text-white)',
+                fontSize: 'var(--font-sm)',
+                fontWeight: 'bold'
+              }}>
+                输入字段
+              </h4>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 'var(--space-sm)'
+              }}>
+                {card.adminInputs && Object.entries(card.adminInputs).map(([key, value]) => {
+                  // 提取描述性标签（<def>前的部分）
+                  const valueStr = String(value || '');
+                  const labelText = valueStr.split(/<def>/)[0].trim();
+                  const defaultMatch = valueStr.match(/<def>(.*?)<\/def>/);
+                  const defaultValue = defaultMatch ? defaultMatch[1] : '';
+                  
+                  return (
+                    <div 
+                      key={key} 
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--space-sm)'
+                      }}
+                    >
+                      <div style={{
+                        color: 'var(--text-light-gray)',
+                        minWidth: '120px',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {labelText || key}:
+                      </div>
+                      <input
+                        type="text"
+                        defaultValue={defaultValue}
+                        placeholder={`请输入${labelText || key}的值`}
+                        style={{
+                          backgroundColor: 'var(--main-bg)',
+                          color: 'var(--text-white)',
+                          padding: 'var(--space-xs) var(--space-sm)',
+                          borderRadius: 'var(--radius-sm)',
+                          width: '100%',
+                          border: '1px solid var(--border-color)',
+                          outline: 'none'
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+      
+      {/* 提示词块列表 */}
       <div className="prompt-blocks-section" style={{
         display: 'flex',
         flexDirection: 'column',
@@ -57,7 +165,7 @@ const MultiCardView: React.FC<MultiCardViewProps> = ({
         </h2>
         
         {cards.map(card => 
-          Object.entries(card.promptBlocks).map(([promptId, promptText]) => (
+          card.promptBlocks && Object.entries(card.promptBlocks).map(([promptId, promptText]) => (
             <div 
               key={`${card.id}-${promptId}`} 
               className="prompt-block-item"
@@ -187,107 +295,7 @@ const MultiCardView: React.FC<MultiCardViewProps> = ({
         ))}
       </div>
 
-      {/* 卡片列表 */}
-      {cards.map((card, index) => (
-        <div 
-          key={card.id || index} 
-          className="card-container"
-          style={{
-            backgroundColor: 'var(--card-bg)',
-            borderRadius: 'var(--radius-md)',
-            padding: 'var(--space-md)',
-            border: '1px solid var(--border-color)'
-          }}
-        >
-          {/* 卡片标题 */}
-          <div className="card-header" style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 'var(--space-md)',
-            borderBottom: '1px solid var(--border-color)',
-            paddingBottom: 'var(--space-sm)'
-          }}>
-            <h3 style={{ 
-              margin: 0, 
-              color: 'var(--text-white)',
-              fontSize: 'var(--font-md)',
-              fontWeight: 'bold'
-            }}>
-              {card.title || `卡片 #${index + 1}`}
-            </h3>
-            <div style={{
-              backgroundColor: 'var(--brand-color)',
-              color: 'var(--text-dark)',
-              fontSize: 'var(--font-xs)',
-              fontWeight: 'bold',
-              padding: '2px var(--space-xs)',
-              borderRadius: 'var(--radius-sm)'
-            }}>
-              {card.id}
-            </div>
-          </div>
-
-          {/* 卡片内容 */}
-          <div className="card-content" style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 'var(--space-md)'
-          }}>
-            {/* 管理员输入区域 - 始终显示 */}
-            <div className="card-admin-inputs">
-              <h4 style={{ 
-                margin: '0 0 var(--space-sm) 0', 
-                color: 'var(--text-white)',
-                fontSize: 'var(--font-sm)',
-                fontWeight: 'bold'
-              }}>
-                输入字段
-              </h4>
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 'var(--space-sm)'
-              }}>
-                {Object.entries(card.adminInputs).map(([key, value]) => (
-                  <div 
-                    key={key} 
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 'var(--space-sm)'
-                    }}
-                  >
-                    <div style={{
-                      color: 'var(--text-light-gray)',
-                      minWidth: '120px',
-                      whiteSpace: 'nowrap'
-                    }}>
-                      {key}:
-                    </div>
-                    <input
-                      type="text"
-                      defaultValue={value.toString().replace(/<def>(.*?)<\/def>/, '$1')}
-                      placeholder={`请输入${key}的值`}
-                      style={{
-                        backgroundColor: 'var(--main-bg)',
-                        color: 'var(--text-white)',
-                        padding: 'var(--space-xs) var(--space-sm)',
-                        borderRadius: 'var(--radius-sm)',
-                        width: '100%',
-                        border: '1px solid var(--border-color)',
-                        outline: 'none'
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      ))}
-
-      {/* 移除重复的全局提示词块展示 - 已在上方的折叠面板中显示 */}
+      {/* 移除重复的卡片渲染 - 已在上方显示 */}
 
       {/* 空状态提示 */}
       {cards.length === 0 && (

@@ -183,15 +183,21 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
     setIsGenerating(true);
     
     try {
+      // 获取第一阶段提示词，用于提供给第二阶段
+      const firstStagePrompt = activeTemplates.firstStage.replace('{#input}', userInput);
+      
       // 构建第二阶段提示词 - 使用Context中的第二阶段模板
-      const prompt = activeTemplates.secondStage
+      let prompt = activeTemplates.secondStage
         .replace('{#input}', adjustmentInput)
         .replace('{#promptResults1}', jsonOutput);
+      
+      // 替换第一阶段提示词占位符
+      prompt = prompt.replace('{#firstStagePrompt}', firstStagePrompt);
       
       setCurrentPrompt(prompt);
       
       // 记录提示词
-      addInteraction('prompt', prompt, '第二阶段调整提示词');
+      addInteraction('prompt', prompt, '第二阶段调整提示词(包含第一阶段上下文)');
       
       // 构建userInputs，包含实际的用户输入和调整建议
       const userInputsData = {
@@ -679,6 +685,7 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
               <textarea
                 value={jsonOutput}
                 onChange={(e) => handleJsonInputChange(e.target.value)}
+                aria-label="JSON配置输出"
                 style={{
                   width: '100%',
                   height: '200px',
@@ -695,6 +702,7 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
               <textarea
                 value={apiRawResponse}
                 onChange={(e) => setApiRawResponse(e.target.value)}
+                aria-label="API原始响应"
                 style={{
                   width: '100%',
                   height: '200px',

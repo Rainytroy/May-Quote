@@ -122,7 +122,24 @@ Json 文件范例如下：
 
 针对用户的具体需求，选择合适的结构（单卡片或多卡片），然后设计合适的输入字段和提示词块，确保JSON格式正确、占位符使用恰当。`;
 
-export const ADVANCED_PROMPT_TEMPLATE_2 = `根据用户的输入："{#input}"，以及ai根据用户输入的初步设计的json文件："{#promptResults1}"，优化这个json结构。特别注意如果用户要求了promptBlock数量，要补全json中的promptBlock的数量并开发合适的提示词，满足用户对promptBlocks数量的要求（如果有）。
+export const ADVANCED_PROMPT_TEMPLATE_2 = `{#firstStagePrompt}
+
+【第一阶段执行结果】
+{#promptResults1}
+
+【用户调整请求】
+用户要求进行以下修改："{#input}"
+
+【第二阶段指导】
+根据用户的调整请求和第一阶段生成的JSON，请优化现有配置。重点关注以下方面：
+
+1. card和promptBlock数量：如用户要求特定数量，确保满足
+2. 引用完整性：每个promptBlock至少包含一个占位符引用（{#input}、{#inputBn}或{#promptBlockn}）
+3. 上下文连贯：后续promptBlock应引用前面的promptBlock保持连贯
+4. 输出控制：根据输出长度需求拆分promptBlock（单个promptBlock输出限制约4000字）
+5. 冲突避免：不要在提示词中包含inputBn的<def>标签内容
+6. globalPromptBlock可以根据用户需求，决定是否需要增加或者删除，这不是必要结构
+
 
 详细检查以下内容：
 1. 确认json格式是否正确，如果有语法错误需修复

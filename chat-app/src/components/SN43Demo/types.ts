@@ -98,17 +98,13 @@ export interface SN43ConfigFile {
   description?: string;        // 配置描述（可选）
   language: string;            // 语言（如 'zh', 'en'）
   
-  // 单卡片模式的字段
-  userInputs?: UserInputs;     // 默认用户输入（可选）
-  adminInputs?: AdminInputs;   // 默认管理员配置（可选）
-  promptBlocks?: PromptBlock[]; // 默认提示词块（可选）
+  // 统一使用cards结构，即使是单卡片
+  cards: Card[];               // 卡片数组
   
-  // 多卡片模式的字段
-  cards?: Card[];              // 卡片数组（可选）
+  // 可选的全局提示词块
   globalPromptBlocks?: GlobalPromptBlocks; // 全局提示词块（可选）
   
   version?: string;            // 版本号（可选）
-  isMultiCard?: boolean;       // 是否为多卡片模式（可选）
 }
 
 /**
