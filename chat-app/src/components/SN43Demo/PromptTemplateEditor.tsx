@@ -40,21 +40,36 @@ const PromptTemplateEditor: React.FC<PromptTemplateEditorProps> = () => {
 
   const handleResetDefaults = async (templateType?: TemplateType) => {
     // 获取对应类型的默认模板内容
-    const defaultContent = templateType === TemplateType.ADVANCED 
-      ? { 
+    let defaultContent;
+    let templateName;
+    
+    switch(templateType) {
+      case TemplateType.ADVANCED:
+        defaultContent = { 
           firstStage: getDefaultFirstStagePrompt(TemplateType.ADVANCED),
           secondStage: getDefaultSecondStagePrompt(TemplateType.ADVANCED)
-        }
-      : {
+        };
+        templateName = '迭代版提示词';
+        break;
+      case TemplateType.ITERATION_2:
+        defaultContent = { 
+          firstStage: getDefaultFirstStagePrompt(TemplateType.ITERATION_2),
+          secondStage: getDefaultSecondStagePrompt(TemplateType.ITERATION_2)
+        };
+        templateName = '迭代版2.0';
+        break;
+      default:
+        defaultContent = {
           firstStage: getDefaultFirstStagePrompt(TemplateType.ORIGINAL),
           secondStage: getDefaultSecondStagePrompt(TemplateType.ORIGINAL)
         };
+        templateName = '原版提示词';
+    }
     
     // 直接更新当前编辑区的内容，而不是切换模板
     setEditableFirstStage(defaultContent.firstStage);
     setEditableSecondStage(defaultContent.secondStage);
     
-    const templateName = templateType === TemplateType.ADVANCED ? '迭代版提示词' : '原版提示词';
     alert(`当前编辑内容已重置为${templateName}默认内容。需要点击保存应用更改。`);
   };
 
@@ -373,6 +388,20 @@ const PromptTemplateEditor: React.FC<PromptTemplateEditorProps> = () => {
                     onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
                     迭代版提示词
+                  </div>
+                  <div 
+                    onClick={() => handleResetDefaults(TemplateType.ITERATION_2)}
+                    style={{
+                      padding: 'var(--space-sm) var(--space-md)',
+                      cursor: 'pointer',
+                      color: 'var(--text-white)',
+                      transition: 'background-color 0.15s',
+                      fontSize: 'var(--font-sm)'
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--secondary-bg)'}
+                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    迭代版2.0
                   </div>
                 </div>
               </div>
