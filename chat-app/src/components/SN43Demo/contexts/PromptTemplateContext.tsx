@@ -297,7 +297,17 @@ export const PromptTemplateProvider: React.FC<{ children: React.ReactNode }> = (
     // 注意：这个方法现在在PromptTemplateEditor中被重新实现
     // 这里保留是为了向后兼容，但实际使用时建议使用Editor中直接操作的版本
     // 这不再是切换模板，而是获取默认模板内容的参考API
-    const template = templateType === TemplateType.ADVANCED ? advancedTemplate : originalTemplate;
+    let template;
+    switch (templateType) {
+      case TemplateType.ADVANCED:
+        template = advancedTemplate;
+        break;
+      case TemplateType.ITERATION_2:
+        template = iteration2Template;
+        break;
+      default:
+        template = originalTemplate;
+    }
     setActiveTemplates(template);
     localStorage.setItem(ACTIVE_TEMPLATE_ID_KEY, template.id);
     console.log(`激活的提示词模板已设置为${template.name}。`);
