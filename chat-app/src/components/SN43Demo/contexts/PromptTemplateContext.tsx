@@ -15,6 +15,7 @@ export interface PromptTemplateSet {
   createdAt: number;
   updatedAt: number;
   isDefault?: boolean; // 标记是否为不可删除的默认模板
+  version?: string; // 版本标识，用于检测内容更新
 }
 
 interface PromptTemplateContextType {
@@ -52,7 +53,7 @@ export const PromptTemplateProvider: React.FC<{ children: React.ReactNode }> = (
     isDefault: true,
   };
   
-  // 迭代版2.0提示词模板
+  // 迭代版2.0提示词模板 (添加版本标识)
   const iteration2Template: PromptTemplateSet = {
     id: 'iteration2',
     name: '迭代版2.0',
@@ -61,6 +62,7 @@ export const PromptTemplateProvider: React.FC<{ children: React.ReactNode }> = (
     createdAt: Date.now(),
     updatedAt: Date.now(),
     isDefault: true,
+    version: 'v2.0.1', // 与下方检查使用的版本号一致
   };
 
   const [activeTemplates, setActiveTemplates] = useState<PromptTemplateSet>(originalTemplate);
@@ -161,19 +163,29 @@ export const PromptTemplateProvider: React.FC<{ children: React.ReactNode }> = (
       }
       
       // 处理迭代版2.0提示词模板
+      // 添加版本标识符，用于检测模板内容是否是最新的
+      const iteration2Version = 'v2.0.1'; // 版本标识，每次更新模板内容时递增
+      
       if (!hasIteration2Template) {
         // 如果不存在，则添加
         writeStore.put(iteration2Template);
         templatesToSet = [iteration2Template, ...templatesToSet];
         needsUpdate = true;
-      } else if (hasIteration2Template.name !== '迭代版2.0') {
-        // 如果存在但名称不正确，则更新
+      } else if (hasIteration2Template.name !== '迭代版2.0' || 
+                 !hasIteration2Template.version || 
+                 hasIteration2Template.version !== iteration2Version) {
+        // 如果存在但名称不正确或版本不是最新的，则更新
+        console.log("更新迭代版2.0模板到最新版本", iteration2Version);
         const updatedTemplate = {
           ...hasIteration2Template,
-          name: '迭代版2.0'
+          name: '迭代版2.0',
+          firstStage: getDefaultFirstStagePrompt(TemplateType.ITERATION_2),
+          secondStage: getDefaultSecondStagePrompt(TemplateType.ITERATION_2),
+          version: iteration2Version,
+          updatedAt: Date.now()
         };
         writeStore.put(updatedTemplate);
-        // 更新本地列表中的名称
+        // 更新本地列表中的模板
         templatesToSet = templatesToSet.map(t => 
           t.id === 'iteration2' ? updatedTemplate : t
         );
