@@ -6,6 +6,10 @@ import { usePromptTemplates } from '../contexts/PromptTemplateContext'; // 导�
 import { mayApi, MayAPI } from '../api/mayApi';
 import MultiCardView from '../MultiCardView';
 
+// 导入拆分出的子组件
+import CardPreviewPanel from './components/CardPreviewPanel';
+import InteractionHistoryPanel from './components/InteractionHistoryPanel';
+
 // 交互记录类型
 interface InteractionEntry {
   id: number;
@@ -617,22 +621,30 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
                   
                   {/* JSON/API内容展示 */}
                   {activeJsonTabs[card.id] === 'json' ? (
-                    <textarea
-                      value={editableJsons[card.id] || card.jsonOutput}
-                      onChange={(e) => handleJsonInputChange(e.target.value, card.id)}
-                      style={{
-                        width: '100%',
-                        height: '200px',
-                        padding: 'var(--space-sm)',
-                        backgroundColor: 'var(--main-bg)',
-                        color: 'var(--text-white)',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: 'var(--radius-sm)',
-                        fontFamily: 'monospace',
-                        fontSize: 'var(--font-xs)',
-                        resize: 'vertical'
-                      }}
-                    />
+                    <div>
+                      <label htmlFor={`json-editor-${card.id}`} className="sr-only" style={{ display: 'none' }}>
+                        JSON编辑器
+                      </label>
+                      <textarea
+                        id={`json-editor-${card.id}`}
+                        value={editableJsons[card.id] || card.jsonOutput}
+                        onChange={(e) => handleJsonInputChange(e.target.value, card.id)}
+                        aria-label={`编辑JSON配置卡片${card.id}`}
+                        placeholder="JSON配置数据"
+                        style={{
+                          width: '100%',
+                          height: '200px',
+                          padding: 'var(--space-sm)',
+                          backgroundColor: 'var(--main-bg)',
+                          color: 'var(--text-white)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: 'var(--radius-sm)',
+                          fontFamily: 'monospace',
+                          fontSize: 'var(--font-xs)',
+                          resize: 'vertical'
+                        }}
+                      />
+                    </div>
                   ) : (
                     <pre style={{
                       width: '100%',
@@ -734,157 +746,18 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
         </div>
       </div>
       
-      {/* 中间面板 - 多卡片预览 */}
-      <div className="middle-panel" style={{
-        width: '33.3%',
-        padding: 'var(--space-md)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'auto',
-        borderRight: '1px solid var(--border-color)'
-      }}>
-        <h2 style={{ color: 'var(--text-white)', marginBottom: 'var(--space-md)' }}>多卡片预览</h2>
-        
-        {cards.length > 0 ? (
-          <div className="cards-preview" style={{
-            backgroundColor: 'var(--secondary-bg)',
-            padding: 'var(--space-md)',
-            borderRadius: 'var(--radius-md)',
-            flex: 1,
-            overflow: 'auto'
-          }}>
-            <MultiCardView 
-              cards={cards}
-              globalPromptBlocks={globalPromptBlocks}
-              isPreview={true}
-            />
-          </div>
-        ) : (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flex: 1,
-            color: 'var(--text-light-gray)',
-            backgroundColor: 'var(--secondary-bg)',
-            padding: 'var(--space-md)',
-            borderRadius: 'var(--radius-md)'
-          }}>
-            <p>请先生成Agent卡片</p>
-          </div>
-        )}
-      </div>
+      {/* 使用中间面板组件 */}
+      <CardPreviewPanel 
+        cards={cards}
+        globalPromptBlocks={globalPromptBlocks}
+        isPreview={true}
+      />
       
-      {/* 右侧面板 - 交互历史 */}
-      <div className="right-panel" style={{
-        width: '33.3%',
-        padding: 'var(--space-md)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'auto'
-      }}>
-        <h2 style={{ color: 'var(--text-white)', marginBottom: 'var(--space-md)' }}>交互历史</h2>
-        
-        <div className="current-prompt-section" style={{
-          marginBottom: 'var(--space-md)'
-        }}>
-          <h3 style={{ 
-            color: 'var(--text-white)', 
-            fontSize: 'var(--font-md)',
-            marginBottom: 'var(--space-sm)'
-          }}>
-            当前提示词
-          </h3>
-          <div style={{
-            backgroundColor: 'var(--card-bg)',
-            padding: 'var(--space-md)',
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--text-light-gray)',
-            fontFamily: 'monospace',
-            wordBreak: 'break-word',
-            maxHeight: '150px',
-            overflow: 'auto'
-          }}>
-            {currentPrompt || '尚未生成提示词'}
-          </div>
-        </div>
-
-        <div className="interactions-section" style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 'var(--space-md)'
-        }}>
-          <h3 style={{ 
-            color: 'var(--text-white)', 
-            fontSize: 'var(--font-md)',
-            marginBottom: 'var(--space-sm)'
-          }}>
-            历史记录
-          </h3>
-          
-          {interactions.length > 0 ? (
-            <div className="interactions-list" style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 'var(--space-md)',
-              flex: 1,
-              overflow: 'auto'
-            }}>
-              {interactions.map((entry) => (
-                <div 
-                  key={entry.id}
-                  className={`interaction-entry ${entry.type === 'prompt' ? 'prompt' : 'response'}`}
-                  style={{
-                    backgroundColor: 'var(--secondary-bg)',
-                    padding: 'var(--space-md)',
-                    borderRadius: 'var(--radius-md)',
-                    border: `1px solid ${entry.type === 'prompt' ? 'var(--brand-color)' : 'var(--border-color)'}`
-                  }}
-                >
-                  <div className="interaction-header" style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    marginBottom: 'var(--space-sm)',
-                    color: entry.type === 'prompt' ? 'var(--brand-color)' : 'var(--text-white)',
-                    fontWeight: 'bold'
-                  }}>
-                    <span>{entry.type === 'prompt' ? '提示词' : '响应'} {entry.note && `(${entry.note})`}</span>
-                    <span style={{ color: 'var(--text-light-gray)', fontSize: 'var(--font-xs)' }}>
-                      {formatTime(entry.timestamp)}
-                    </span>
-                  </div>
-                  <div className="interaction-content" style={{
-                    color: 'var(--text-white)',
-                    fontFamily: entry.type === 'prompt' ? 'monospace' : 'inherit',
-                    whiteSpace: 'pre-wrap',
-                    maxHeight: '200px',
-                    overflow: 'auto',
-                    wordBreak: 'break-word'
-                  }}>
-                    {entry.content.length > 500 
-                      ? `${entry.content.substring(0, 500)}... (${entry.content.length}字)` 
-                      : entry.content}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flex: 1,
-              color: 'var(--text-light-gray)',
-              backgroundColor: 'var(--secondary-bg)',
-              padding: 'var(--space-md)',
-              borderRadius: 'var(--radius-md)'
-            }}>
-              <p>尚无交互记录</p>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* 使用右侧面板组件 */}
+      <InteractionHistoryPanel 
+        interactions={interactions}
+        currentPrompt={currentPrompt}
+      />
     </div>
   );
 };
