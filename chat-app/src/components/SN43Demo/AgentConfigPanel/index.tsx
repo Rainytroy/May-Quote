@@ -131,7 +131,11 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
   // 从Context获取当前激活的模板
   const { activeTemplates } = usePromptTemplates();
 
-  // 生成Agent卡片 - 统一处理所有用户输入
+  // 保存第一阶段提示词和结果，用于后续修改
+  const [firstStagePrompt, setFirstStagePrompt] = useState<string>('');
+  const [firstStageResult, setFirstStageResult] = useState<string>('');
+  
+  // 生成Agent卡片 - 根据当前状态使用不同的提示词逻辑
   const generateAgent = async () => {
     if (!userInput.trim()) {
       alert('请输入用户需求描述');
@@ -141,17 +145,42 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
     setIsGenerating(true);
     
     try {
-      // 构建提示词 - 使用Context中的第一阶段模板
-      const prompt = activeTemplates.firstStage.replace('{#input}', userInput);
+      let prompt: string;
+      let interactionNote: string;
+      let userInputsData: any;
+      
+      // 根据状态决定使用哪个阶段的提示词
+      if (!hasGenerated) {
+        // 初次生成 - 使用第一阶段提示词
+        prompt = activeTemplates.firstStage.replace('{#input}', userInput);
+        interactionNote = '第一阶段生成提示词';
+        userInputsData = {
+          input: userInput  // 使用实际的用户输入
+        };
+        
+        // 保存第一阶段提示词，用于后续修改
+        setFirstStagePrompt(prompt);
+      } else {
+        // 修改已有内容 - 使用第二阶段提示词
+        // 1. 获取第一阶段的上下文
+        // 2. 构建第二阶段提示词，替换占位符
+        prompt = activeTemplates.secondStage
+          .replace('{#input}', userInput)
+          .replace('{#firstStagePrompt}', firstStagePrompt)
+          .replace('{#promptResults1}', jsonOutput);
+        
+        interactionNote = '第二阶段修改提示词';
+        userInputsData = {
+          input: userInput,
+          firstStagePrompt: firstStagePrompt,
+          firstStageResult: jsonOutput
+        };
+      }
+      
       setCurrentPrompt(prompt);
       
       // 记录提示词
-      addInteraction('prompt', prompt, '生成提示词');
-      
-      // 构建userInputs，包含实际的用户输入
-      const userInputsData = {
-        input: userInput  // 使用实际的用户输入
-      };
+      addInteraction('prompt', prompt, interactionNote);
       
       // 调用May的AI服务
       const response = await mayApi.executeShenyuRequest({
@@ -421,6 +450,9 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
     setActiveJsonTabs({});
     setEditableJsons({});
     setUserInput('');
+    // 重置第一阶段提示词相关状态
+    setFirstStagePrompt('');
+    setFirstStageResult('');
   };
 
   // 格式化时间
