@@ -131,9 +131,9 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
   // 从Context获取当前激活的模板
   const { activeTemplates } = usePromptTemplates();
 
-  // 保存第一阶段提示词和结果，用于后续修改
+  // 保存第一阶段提示词和最新结果，用于后续修改
   const [firstStagePrompt, setFirstStagePrompt] = useState<string>('');
-  const [firstStageResult, setFirstStageResult] = useState<string>('');
+  const [latestJsonOutput, setLatestJsonOutput] = useState<string>('');
   
   // 生成Agent卡片 - 根据当前状态使用不同的提示词逻辑
   const generateAgent = async () => {
@@ -167,13 +167,13 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
         prompt = activeTemplates.secondStage
           .replace('{#input}', userInput)
           .replace('{#firstStagePrompt}', firstStagePrompt)
-          .replace('{#promptResults1}', jsonOutput);
+          .replace('{#latestResult}', latestJsonOutput || jsonOutput);
         
         interactionNote = '第二阶段修改提示词';
         userInputsData = {
           input: userInput,
           firstStagePrompt: firstStagePrompt,
-          firstStageResult: jsonOutput
+          latestResult: latestJsonOutput || jsonOutput
         };
       }
       
@@ -204,6 +204,9 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
       if (matches && matches.length > 0) {
         jsonStr = JSON.stringify(JSON.parse(matches[0]), null, 2);
         setJsonOutput(jsonStr);
+        
+        // 更新最新JSON结果，用于后续修改
+        setLatestJsonOutput(jsonStr);
         
         // 解析JSON
         parseJsonConfig(jsonStr);
@@ -278,7 +281,12 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
       
       // 使用setTimeout确保UI已清空后再渲染新控件
       setTimeout(() => {
+        // 更新latestJsonOutput，用于下一次修改
+        setLatestJsonOutput(jsonText);
+        
+        // 解析JSON配置
         parseJsonConfig(jsonText);
+        
         // 设置已生成状态
         setHasGenerated(true);
         
@@ -450,9 +458,9 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
     setActiveJsonTabs({});
     setEditableJsons({});
     setUserInput('');
-    // 重置第一阶段提示词相关状态
+    // 重置提示词相关状态
     setFirstStagePrompt('');
-    setFirstStageResult('');
+    setLatestJsonOutput('');
   };
 
   // 格式化时间
