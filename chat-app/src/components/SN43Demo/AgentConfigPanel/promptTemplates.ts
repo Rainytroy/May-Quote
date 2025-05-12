@@ -198,23 +198,59 @@ export const ADVANCED_PROMPT_TEMPLATE_2 = `{#firstStagePrompt}
  */
 export enum TemplateType {
   ORIGINAL = 'original',
-  ADVANCED = 'advanced'
+  ADVANCED = 'advanced',
+  ITERATION_2 = 'iteration_2'
 }
+
+// 迭代版2.0提示词模板
+export const ITERATION_2_PROMPT_TEMPLATE_1 = ADVANCED_PROMPT_TEMPLATE_1; // 使用与迭代版相同的第一阶段提示词
+
+export const ITERATION_2_PROMPT_TEMPLATE_2 = `{#firstStagePrompt}
+
+【最后一次执行结果】
+{#latestResult}
+
+【用户调整请求】
+用户要求进行以下修改："{#input}"
+
+【第二阶段指导】
+根据用户的调整请求和第一阶段生成的JSON，请优化现有配置。重点关注以下方面：
+
+1. card和promptBlock数量：如用户要求特定数量，确保满足
+2. 引用完整性：每个promptBlock至少包含一个占位符引用（{#input}、{#inputBn}或{#promptBlockn}）
+3. 上下文连贯：后续promptBlock应引用前面的promptBlock保持连贯
+4. 输出控制：根据输出长度需求拆分promptBlock（单个promptBlock输出限制约4000字）
+5. 冲突避免：不要在提示词中包含inputBn的<def>标签内容
+6. globalPromptBlock可以根据用户需求，决定是否需要增加或者删除，这不是必要结构
+
+直接输出优化后的完整JSON，无需附加说明或解释。`;
 
 /**
  * 获取默认的第一阶段提示词模板
  */
 export function getDefaultFirstStagePrompt(type: TemplateType = TemplateType.ORIGINAL): string {
-  return type === TemplateType.ORIGINAL 
-    ? ORIGINAL_PROMPT_TEMPLATE_1 
-    : ADVANCED_PROMPT_TEMPLATE_1;
+  switch (type) {
+    case TemplateType.ORIGINAL:
+      return ORIGINAL_PROMPT_TEMPLATE_1;
+    case TemplateType.ITERATION_2:
+      return ITERATION_2_PROMPT_TEMPLATE_1;
+    case TemplateType.ADVANCED:
+    default:
+      return ADVANCED_PROMPT_TEMPLATE_1;
+  }
 }
 
 /**
  * 获取默认的第二阶段提示词模板
  */
 export function getDefaultSecondStagePrompt(type: TemplateType = TemplateType.ORIGINAL): string {
-  return type === TemplateType.ORIGINAL 
-    ? ORIGINAL_PROMPT_TEMPLATE_2 
-    : ADVANCED_PROMPT_TEMPLATE_2;
+  switch (type) {
+    case TemplateType.ORIGINAL:
+      return ORIGINAL_PROMPT_TEMPLATE_2;
+    case TemplateType.ITERATION_2:
+      return ITERATION_2_PROMPT_TEMPLATE_2;
+    case TemplateType.ADVANCED:
+    default:
+      return ADVANCED_PROMPT_TEMPLATE_2;
+  }
 }

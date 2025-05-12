@@ -51,6 +51,17 @@ export const PromptTemplateProvider: React.FC<{ children: React.ReactNode }> = (
     updatedAt: Date.now(),
     isDefault: true,
   };
+  
+  // 迭代版2.0提示词模板
+  const iteration2Template: PromptTemplateSet = {
+    id: 'iteration2',
+    name: '迭代版2.0',
+    firstStage: getDefaultFirstStagePrompt(TemplateType.ITERATION_2),
+    secondStage: getDefaultSecondStagePrompt(TemplateType.ITERATION_2),
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    isDefault: true,
+  };
 
   const [activeTemplates, setActiveTemplates] = useState<PromptTemplateSet>(originalTemplate);
   const [savedTemplates, setSavedTemplates] = useState<PromptTemplateSet[]>([]);
@@ -102,6 +113,7 @@ export const PromptTemplateProvider: React.FC<{ children: React.ReactNode }> = (
       let templatesToSet = allTemplates;
       const hasOriginalTemplate = templatesToSet.find(t => t.id === 'default');
       const hasAdvancedTemplate = templatesToSet.find(t => t.id === 'advanced');
+      const hasIteration2Template = templatesToSet.find(t => t.id === 'iteration2');
       
       // 检查是否需要更新或添加默认模板
       const writeTx = db.transaction(PROMPT_TEMPLATE_STORE, 'readwrite');
@@ -144,6 +156,26 @@ export const PromptTemplateProvider: React.FC<{ children: React.ReactNode }> = (
         // 更新本地列表中的名称
         templatesToSet = templatesToSet.map(t => 
           t.id === 'advanced' ? updatedTemplate : t
+        );
+        needsUpdate = true;
+      }
+      
+      // 处理迭代版2.0提示词模板
+      if (!hasIteration2Template) {
+        // 如果不存在，则添加
+        writeStore.put(iteration2Template);
+        templatesToSet = [iteration2Template, ...templatesToSet];
+        needsUpdate = true;
+      } else if (hasIteration2Template.name !== '迭代版2.0') {
+        // 如果存在但名称不正确，则更新
+        const updatedTemplate = {
+          ...hasIteration2Template,
+          name: '迭代版2.0'
+        };
+        writeStore.put(updatedTemplate);
+        // 更新本地列表中的名称
+        templatesToSet = templatesToSet.map(t => 
+          t.id === 'iteration2' ? updatedTemplate : t
         );
         needsUpdate = true;
       }
