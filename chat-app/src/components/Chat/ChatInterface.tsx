@@ -55,15 +55,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   }, [initialMessages, messages.length, initialMessagesLoaded, setInitialMessages]);
   
-  // 当对话ID变化时重置加载状态、清空消息列表，并检查是否有待处理的消息
+  // 当对话ID变化时重置加载状态和检查是否有待处理的消息
   React.useEffect(() => {
     setInitialMessagesLoaded(false);
-    
-    // 清空消息列表 - 确保清除之前对话的消息
-    if (clearMessages) {
-      clearMessages();
-      console.log(`对话ID变化: ${conversationId}, 已清空消息`);
-    }
     
     // 检查是否有待处理的消息需要发送（针对引用到新对话的场景）
     const pendingMessage = window.localStorage.getItem('_may_pending_message');

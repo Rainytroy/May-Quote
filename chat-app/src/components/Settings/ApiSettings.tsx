@@ -337,10 +337,26 @@ const ApiSettings: React.FC<ApiSettingsProps> = ({ isOpen, onClose, onSave }) =>
               textDecoration: 'none',
               fontSize: 'var(--font-sm)',
               display: 'inline-block',
-              padding: 'var(--space-xs) 0'
+              padding: 'var(--space-xs) 0',
+              marginRight: 'var(--space-md)'
             }}
           >
             打开插件调试页面
+          </a>
+          
+          <a 
+            href="/?demo=shenyu" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{
+              color: 'var(--brand-color)',
+              textDecoration: 'none',
+              fontSize: 'var(--font-sm)',
+              display: 'inline-block',
+              padding: 'var(--space-xs) 0'
+            }}
+          >
+            打开神谕模式
           </a>
         </div>
         
