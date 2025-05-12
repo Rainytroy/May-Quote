@@ -376,20 +376,6 @@ const PromptTemplateEditor: React.FC<PromptTemplateEditorProps> = () => {
                     原版提示词
                   </div>
                   <div 
-                    onClick={() => handleResetDefaults(TemplateType.ADVANCED)}
-                    style={{
-                      padding: 'var(--space-sm) var(--space-md)',
-                      cursor: 'pointer',
-                      color: 'var(--text-white)',
-                      transition: 'background-color 0.15s',
-                      fontSize: 'var(--font-sm)'
-                    }}
-                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--secondary-bg)'}
-                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    迭代版提示词
-                  </div>
-                  <div 
                     onClick={() => handleResetDefaults(TemplateType.ITERATION_2)}
                     style={{
                       padding: 'var(--space-sm) var(--space-md)',
