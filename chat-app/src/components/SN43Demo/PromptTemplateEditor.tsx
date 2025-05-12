@@ -177,7 +177,7 @@ const PromptTemplateEditor: React.FC<PromptTemplateEditorProps> = () => {
           flex: 1,
           padding: 'var(--space-xs)'
         }}>
-          {savedTemplates.map(template => (
+          {savedTemplates.filter(t => !t.hidden).map(template => (
             <div 
               key={template.id} 
               onClick={() => handleLoadTemplate(template.id)}
