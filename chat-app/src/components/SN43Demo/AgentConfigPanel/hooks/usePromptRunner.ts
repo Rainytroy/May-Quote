@@ -153,6 +153,7 @@ export const usePromptRunner = ({
         : agentName;
       
       console.log(`[PromptRunner] 用户原始输入: ${userInput.substring(0, 50)}...`);
+      console.log(`[PromptRunner] 开始循环执行提示词块，总数: ${promptBlocks.length}`);
       
       // 依次运行每个promptBlock
       for (let i = 0; i < promptBlocks.length; i++) {
@@ -161,20 +162,20 @@ export const usePromptRunner = ({
         const startTime = Date.now();
         const originalBlock = promptBlocks[i];
         
-        console.log(`[PromptRunner] 原始提示词(${originalBlock.text.length}字符):`);
+        console.log(`[PromptRunner] 原始提示词块 ${i+1} (${originalBlock.text.length}字符):`);
         console.log(originalBlock.text.substring(0, 100) + (originalBlock.text.length > 100 ? '...' : ''));
         
         // 替换提示词中的占位符
         const processedText = replacePromptPlaceholders(originalBlock.text, userInput);
         
-        console.log(`[PromptRunner] 替换后提示词(${processedText.length}字符):`);
+        console.log(`[PromptRunner] 替换后提示词块 ${i+1} (${processedText.length}字符):`);
         console.log(processedText.substring(0, 100) + (processedText.length > 100 ? '...' : ''));
         
         // 添加处理后的提示词作为用户消息，但不显示在UI中
         messageHistory.push({ role: 'user', content: processedText });
         
         // 显示AI响应（不显示用户消息）
-        console.log(`[PromptRunner] 创建隐藏的用户消息...`);
+        console.log(`[PromptRunner] 创建隐藏的用户消息 ${i+1}...`);
         const aiMessageId = await chatInterfaceRef.current?.handleSubmit(processedText, true);
         
         if (!aiMessageId) {
@@ -182,10 +183,10 @@ export const usePromptRunner = ({
           continue;
         }
         
-        console.log(`[PromptRunner] 成功创建AI消息占位，ID: ${aiMessageId}`);
+        console.log(`[PromptRunner] 成功创建AI消息占位 ${i+1}，ID: ${aiMessageId}`);
         
         try {
-          console.log(`[PromptRunner] 开始调用API发送消息...`);
+          console.log(`[PromptRunner] 开始调用API发送消息 ${i+1}...`);
           
           // 直接使用API客户端发送聊天消息
           const response = await sendChatDirectly(messageHistory);
@@ -193,29 +194,32 @@ export const usePromptRunner = ({
           const aiResponse = response.content;
           const endTime = Date.now();
           
-          console.log(`[PromptRunner] 块 ${i+1} 执行完成，耗时: ${endTime - startTime}ms`);
+          console.log(`[PromptRunner] 块 ${i+1}/${promptBlocks.length} 执行完成，耗时: ${endTime - startTime}ms`);
           
           // 更新对话历史
           messageHistory.push({ role: 'assistant', content: aiResponse });
           
           // 更新消息UI - 显示为普通文本而不是JSON
           if (chatInterfaceRef.current) {
-            console.log(`[PromptRunner] 更新UI消息...`);
+            console.log(`[PromptRunner] 更新UI消息 ${i+1}...`);
+            // 注意参数顺序：messageId, content, rawResponse, customSender
+            // 这里content应该是直接显示的文本，不应被当作JSON
+            // ShenyuMessageItem组件会根据这些参数正确显示消息
             chatInterfaceRef.current.updateAiMessage(
-              aiMessageId, 
-              aiResponse, // 显示文本内容，不是JSON
-              aiResponse, // 原始响应也是文本
+              aiMessageId,  
+              aiResponse,    // 显示文本内容 - 会以markdown形式渲染
+              aiResponse,    // 原始响应
               "May the 神谕 be with you" // 自定义发送者名称
             );
           }
           
           // 添加短暂延迟，使执行看起来更自然
           const delayTime = 800;
-          console.log(`[PromptRunner] 添加${delayTime}ms延迟...`);
+          console.log(`[PromptRunner] 块 ${i+1} 添加${delayTime}ms延迟...`);
           await new Promise(resolve => setTimeout(resolve, delayTime));
           
         } catch (error) {
-          console.error(`[PromptRunner] 运行提示词块 ${i+1} 时出错:`, error);
+          console.error(`[PromptRunner] 运行提示词块 ${i+1}/${promptBlocks.length} 时出错:`, error);
           
           if (chatInterfaceRef.current) {
             const errorMessage = `运行错误: ${error instanceof Error ? error.message : '未知错误'}`;
@@ -227,8 +231,11 @@ export const usePromptRunner = ({
             );
           }
         }
+        
+        console.log(`[PromptRunner] 提示词块 ${i+1}/${promptBlocks.length} 执行完成，继续下一个`);
       }
       
+      console.log(`[PromptRunner] 所有提示词块处理完毕，共 ${promptBlocks.length} 个`);
       console.log('\n====================================');
       console.log('[PromptRunner] 所有提示词块运行完毕');
       console.log('====================================\n');
