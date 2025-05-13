@@ -361,6 +361,9 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
         // 解析JSON配置
         parseJsonConfig(jsonText);
         
+        // 自动切换到卡片预览Tab
+        switchToCardsTab();
+        
         // 设置已生成状态
         setHasGenerated(true);
         
