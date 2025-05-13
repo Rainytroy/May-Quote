@@ -193,9 +193,9 @@ export const usePromptRunner = ({
         // 添加处理后的提示词作为用户消息，但不显示在UI中
         messageHistory.push({ role: 'user', content: processedText });
         
-        // 显示AI响应（不显示用户消息）
-        console.log(`[PromptRunner] 创建隐藏的用户消息 ${i+1}...`);
-        const aiMessageId = await chatInterfaceRef.current?.handleSubmit(processedText, true);
+        // 创建AI响应消息（不显示用户提示词）
+        console.log(`[PromptRunner] 创建AI响应消息 ${i+1}（不显示提示词）...`);
+        const aiMessageId = await chatInterfaceRef.current?.handleSubmit("运行提示词块处理中...", true);
         
         if (!aiMessageId) {
           console.error(`[PromptRunner] 为提示词块 ${i+1} 创建消息ID失败`);

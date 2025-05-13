@@ -260,6 +260,10 @@ const ShenyuMessageItem: React.FC<ShenyuMessageItemProps> = ({
                   {(() => {
                     // 检查是否是JSON字符串
                     const content = getDisplayContent();
+                    // 这里不需要再次检查prompt类型，因为外部已经做了判断
+                    // 如果代码执行到这里，已经确定message.type !== 'prompt'
+                    
+                    // 否则，尝试检测是否是JSON格式
                     const isJsonContent = (() => {
                       try {
                         // 尝试检测是否是JSON格式 - 以{ 开头且包含"adminInputs"和"promptBlocks"
