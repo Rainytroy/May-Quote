@@ -19,22 +19,13 @@ const CardPreviewPanel: React.FC<CardPreviewPanelProps> = ({
   isPreview = true
 }) => {
   return (
-    <div className="middle-panel" style={{
-      width: '33.3%',
-      padding: 'var(--space-md)',
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'auto',
-      borderRight: '1px solid var(--border-color)'
-    }}>
-      <h2 style={{ color: 'var(--text-white)', marginBottom: 'var(--space-md)' }}>多卡片预览</h2>
-      
+    <>
       {cards.length > 0 ? (
         <div className="cards-preview" style={{
           backgroundColor: 'var(--secondary-bg)',
           padding: 'var(--space-md)',
           borderRadius: 'var(--radius-md)',
-          flex: 1,
+          height: '100%',
           overflow: 'auto'
         }}>
           <MultiCardView 
@@ -48,7 +39,7 @@ const CardPreviewPanel: React.FC<CardPreviewPanelProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          flex: 1,
+          height: '100%',
           color: 'var(--text-light-gray)',
           backgroundColor: 'var(--secondary-bg)',
           padding: 'var(--space-md)',
@@ -57,7 +48,7 @@ const CardPreviewPanel: React.FC<CardPreviewPanelProps> = ({
           <p>请先生成Agent卡片</p>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

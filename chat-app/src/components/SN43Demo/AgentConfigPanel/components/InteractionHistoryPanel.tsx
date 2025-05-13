@@ -30,15 +30,13 @@ const InteractionHistoryPanel: React.FC<InteractionHistoryPanelProps> = ({
   };
 
   return (
-    <div className="right-panel" style={{
-      width: '33.3%',
-      padding: 'var(--space-md)',
+    <div style={{
       display: 'flex',
       flexDirection: 'column',
+      padding: 'var(--space-md)',
+      height: '100%',
       overflow: 'auto'
     }}>
-      <h2 style={{ color: 'var(--text-white)', marginBottom: 'var(--space-md)' }}>交互历史</h2>
-      
       <div className="current-prompt-section" style={{
         marginBottom: 'var(--space-md)'
       }}>

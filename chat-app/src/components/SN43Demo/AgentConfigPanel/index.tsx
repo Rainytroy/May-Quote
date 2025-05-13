@@ -14,6 +14,9 @@ import ApiStatusIndicator from './components/ApiStatusIndicator';
 // 导入新的聊天组件
 import ShenyuChatInterface, { ShenyuChatInterfaceHandle } from '../Chat/ShenyuChatInterface';
 
+// 右侧区域Tab类型
+type RightPanelTab = 'cards' | 'debug';
+
 // 交互记录类型
 interface InteractionEntry {
   id: number;
@@ -94,6 +97,9 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
   // 滚动到底部的ref
   const historyContainerRef = useRef<HTMLDivElement>(null);
   
+  // 右侧面板Tab状态
+  const [activeRightTab, setActiveRightTab] = useState<RightPanelTab>('cards');
+  
   // 添加历史卡片后滚动到底部
   useEffect(() => {
     if (historyContainerRef.current && historyCards.length > 0) {
@@ -132,6 +138,14 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
   const [firstStagePrompt, setFirstStagePrompt] = useState<string>('');
   const [latestJsonOutput, setLatestJsonOutput] = useState<string>('');
   
+  // 自动切换到卡片预览Tab
+  const switchToCardsTab = useCallback(() => {
+    if (activeRightTab !== 'cards') {
+      console.log('[AgentConfigPanel] 自动切换到神谕Tab查看生成结果');
+      setActiveRightTab('cards');
+    }
+  }, [activeRightTab]);
+  
   // 生成Agent卡片 - 集成新的聊天界面
   const generateAgent = useCallback(async (content: string) => {
     if (!content.trim()) {
@@ -145,6 +159,9 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
       content: content.substring(0, 30) + (content.length > 30 ? '...' : '')
     });
 
+    // 确保切换到卡片预览Tab
+    switchToCardsTab();
+    
     setIsGenerating(true);
     
     try {
@@ -558,7 +575,7 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
     }}>
       {/* 左侧面板 - 神谕聊天界面 */}
       <div className="left-panel" style={{
-        width: '33.3%',
+        width: '50%',
         display: 'flex',
         flexDirection: 'column',
         borderRight: '1px solid var(--border-color)',
@@ -583,18 +600,67 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
         />
       </div>
       
-      {/* 使用中间面板组件 */}
-      <CardPreviewPanel 
-        cards={cards}
-        globalPromptBlocks={globalPromptBlocks}
-        isPreview={true}
-      />
-      
-      {/* 使用右侧面板组件 */}
-      <InteractionHistoryPanel 
-        interactions={interactions}
-        currentPrompt={currentPrompt}
-      />
+      {/* 右侧面板 */}
+      <div className="right-panel" style={{
+        width: '50%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden'
+      }}>
+        {/* Tab栏 */}
+        <div className="right-panel-tabs" style={{
+          display: 'flex',
+          borderBottom: '1px solid var(--border-color)',
+          backgroundColor: 'var(--main-bg)'
+        }}>
+          <div
+            onClick={() => setActiveRightTab('cards')}
+            style={{
+              padding: 'var(--space-sm) var(--space-md)',
+              cursor: 'pointer',
+              fontWeight: activeRightTab === 'cards' ? 'bold' : 'normal',
+              color: activeRightTab === 'cards' ? 'var(--text-white)' : 'var(--text-light-gray)',
+              borderBottom: activeRightTab === 'cards' ? '2px solid var(--brand-color)' : 'none',
+              backgroundColor: activeRightTab === 'cards' ? 'var(--card-bg)' : 'transparent'
+            }}
+          >
+            神谕
+          </div>
+          <div
+            onClick={() => setActiveRightTab('debug')}
+            style={{
+              padding: 'var(--space-sm) var(--space-md)',
+              cursor: 'pointer',
+              fontWeight: activeRightTab === 'debug' ? 'bold' : 'normal',
+              color: activeRightTab === 'debug' ? 'var(--text-white)' : 'var(--text-light-gray)',
+              borderBottom: activeRightTab === 'debug' ? '2px solid var(--brand-color)' : 'none',
+              backgroundColor: activeRightTab === 'debug' ? 'var(--card-bg)' : 'transparent'
+            }}
+          >
+            神谕-调试
+          </div>
+        </div>
+        
+        {/* Tab内容区域 */}
+        <div className="right-panel-content" style={{
+          flex: 1,
+          height: 'calc(100% - 40px)',
+          overflow: 'hidden'
+        }}>
+          {activeRightTab === 'cards' ? (
+            <CardPreviewPanel 
+              cards={cards}
+              globalPromptBlocks={globalPromptBlocks}
+              isPreview={true}
+            />
+          ) : (
+            <InteractionHistoryPanel 
+              interactions={interactions}
+              currentPrompt={currentPrompt}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 };
