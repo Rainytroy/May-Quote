@@ -708,15 +708,17 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
           overflow: 'hidden'
         }}>
           {activeRightTab === 'cards' ? (
-            <CardPreviewPanel 
-              cards={cards}
-              globalPromptBlocks={globalPromptBlocks}
-              isPreview={true}
-              agentName={agentName}
-              onAgentNameChange={handleAgentNameChange}
-              onRunAgent={runAgent}
-              controlValues={controlValues}
-            />
+          <CardPreviewPanel 
+            cards={cards}
+            globalPromptBlocks={globalPromptBlocks}
+            isPreview={true}
+            agentName={agentName}
+            onAgentNameChange={handleAgentNameChange}
+            onRunAgent={runAgent}
+            controlValues={controlValues}
+            chatInterfaceRef={chatInterfaceRef}
+            userInput={chatMessages.length > 0 && chatMessages[0].role === 'user' ? chatMessages[0].content : ''}
+          />
           ) : (
             <InteractionHistoryPanel 
               interactions={interactions}

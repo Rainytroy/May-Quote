@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import { Card, GlobalPromptBlocks } from '../../types';
 import MultiCardView from '../../MultiCardView';
 import PromptPreviewModal from './PromptPreviewModal';
+import { usePromptExecutor } from '../hooks/usePromptExecutor';
+import { ShenyuChatInterfaceHandle } from '../../Chat/ShenyuChatInterface';
+import { processAllPrompts, ProcessedPromptBlock } from '../../utils/processPrompts'; // Import processAllPrompts
+import '../../styles/animations.css';
 
 interface CardPreviewPanelProps {
   cards: Card[];
@@ -9,8 +13,10 @@ interface CardPreviewPanelProps {
   isPreview?: boolean;
   agentName: string;
   onAgentNameChange: (name: string) => void;
-  onRunAgent: () => void;
+  onRunAgent?: () => void; // 可选，兼容旧接口
   controlValues: Record<string, any>;
+  chatInterfaceRef?: React.RefObject<ShenyuChatInterfaceHandle | null>;
+  userInput?: string;
 }
 
 /**
@@ -25,8 +31,65 @@ const CardPreviewPanel: React.FC<CardPreviewPanelProps> = ({
   agentName,
   onAgentNameChange,
   onRunAgent,
-  controlValues
+  controlValues,
+  chatInterfaceRef,
+  userInput = ''
 }) => {
+  // 使用提示词执行器，实现新的运行按钮功能
+  const { executePrompts, isRunning } = usePromptExecutor({
+    chatInterfaceRef,
+    agentName
+    // cards, globalPromptBlocks, controlValues, userInput are no longer passed here
+  });
+
+  // 运行按钮点击处理
+  const handleRunClick = async () => {
+    if (cards.length === 0 || !chatInterfaceRef?.current) {
+      console.warn('[CardPreviewPanel] 无法运行: 无卡片或聊天界面引用未初始化');
+      return;
+    }
+    
+    console.log('[CardPreviewPanel] "运行"按钮点击，开始处理...');
+
+    // 1. 从DOM获取最新的控件值 (与handleViewPrompt类似)
+    const inputElements = document.querySelectorAll('input, textarea, select');
+    const currentControlValues: Record<string, any> = {};
+    inputElements.forEach(el => {
+      const id = el.id || el.getAttribute('data-id');
+      if (id) {
+        let value;
+        if (el.tagName === 'SELECT') value = (el as HTMLSelectElement).value;
+        else if ((el as HTMLInputElement).type === 'checkbox') value = (el as HTMLInputElement).checked;
+        else value = (el as HTMLInputElement | HTMLTextAreaElement).value;
+        currentControlValues[id] = value;
+        if (id.match(/^B[0-9]+$/)) {
+          currentControlValues[`input${id}`] = value;
+        }
+      }
+    });
+    console.log('[CardPreviewPanel] 运行时获取的实时控件值:', currentControlValues);
+
+    // 2. 调用 processAllPrompts 获取完全替换后的提示词
+    console.log('[CardPreviewPanel] 调用 processAllPrompts 进行替换...');
+    const processedResults = processAllPrompts(
+      cards,
+      globalPromptBlocks,
+      currentControlValues, // 使用实时获取的控件值
+      agentName,
+      userInput
+    );
+    
+    console.log('[CardPreviewPanel] processAllPrompts 完成，结果:', processedResults);
+
+    // 3. 将替换结果传递给 executePrompts
+    if (processedResults.cardBlocks.length > 0 || processedResults.globalBlocks.length > 0) {
+      console.log('[CardPreviewPanel] 调用 executePrompts 执行处理后的提示词...');
+      // We'll adjust executePrompts to accept this structure
+      await executePrompts(processedResults); 
+    } else {
+      console.warn('[CardPreviewPanel] processAllPrompts 未返回任何可执行的提示词块');
+    }
+  };
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameInputValue, setNameInputValue] = useState(agentName);
   const [isPromptPreviewOpen, setIsPromptPreviewOpen] = useState(false);
@@ -225,37 +288,55 @@ const CardPreviewPanel: React.FC<CardPreviewPanelProps> = ({
           
           {/* 运行按钮 */}
           <button
-            onClick={onRunAgent}
-            disabled={cards.length === 0}
+            onClick={handleRunClick}
+            disabled={cards.length === 0 || isRunning}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: 'var(--space-xs)',
-              backgroundColor: cards.length > 0 ? 'var(--brand-color)' : 'var(--text-light-gray)',
+              backgroundColor: cards.length > 0 && !isRunning ? 'var(--brand-color)' : 'var(--text-light-gray)',
               color: 'var(--text-dark)',
               fontWeight: 'bold',
               border: 'none',
               borderRadius: 'var(--radius-sm)',
               padding: 'var(--space-xs) var(--space-md)',
-              cursor: cards.length > 0 ? 'pointer' : 'not-allowed',
+              cursor: cards.length > 0 && !isRunning ? 'pointer' : 'not-allowed',
               transition: 'background-color 0.15s',
             }}
           >
-            {/* 播放图标 */}
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              width="16" 
-              height="16" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="2" 
-              strokeLinecap="round" 
-              strokeLinejoin="round"
-            >
-              <polygon points="5 3 19 12 5 21 5 3"></polygon>
-            </svg>
-            运行
+            {/* 根据运行状态显示不同图标 */}
+            {isRunning ? (
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="16" 
+                height="16" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+                className="spin-animation"
+              >
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 6v6l4 2"></path>
+              </svg>
+            ) : (
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="16" 
+                height="16" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+            )}
+            {isRunning ? '运行中...' : '运行'}
           </button>
         </div>
       </div>
