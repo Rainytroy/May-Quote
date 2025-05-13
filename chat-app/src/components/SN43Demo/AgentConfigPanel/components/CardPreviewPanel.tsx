@@ -303,6 +303,7 @@ const CardPreviewPanel: React.FC<CardPreviewPanelProps> = ({
               cursor: cards.length > 0 && !isRunning ? 'pointer' : 'not-allowed',
               transition: 'background-color 0.15s',
             }}
+            title="May the 神谕 be with you"
           >
             {/* 根据运行状态显示不同图标 */}
             {isRunning ? (

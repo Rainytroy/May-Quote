@@ -128,9 +128,9 @@ export const usePromptExecutor = ({
       // 更新运行消息
       chatInterfaceRef.current.updateAiMessage(
         runningMessageId,
-        `# 🚀 提示词执行器\n\n**Agent**: ${agentName}\n\n*正在加载提示词块...*`,
+        `# May the 神谕 be with you\n\n**<span style="color: var(--brand-color);">运行：</span>** ${agentName}\n\n*正在加载提示词块...*`,
         '',
-        '提示词执行器',
+        'May the 神谕 be with you',
         'prompt'
       );
       
@@ -166,14 +166,14 @@ export const usePromptExecutor = ({
           continue;
         }
         
-        // 显示提示词
-        const blockTitle = `卡片 ${block.cardTitle} 提示词块: ${block.blockId}`;
+        // 显示提示词 - 简化标题，移除提示词内容
+        const blockTitle = `${block.cardTitle}`;
         
         chatInterfaceRef.current.updateAiMessage(
           blockMessageId,
-          `## 📝 ${blockTitle}\n\n\`\`\`\n${processedText}\n\`\`\`\n\n*处理中...*`,
+          `## ${blockTitle}\n\n*处理中...*`,
           processedText,
-          '提示词执行器',
+          'May the 神谕 be with you',
           'prompt'
         );
         
@@ -187,12 +187,12 @@ export const usePromptExecutor = ({
           context.push(processedText);
           context.push(response.content);
           
-          // 更新消息，显示结果
+          // 更新消息，显示结果 - 移除提示词内容和响应标签
           chatInterfaceRef.current.updateAiMessage(
             blockMessageId,
-            `## 📝 ${blockTitle}\n\n\`\`\`\n${processedText}\n\`\`\`\n\n## 🤖 响应\n\n${response.content}`,
+            `## ${blockTitle}\n\n${response.content}`,
             processedText,
-            '提示词执行器',
+            'May the 神谕 be with you',
             'prompt'
           );
           
@@ -207,12 +207,12 @@ export const usePromptExecutor = ({
             ? error.message
             : String(error);
           
-          // 更新消息，显示错误
+          // 更新消息，显示错误 - 移除提示词内容
           chatInterfaceRef.current.updateAiMessage(
             blockMessageId,
-            `## 📝 ${blockTitle}\n\n\`\`\`\n${processedText}\n\`\`\`\n\n## ❌ 错误\n\n执行此提示词块时出错: ${errorMessage}`,
+            `## ${blockTitle}\n\n**错误：**\n\n执行此提示词块时出错: ${errorMessage}`,
             processedText,
-            '提示词执行器',
+            'May the 神谕 be with you',
             'prompt'
           );
         }
@@ -243,14 +243,14 @@ export const usePromptExecutor = ({
           continue;
         }
         
-        // 显示提示词
-        const blockTitle = `全局提示词块: ${block.blockId}`;
+        // 显示提示词 - 改为"总结"
+        const blockTitle = `总结`;
         
         chatInterfaceRef.current.updateAiMessage(
           blockMessageId,
-          `## 📝 ${blockTitle}\n\n\`\`\`\n${processedText}\n\`\`\`\n\n*处理中...*`,
+          `## ${blockTitle}\n\n*处理中...*`,
           processedText,
-          '提示词执行器',
+          'May the 神谕 be with you',
           'prompt'
         );
         
@@ -264,12 +264,12 @@ export const usePromptExecutor = ({
           context.push(processedText);
           context.push(response.content);
           
-          // 更新消息，显示结果
+          // 更新消息，显示结果 - 移除提示词内容和响应标签
           chatInterfaceRef.current.updateAiMessage(
             blockMessageId,
-            `## 📝 ${blockTitle}\n\n\`\`\`\n${processedText}\n\`\`\`\n\n## 🤖 响应\n\n${response.content}`,
+            `## ${blockTitle}\n\n${response.content}`,
             processedText,
-            '提示词执行器',
+            'May the 神谕 be with you',
             'prompt'
           );
           
@@ -284,12 +284,12 @@ export const usePromptExecutor = ({
             ? error.message
             : String(error);
           
-          // 更新消息，显示错误
+          // 更新消息，显示错误 - 移除提示词内容
           chatInterfaceRef.current.updateAiMessage(
             blockMessageId,
-            `## 📝 ${blockTitle}\n\n\`\`\`\n${processedText}\n\`\`\`\n\n## ❌ 错误\n\n执行此提示词块时出错: ${errorMessage}`,
+            `## ${blockTitle}\n\n**错误：**\n\n执行此提示词块时出错: ${errorMessage}`,
             processedText,
-            '提示词执行器',
+            'May the 神谕 be with you',
             'prompt'
           );
         }
@@ -298,12 +298,12 @@ export const usePromptExecutor = ({
       // 完成执行，显示摘要
       console.log('[PromptExecutor] 所有提示词块执行完毕');
       
-      // 更新运行消息
+      // 更新运行消息 - 使用常规字体代替Emoji
       chatInterfaceRef.current.updateAiMessage(
         runningMessageId,
-        `# ✅ 提示词执行完成\n\n**Agent**: ${agentName}\n\n共执行了 ${allBlocks.length} 个提示词块 (卡片 ${cardBlocks.length} 个，全局 ${globalBlocks.length} 个)，请查看上方消息了解详情。`,
+        `# 执行完成\n\n**<span style="color: var(--brand-color);">运行：</span>** ${agentName}\n\n<span style="color: var(--text-light-gray);">共执行了 ${allBlocks.length} 个提示词块 (卡片 ${cardBlocks.length} 个，全局 ${globalBlocks.length} 个)，请查看下方消息了解详情。</span>`,
         '',
-        '提示词执行器',
+        'May the 神谕 be with you',
         'prompt'
       );
       
@@ -318,9 +318,9 @@ export const usePromptExecutor = ({
         
         chatInterfaceRef.current.updateAiMessage(
           'error-message-id', // 这个ID可能不存在，会被忽略
-          `# ❌ 提示词执行出错\n\n**Agent**: ${agentName}\n\n错误信息: ${errorMessage}`,
+          `# 执行出错\n\n**<span style="color: var(--brand-color);">运行：</span>** ${agentName}\n\n错误信息: ${errorMessage}`,
           '',
-          '提示词执行器',
+          'May the 神谕 be with you',
           'prompt'
         );
       }
