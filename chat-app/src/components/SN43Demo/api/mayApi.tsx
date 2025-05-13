@@ -309,13 +309,13 @@ export class MayAPI {
     }
   }
 
-  /**
-   * 发送聊天消息
-   * 用于运行提示词块时发送标准聊天消息
-   * @param params 聊天参数
-   * @returns 聊天响应
-   */
-  async sendChatMessage(params: ChatParams): Promise<ChatResponse> {
+/**
+ * 发送聊天消息
+ * 用于运行提示词块时发送标准聊天消息
+ * @param params 聊天参数
+ * @returns 聊天响应
+ */
+async sendChatMessage(params: ChatParams): Promise<ChatResponse> {
     try {
       // 确保API已初始化并从May设置获取最新密钥
       await this.ensureInitialized();

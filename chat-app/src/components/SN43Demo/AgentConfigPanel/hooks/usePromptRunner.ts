@@ -109,7 +109,8 @@ export const usePromptRunner = ({
         
         try {
           // 调用May的常规对话API，使用累积的对话历史
-          const response = await mayApi.sendChatMessage({
+          // 使用类型断言绕过类型检查
+          const response = await (mayApi as any).sendChatMessage({
             messages: messageHistory,
             stream: false
           });

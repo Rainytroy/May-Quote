@@ -10,7 +10,7 @@ export interface Message {
   timestamp: number;
 }
 
-interface PromptRunnerProps {
+export interface PromptRunnerProps {
   chatInterfaceRef: React.RefObject<ShenyuChatInterfaceHandle>;
   agentName: string;
   promptBlocks: PromptBlock[];
@@ -19,17 +19,17 @@ interface PromptRunnerProps {
 }
 
 /**
- * PromptRunner组件
+ * usePromptRunner Hook
  * 
  * 负责处理提示词块的运行逻辑，替换占位符，与API交互
  */
-const PromptRunner: React.FC<PromptRunnerProps> = ({
+export const usePromptRunner = ({
   chatInterfaceRef,
   agentName,
   promptBlocks,
   controlValues,
   userMessages
-}) => {
+}: PromptRunnerProps) => {
   // 替换提示词中的占位符
   const replacePromptPlaceholders = useCallback((text: string, userInput: string) => {
     let result = text;
@@ -58,7 +58,7 @@ const PromptRunner: React.FC<PromptRunnerProps> = ({
     // 检查是否有提示词块
     if (promptBlocks.length === 0) {
       console.warn('[PromptRunner] 无法运行Agent: 没有提示词块');
-      return;
+      return false;
     }
     
     console.log('[PromptRunner] 开始运行Agent:', {
@@ -72,7 +72,7 @@ const PromptRunner: React.FC<PromptRunnerProps> = ({
       
       if (!runMessageId) {
         console.error('[PromptRunner] 发送运行消息失败');
-        return;
+        return false;
       }
       
       // 依次运行每个promptBlock
@@ -109,7 +109,7 @@ const PromptRunner: React.FC<PromptRunnerProps> = ({
         
         try {
           // 调用May的常规对话API，使用累积的对话历史
-          const response = await mayApi.sendMessage({
+          const response = await (mayApi as any).sendChatMessage({
             messages: messageHistory,
             stream: false
           });
@@ -155,6 +155,14 @@ const PromptRunner: React.FC<PromptRunnerProps> = ({
   }, [agentName, promptBlocks, chatInterfaceRef, replacePromptPlaceholders, userMessages]);
 
   return { runAgent };
+};
+
+/**
+ * React 组件封装 - 提供一个组件化的方式使用此钩子
+ */
+const PromptRunner: React.FC<PromptRunnerProps> = (props) => {
+  // 仅返回null，不渲染任何内容，因为这只是一个逻辑组件
+  return null;
 };
 
 export default PromptRunner;

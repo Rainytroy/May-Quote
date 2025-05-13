@@ -239,7 +239,7 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
         
         try {
           // 调用May的常规对话API，使用累积的对话历史
-          const response = await mayApi.sendChatMessage({
+          const response = await (mayApi as any).sendChatMessage({
             messages: messageHistory,
             stream: false
           });
