@@ -715,6 +715,7 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
               agentName={agentName}
               onAgentNameChange={handleAgentNameChange}
               onRunAgent={runAgent}
+              controlValues={controlValues}
             />
           ) : (
             <InteractionHistoryPanel 

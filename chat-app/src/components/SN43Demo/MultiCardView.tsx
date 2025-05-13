@@ -128,6 +128,8 @@ const MultiCardView: React.FC<MultiCardViewProps> = ({
                       </div>
                       <input
                         type="text"
+                        id={key}  // 添加id属性，值为inputB1等
+                        data-id={key} // 添加data-id备用
                         defaultValue={defaultValue}
                         placeholder={`请输入${labelText || key}的值`}
                         style={{
@@ -217,11 +219,17 @@ const MultiCardView: React.FC<MultiCardViewProps> = ({
               
               {/* 提示词块内容 - 仅在展开状态显示 */}
               {!isPromptCollapsed(card.id, promptId) && (
-                <div style={{
-                  padding: 'var(--space-md)',
-                  color: 'var(--text-white)',
-                  whiteSpace: 'pre-wrap'
-                }}>
+                <div 
+                  id={promptId}
+                  data-card-id={card.id}
+                  data-prompt-id={promptId}
+                  className="prompt-block-content"
+                  style={{
+                    padding: 'var(--space-md)',
+                    color: 'var(--text-white)',
+                    whiteSpace: 'pre-wrap'
+                  }}
+                >
                   {promptText}
                 </div>
               )}
@@ -282,15 +290,21 @@ const MultiCardView: React.FC<MultiCardViewProps> = ({
             </div>
             
             {/* 全局提示词块内容 - 仅在展开状态显示 */}
-            {!isPromptCollapsed('global', promptId) && (
-              <div style={{
-                padding: 'var(--space-md)',
-                color: 'var(--text-white)',
-                whiteSpace: 'pre-wrap'
-              }}>
-                {promptText}
-              </div>
-            )}
+              {!isPromptCollapsed('global', promptId) && (
+                <div 
+                  id={promptId}
+                  data-card-id="global"
+                  data-prompt-id={promptId}
+                  className="prompt-block-content global"
+                  style={{
+                    padding: 'var(--space-md)',
+                    color: 'var(--text-white)',
+                    whiteSpace: 'pre-wrap'
+                  }}
+                >
+                  {promptText}
+                </div>
+              )}
           </div>
         ))}
       </div>
