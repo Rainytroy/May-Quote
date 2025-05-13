@@ -15,6 +15,7 @@ export interface ShenyuMessage {
   apiRawResponse?: string; // API原始响应
   activeTemplate?: string; // 当前使用的模板ID
   sender?: string;        // 自定义发送者名称
+  type?: 'json' | 'prompt'; // 消息类型：json(默认) 或 prompt(纯文本提示词)
 }
 
 interface ShenyuMessageItemProps {
@@ -167,7 +168,9 @@ const ShenyuMessageItem: React.FC<ShenyuMessageItemProps> = ({
         ) : (
           <div>
             {/* AI消息加载状态显示加载动画 */}
+            {/* 根据消息类型和状态显示不同内容 */}
             {message.loading || (!message.jsonOutput && !message.apiRawResponse) ? (
+              /* 加载状态显示 */
               <div className="loading-state" style={{ 
                 display: 'flex', 
                 flexDirection: 'column',
@@ -228,7 +231,29 @@ const ShenyuMessageItem: React.FC<ShenyuMessageItemProps> = ({
                   </div>
                 )}
               </div>
+            ) : message.type === 'prompt' ? (
+              /* Prompt类型消息 - 类似May的普通消息，仅显示内容，没有工具栏 */
+              <div 
+                className="markdown-body"
+                style={{ 
+                  whiteSpace: 'pre-wrap', 
+                  wordBreak: 'break-word',
+                  overflow: 'visible' // 不限制高度
+                }}
+              >
+                {/* 简单的Markdown渲染，与May类似 */}
+                <div
+                  dangerouslySetInnerHTML={{ 
+                    __html: getDisplayContent()
+                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+                      .replace(/\*([^*]*)\*/g, '<em>$1</em>') // Italic
+                      .replace(/`([^`]*)`/g, '<code style="background-color: #2d3748; padding: 2px 4px; border-radius: 3px; font-family: monospace;">$1</code>') // Inline code
+                      .replace(/\n/g, '<br/>') // Line breaks
+                  }} 
+                />
+              </div>
             ) : (
+              /* 默认JSON类型消息 - 原有的JSON/API双视图 */
               <>
                 {/* JSON/API响应内容 - 根据内容类型决定渲染方式 */}
                 <div style={{ maxHeight: '400px', overflow: 'auto' }}>
@@ -266,8 +291,6 @@ const ShenyuMessageItem: React.FC<ShenyuMessageItemProps> = ({
                       return (
                         <div 
                           style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
-                          // 使用dangerouslySetInnerHTML仅用于开发环境
-                          // 在生产环境应使用安全的Markdown渲染库
                           dangerouslySetInnerHTML={{ 
                             __html: content
                               .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
@@ -281,7 +304,7 @@ const ShenyuMessageItem: React.FC<ShenyuMessageItemProps> = ({
                   })()}
                 </div>
                 
-                {/* 底部工具栏 */}
+                {/* 底部工具栏 - 只在JSON类型消息中显示 */}
                 {message.jsonOutput && message.apiRawResponse && (
                   <div className="shenyu-message-footer" style={{
                     display: 'flex',

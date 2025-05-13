@@ -221,14 +221,14 @@ export const usePromptRunner = ({
           // 更新消息UI - 显示为普通文本而不是JSON
           if (chatInterfaceRef.current) {
             console.log(`[PromptRunner] 更新UI消息 ${i+1}...`);
-            // 注意参数顺序：messageId, content, rawResponse, customSender
-            // 这里content应该是直接显示的文本，不应被当作JSON
-            // ShenyuMessageItem组件会根据这些参数正确显示消息
+            // 注意参数顺序：messageId, content, rawResponse, customSender, type
+            // 这里使用type: 'prompt'参数确保消息以纯文本提示词格式显示
             chatInterfaceRef.current.updateAiMessage(
               aiMessageId,  
               aiResponse,    // 显示文本内容 - 会以markdown形式渲染
               aiResponse,    // 原始响应
-              "May the 神谕 be with you" // 自定义发送者名称
+              "May the 神谕 be with you", // 自定义发送者名称
+              'prompt'       // 消息类型 - 使用prompt类型
             );
           }
           
