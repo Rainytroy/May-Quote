@@ -125,10 +125,10 @@ export const usePromptExecutor = ({
         return;
       }
       
-      // 更新运行消息
+      // 更新运行消息 - 保持与执行完成消息相同的风格
       chatInterfaceRef.current.updateAiMessage(
         runningMessageId,
-        `# May the 神谕 be with you\n\n**<span style="color: var(--brand-color);">运行：</span>** ${agentName}\n\n*正在加载提示词块...*`,
+        `May the 神谕 be with you\n\n<span style="color: var(--brand-color);">运行：</span> ${agentName}\n\n*正在加载提示词块...*`,
         '',
         'May the 神谕 be with you',
         'prompt'
@@ -298,10 +298,10 @@ export const usePromptExecutor = ({
       // 完成执行，显示摘要
       console.log('[PromptExecutor] 所有提示词块执行完毕');
       
-      // 更新运行消息 - 使用常规字体代替Emoji
+      // 更新运行消息 - 使用常规字体代替Emoji，移除Markdown标记
       chatInterfaceRef.current.updateAiMessage(
         runningMessageId,
-        `# 执行完成\n\n**<span style="color: var(--brand-color);">运行：</span>** ${agentName}\n\n<span style="color: var(--text-light-gray);">共执行了 ${allBlocks.length} 个提示词块 (卡片 ${cardBlocks.length} 个，全局 ${globalBlocks.length} 个)，请查看下方消息了解详情。</span>`,
+        `执行完成\n\n<span style="color: var(--brand-color);">运行：</span> ${agentName}\n\n<span style="color: var(--text-light-gray);">共执行了 ${allBlocks.length} 个提示词块 (卡片 ${cardBlocks.length} 个，全局 ${globalBlocks.length} 个)，请查看下方消息了解详情。</span>`,
         '',
         'May the 神谕 be with you',
         'prompt'
@@ -318,7 +318,7 @@ export const usePromptExecutor = ({
         
         chatInterfaceRef.current.updateAiMessage(
           'error-message-id', // 这个ID可能不存在，会被忽略
-          `# 执行出错\n\n**<span style="color: var(--brand-color);">运行：</span>** ${agentName}\n\n错误信息: ${errorMessage}`,
+          `执行出错\n\n<span style="color: var(--brand-color);">运行：</span> ${agentName}\n\n错误信息: ${errorMessage}`,
           '',
           'May the 神谕 be with you',
           'prompt'
