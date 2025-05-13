@@ -288,8 +288,7 @@ const ShenyuMessageItem: React.FC<ShenyuMessageItemProps> = ({
           className="message-header"
           style={{
             textAlign: isUser ? 'right' : 'left',
-            width: '100%',
-            maxWidth: '80%',
+            width: '80%', // 固定宽度替代maxWidth，与气泡保持一致
             color: 'var(--text-light-gray)',
             fontSize: 'var(--font-sm)',
             marginBottom: 'var(--space-xs)'
@@ -309,7 +308,7 @@ const ShenyuMessageItem: React.FC<ShenyuMessageItemProps> = ({
             color: isUser ? 'var(--text-dark)' : 'var(--text-white)',
             padding: 'var(--space-md)',
             borderRadius: '6px',
-            maxWidth: '80%',
+            width: '80%', // 固定宽度替代maxWidth，保持视觉一致性
             minWidth: '200px',
             boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
             position: 'relative',
