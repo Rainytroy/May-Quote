@@ -78,43 +78,12 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
   // 滚动到底部的ref
   const historyContainerRef = useRef<HTMLDivElement>(null);
   
-  // API配置状态
-  const [apiConfig, setApiConfig] = useState<{
-    baseUrl: string;
-    apiKey?: string;
-    initialized: boolean;
-    modelId?: string;
-    modelName?: string;
-  }>({ baseUrl: '', initialized: false });
-  
-  // 获取当前的API配置
-  useEffect(() => {
-    const updateApiConfig = () => {
-      const config = mayApi.getApiConfig();
-      setApiConfig(config);
-    };
-    
-    // 初始加载时获取配置
-    updateApiConfig();
-    
-    // 定期刷新配置
-    const intervalId = setInterval(updateApiConfig, 5000);
-    
-    // 清理函数
-    return () => clearInterval(intervalId);
-  }, []);
-  
   // 添加历史卡片后滚动到底部
   useEffect(() => {
     if (historyContainerRef.current && historyCards.length > 0) {
       historyContainerRef.current.scrollTop = historyContainerRef.current.scrollHeight;
     }
   }, [historyCards]);
-  
-  // 手动刷新API配置
-  const refreshApiConfig = () => {
-    setApiConfig(mayApi.getApiConfig());
-  };
 
   // 添加交互记录
   const addInteraction = (type: 'prompt' | 'response', content: string, note?: string) => {
