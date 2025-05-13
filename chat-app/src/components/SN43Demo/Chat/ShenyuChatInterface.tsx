@@ -7,8 +7,8 @@ import { usePromptTemplates } from '../contexts/PromptTemplateContext';
 
 // 定义组件接口
 export interface ShenyuChatInterfaceHandle {
-  updateAiMessage: (messageId: string, jsonOutput: string, apiRawResponse: string) => void;
-  handleSubmit: (content: string) => Promise<string | undefined>;
+  updateAiMessage: (messageId: string, jsonOutput: string, apiRawResponse: string, customSender?: string) => void;
+  handleSubmit: (content: string, hideUserMessage?: boolean) => Promise<string | undefined>;
 }
 
 interface ShenyuChatInterfaceProps {
@@ -41,7 +41,7 @@ const ShenyuChatInterface = forwardRef<ShenyuChatInterfaceHandle, ShenyuChatInte
   const { activeTemplates } = usePromptTemplates();
   
   // 处理提交消息
-  const handleSubmit = async (content: string) => {
+  const handleSubmit = async (content: string, hideUserMessage: boolean = false) => {
     console.log('[ShenyuChatInterface] handleSubmit 被调用，收到内容:', content.substring(0, 30) + (content.length > 30 ? '...' : ''));
     console.trace('[ShenyuChatInterface] handleSubmit 调用堆栈');
     
@@ -59,7 +59,8 @@ const ShenyuChatInterface = forwardRef<ShenyuChatInterfaceHandle, ShenyuChatInte
     console.log('[ShenyuChatInterface] 生成的消息ID:', {
       userMessageId,
       aiMessageId,
-      timestamp
+      timestamp,
+      hideUserMessage
     });
     
     // 创建用户消息
@@ -80,8 +81,14 @@ const ShenyuChatInterface = forwardRef<ShenyuChatInterfaceHandle, ShenyuChatInte
       activeTemplate: activeTemplates.id
     };
     
-    // 添加消息到列表
-    setMessages(prev => [...prev, userMessage, aiMessage]);
+    // 添加消息到列表 - 如果hideUserMessage为true，则只添加AI消息
+    if (hideUserMessage) {
+      setMessages(prev => [...prev, aiMessage]);
+      console.log('[ShenyuChatInterface] 仅添加AI消息到列表，当前消息数:', messages.length + 1);
+    } else {
+      setMessages(prev => [...prev, userMessage, aiMessage]);
+      console.log('[ShenyuChatInterface] 消息已添加到列表，当前消息数:', messages.length + 2);
+    }
     console.log('[ShenyuChatInterface] 消息已添加到列表，当前消息数:', messages.length + 2);
     
     // 标记为生成中
@@ -129,11 +136,12 @@ const ShenyuChatInterface = forwardRef<ShenyuChatInterfaceHandle, ShenyuChatInte
   };
   
   // 提供给外部更新AI消息的方法
-  const updateAiMessage = (messageId: string, jsonOutput: string, apiRawResponse: string) => {
+  const updateAiMessage = (messageId: string, jsonOutput: string, apiRawResponse: string, customSender?: string) => {
     console.log('[ShenyuChatInterface] 开始更新AI消息:', {
       messageId, 
       jsonAvailable: !!jsonOutput, 
       apiResponseAvailable: !!apiRawResponse,
+      hasCustomSender: !!customSender,
       currentMessages: messages.length
     });
 
@@ -159,7 +167,8 @@ const ShenyuChatInterface = forwardRef<ShenyuChatInterfaceHandle, ShenyuChatInte
               ...msg, 
               loading: false, 
               jsonOutput,
-              apiRawResponse
+              apiRawResponse,
+              ...(customSender ? { sender: customSender } : {})
             } 
           : msg
       );

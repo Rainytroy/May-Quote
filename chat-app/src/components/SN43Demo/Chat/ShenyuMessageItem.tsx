@@ -14,6 +14,7 @@ export interface ShenyuMessage {
   jsonOutput?: string;   // JSON输出内容
   apiRawResponse?: string; // API原始响应
   activeTemplate?: string; // 当前使用的模板ID
+  sender?: string;        // 自定义发送者名称
 }
 
 interface ShenyuMessageItemProps {
@@ -121,7 +122,7 @@ const ShenyuMessageItem: React.FC<ShenyuMessageItemProps> = ({
           marginBottom: 'var(--space-xs)'
         }}
       >
-        {isUser ? '你' : 'May the 神谕 be with you'}
+        {isUser ? '你' : message.sender || 'May the 神谕 be with you'}
         <span style={{ marginLeft: 'var(--space-sm)', fontSize: 'var(--font-xs)' }}>
           {formatSmartTime(message.timestamp)}
         </span>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { ControlDefinition } from '../Controls/DynamicControl';
 import ControlsContainer from '../Controls/ControlsContainer';
 import { AdminInputs, PromptBlock, Card, GlobalPromptBlocks } from '../types';
@@ -100,6 +100,9 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
   // 右侧面板Tab状态
   const [activeRightTab, setActiveRightTab] = useState<RightPanelTab>('cards');
   
+  // Agent名称状态 - 默认为用户第一条消息的前20个字符
+  const [agentName, setAgentName] = useState<string>('未命名Agent');
+  
   // 添加历史卡片后滚动到底部
   useEffect(() => {
     if (historyContainerRef.current && historyCards.length > 0) {
@@ -146,6 +149,102 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
     }
   }, [activeRightTab]);
   
+  // 更新Agent名称
+  const handleAgentNameChange = useCallback((newName: string) => {
+    setAgentName(newName);
+    console.log('[AgentConfigPanel] Agent名称已更新:', newName);
+  }, []);
+  
+  // 运行Agent - 依次执行promptBlocks
+  const runAgent = useCallback(async () => {
+    // 检查是否有卡片和promptBlocks
+    if (cards.length === 0 || promptBlocks.length === 0) {
+      console.warn('[AgentConfigPanel] 无法运行Agent: 没有卡片或提示词块');
+      return;
+    }
+    
+    console.log('[AgentConfigPanel] 开始运行Agent:', {
+      agentName,
+      cardsCount: cards.length,
+      promptBlocksCount: promptBlocks.length
+    });
+    
+    try {
+      // 首先发送一条用户消息，内容为"运行：[Agent名称]"
+      const runMessageId = await chatInterfaceRef.current?.handleSubmit(`运行：${agentName}`);
+      
+      if (!runMessageId) {
+        console.error('[AgentConfigPanel] 发送运行消息失败');
+        return;
+      }
+      
+      // 依次运行每个promptBlock
+      console.log('[AgentConfigPanel] 开始依次运行提示词块...');
+      
+      // 创建一个包含上下文的数组
+      const messageHistory: { role: 'user' | 'assistant', content: string }[] = [
+        { role: 'user', content: `运行：${agentName}` }
+      ];
+      
+      // 依次运行每个promptBlock
+      for (let i = 0; i < promptBlocks.length; i++) {
+        const block = promptBlocks[i];
+        console.log(`[AgentConfigPanel] 运行第 ${i+1}/${promptBlocks.length} 个提示词块`);
+        
+        // 添加提示词块作为用户消息但不显示在UI中
+        messageHistory.push({ role: 'user', content: block.text });
+        
+        // 显示AI响应
+        const aiMessageId = await chatInterfaceRef.current?.handleSubmit(block.text, true);
+        
+        if (!aiMessageId) {
+          console.error(`[AgentConfigPanel] 为提示词块 ${i+1} 创建消息ID失败`);
+          continue;
+        }
+        
+        try {
+          // 调用May的AI服务，使用累积的对话历史
+          const response = await mayApi.executeShenyuRequest({
+            userInputs: { context: JSON.stringify(messageHistory) },
+            adminInputs: adminInputs,
+            promptBlocks: [block],
+            controls: controlValues
+          });
+          
+          // 更新对话历史
+          messageHistory.push({ role: 'assistant', content: response.result });
+          
+          // 更新消息UI
+          if (chatInterfaceRef.current) {
+            chatInterfaceRef.current.updateAiMessage(
+              aiMessageId, 
+              response.result, 
+              response.result,
+              "May the 神谕 be with you" // 自定义发送者名称
+            );
+          }
+          
+          // 添加短暂延迟，使执行看起来更自然
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (error) {
+          console.error(`[AgentConfigPanel] 运行提示词块 ${i+1} 时出错:`, error);
+          if (chatInterfaceRef.current) {
+            chatInterfaceRef.current.updateAiMessage(
+              aiMessageId,
+              `运行错误: ${error instanceof Error ? error.message : '未知错误'}`,
+              `运行错误: ${error instanceof Error ? error.message : '未知错误'}`,
+              "May the 神谕 be with you"
+            );
+          }
+        }
+      }
+      
+      console.log('[AgentConfigPanel] 所有提示词块运行完毕');
+    } catch (error) {
+      console.error('[AgentConfigPanel] 运行Agent时发生错误:', error);
+    }
+  }, [cards, promptBlocks, agentName, adminInputs, controlValues]);
+  
   // 生成Agent卡片 - 集成新的聊天界面
   const generateAgent = useCallback(async (content: string) => {
     if (!content.trim()) {
@@ -158,6 +257,15 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
       isGenerating,
       content: content.substring(0, 30) + (content.length > 30 ? '...' : '')
     });
+    
+    // 初次生成时，设置Agent名称为用户输入的前20个字符
+    if (!hasGenerated) {
+      const truncatedName = content.length > 20 
+        ? content.substring(0, 20) + '...' 
+        : content;
+      setAgentName(truncatedName);
+      console.log('[AgentConfigPanel] 设置初始Agent名称:', truncatedName);
+    }
 
     // 确保切换到卡片预览Tab
     switchToCardsTab();
@@ -655,6 +763,9 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
               cards={cards}
               globalPromptBlocks={globalPromptBlocks}
               isPreview={true}
+              agentName={agentName}
+              onAgentNameChange={handleAgentNameChange}
+              onRunAgent={runAgent}
             />
           ) : (
             <InteractionHistoryPanel 
