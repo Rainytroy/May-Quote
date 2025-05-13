@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Message } from './hooks/usePromptRunner';
+import { useAgentRunner } from './hooks/useAgentRunner';
 import { ControlDefinition } from '../Controls/DynamicControl';
 import ControlsContainer from '../Controls/ControlsContainer';
 import { AdminInputs, PromptBlock, Card, GlobalPromptBlocks } from '../types';
@@ -182,102 +183,16 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
     return result;
   }, [controlValues]);
   
-  // 运行Agent - 依次执行promptBlocks，替换占位符
-  const runAgent = useCallback(async () => {
-    // 检查是否有卡片和promptBlocks
-    if (cards.length === 0 || promptBlocks.length === 0) {
-      console.warn('[AgentConfigPanel] 无法运行Agent: 没有卡片或提示词块');
-      return;
-    }
-    
-    console.log('[AgentConfigPanel] 开始运行Agent:', {
-      agentName,
-      cardsCount: cards.length,
-      promptBlocksCount: promptBlocks.length
-    });
-    
-    try {
-      // 首先发送一条用户消息，内容为"运行：[Agent名称]"
-      const runMessageId = await chatInterfaceRef.current?.handleSubmit(`运行：${agentName}`);
-      
-      if (!runMessageId) {
-        console.error('[AgentConfigPanel] 发送运行消息失败');
-        return;
-      }
-      
-      // 依次运行每个promptBlock
-      console.log('[AgentConfigPanel] 开始依次运行提示词块...');
-      
-      // 创建一个包含上下文的数组
-      const messageHistory: { role: 'user' | 'assistant', content: string }[] = [
-        { role: 'user', content: `运行：${agentName}` }
-      ];
-      
-      // 假设第一条消息包含了用户的原始需求
-      const userInput = chatMessages.length > 0 && chatMessages[0].role === 'user' 
-        ? chatMessages[0].content 
-        : agentName;
-      
-      // 依次运行每个promptBlock
-      for (let i = 0; i < promptBlocks.length; i++) {
-        const originalBlock = promptBlocks[i];
-        console.log(`[AgentConfigPanel] 运行第 ${i+1}/${promptBlocks.length} 个提示词块`);
-        
-        // 替换提示词中的占位符
-        const processedText = replacePromptPlaceholders(originalBlock.text, userInput);
-        
-        // 添加处理后的提示词作为用户消息，但不显示在UI中
-        messageHistory.push({ role: 'user', content: processedText });
-        
-        // 显示AI响应（不显示用户消息）
-        const aiMessageId = await chatInterfaceRef.current?.handleSubmit(processedText, true);
-        
-        if (!aiMessageId) {
-          console.error(`[AgentConfigPanel] 为提示词块 ${i+1} 创建消息ID失败`);
-          continue;
-        }
-        
-        try {
-          // 调用May的常规对话API，使用累积的对话历史
-          const response = await (mayApi as any).sendChatMessage({
-            messages: messageHistory,
-            stream: false
-          });
-          
-          // 更新对话历史
-          const aiResponse = response.content || '未能获取有效响应';
-          messageHistory.push({ role: 'assistant', content: aiResponse });
-          
-          // 更新消息UI - 显示为普通文本而不是JSON
-          if (chatInterfaceRef.current) {
-            chatInterfaceRef.current.updateAiMessage(
-              aiMessageId, 
-              aiResponse, // 显示文本内容，不是JSON
-              aiResponse, // 原始响应也是文本
-              "May the 神谕 be with you" // 自定义发送者名称
-            );
-          }
-          
-          // 添加短暂延迟，使执行看起来更自然
-          await new Promise(resolve => setTimeout(resolve, 800));
-        } catch (error) {
-          console.error(`[AgentConfigPanel] 运行提示词块 ${i+1} 时出错:`, error);
-          if (chatInterfaceRef.current) {
-            chatInterfaceRef.current.updateAiMessage(
-              aiMessageId,
-              `运行错误: ${error instanceof Error ? error.message : '未知错误'}`,
-              `运行错误: ${error instanceof Error ? error.message : '未知错误'}`,
-              "May the 神谕 be with you"
-            );
-          }
-        }
-      }
-      
-      console.log('[AgentConfigPanel] 所有提示词块运行完毕');
-    } catch (error) {
-      console.error('[AgentConfigPanel] 运行Agent时发生错误:', error);
-    }
-  }, [cards, promptBlocks, agentName, controlValues, replacePromptPlaceholders, chatMessages]);
+  // 使用自定义Hook运行Agent
+  const { runAgent } = useAgentRunner({
+    chatInterfaceRef,
+    agentName,
+    cards,
+    promptBlocks,
+    controlValues,
+    chatMessages,
+    addInteraction
+  });
   
   // 生成Agent卡片 - 集成新的聊天界面
   const generateAgent = useCallback(async (content: string) => {

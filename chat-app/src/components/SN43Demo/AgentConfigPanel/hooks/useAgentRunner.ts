@@ -4,7 +4,7 @@ import { usePromptRunner, Message } from '../hooks/usePromptRunner';
 import { PromptBlock, Card, GlobalPromptBlocks } from '../../types';
 
 interface UseAgentRunnerProps {
-  chatInterfaceRef: RefObject<ShenyuChatInterfaceHandle>;
+  chatInterfaceRef: RefObject<ShenyuChatInterfaceHandle | null>;
   agentName: string;
   cards: Card[];
   promptBlocks: PromptBlock[];

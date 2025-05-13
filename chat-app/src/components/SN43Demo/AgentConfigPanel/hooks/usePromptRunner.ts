@@ -14,7 +14,7 @@ export interface Message {
 }
 
 interface UsePromptRunnerParams {
-  chatInterfaceRef: React.RefObject<ShenyuChatInterfaceHandle>;
+  chatInterfaceRef: React.RefObject<ShenyuChatInterfaceHandle | null>;
   agentName: string;
   promptBlocks: PromptBlock[];
   controlValues: Record<string, any>;
