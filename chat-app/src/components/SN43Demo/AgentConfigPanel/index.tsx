@@ -9,6 +9,7 @@ import MultiCardView from '../MultiCardView';
 // 导入拆分出的子组件
 import CardPreviewPanel from './components/CardPreviewPanel';
 import InteractionHistoryPanel from './components/InteractionHistoryPanel';
+import ApiStatusIndicator from './components/ApiStatusIndicator';
 
 // 交互记录类型
 interface InteractionEntry {
@@ -491,62 +492,19 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
         borderRight: '1px solid var(--border-color)',
         overflow: 'hidden'
       }}>
-        {/* 顶部API配置区域 */}
+        {/* 顶部标题区域 */}
         <div style={{
           padding: 'var(--space-md)',
-          borderBottom: '1px solid var(--border-color)'
+          borderBottom: '1px solid var(--border-color)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
         }}>
-          <h2 style={{ color: 'var(--text-white)' }}>Agent生成器</h2>
+          <h2 style={{ color: 'var(--text-white)', margin: 0 }}>Agent生成器</h2>
           
-          {/* API配置信息显示 */}
-          <div style={{
-            backgroundColor: 'var(--card-bg)',
-            padding: 'var(--space-md)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-color)',
-            marginBottom: 'var(--space-md)'
-          }}>
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              marginBottom: 'var(--space-sm)'
-            }}>
-              <h3 style={{ color: 'var(--text-white)', margin: 0, fontSize: 'var(--font-sm)' }}>MayAPI配置状态</h3>
-              <button
-                onClick={refreshApiConfig}
-                style={{
-                  backgroundColor: 'var(--secondary-bg)',
-                  color: 'var(--text-white)',
-                  border: 'none',
-                  borderRadius: 'var(--radius-sm)',
-                  padding: 'var(--space-xs) var(--space-sm)',
-                  cursor: 'pointer',
-                  fontSize: 'var(--font-xs)'
-                }}
-              >
-                刷新配置
-              </button>
-            </div>
-            
-            <div style={{ 
-              color: 'var(--text-light-gray)',
-              fontFamily: 'monospace',
-              fontSize: 'var(--font-xs)'
-            }}>
-              <div>BaseURL: <span style={{ color: 'var(--text-white)' }}>{apiConfig.baseUrl}</span></div>
-              <div>API密钥: <span style={{ color: apiConfig.apiKey ? 'var(--brand-color)' : 'var(--error-color)' }}>
-                {apiConfig.apiKey ? apiConfig.apiKey : '未设置'}
-              </span></div>
-              <div>模型: <span style={{ color: 'var(--text-white)' }}>
-                {apiConfig.modelName} <span style={{ color: 'var(--text-light-gray)' }}>({apiConfig.modelId})</span>
-              </span></div>
-              <div>初始化状态: <span style={{ 
-                color: apiConfig.initialized ? 'var(--brand-color)' : 'var(--error-color)'
-              }}>
-                {apiConfig.initialized ? '已初始化' : '未初始化'}
-              </span></div>
-            </div>
+          {/* 导入API状态指示器组件，位于右上角 */}
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <ApiStatusIndicator />
           </div>
         </div>
         
