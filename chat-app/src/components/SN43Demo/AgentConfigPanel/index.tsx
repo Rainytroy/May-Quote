@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ControlDefinition } from '../Controls/DynamicControl';
 import ControlsContainer from '../Controls/ControlsContainer';
 import { AdminInputs, PromptBlock, Card, GlobalPromptBlocks } from '../types';
@@ -10,6 +10,9 @@ import MultiCardView from '../MultiCardView';
 import CardPreviewPanel from './components/CardPreviewPanel';
 import InteractionHistoryPanel from './components/InteractionHistoryPanel';
 import ApiStatusIndicator from './components/ApiStatusIndicator';
+
+// 导入新的聊天组件
+import ShenyuChatInterface, { ShenyuChatInterfaceHandle } from '../Chat/ShenyuChatInterface';
 
 // 交互记录类型
 interface InteractionEntry {
@@ -41,9 +44,22 @@ interface AgentConfigPanelProps {
 const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
   onControlsGenerated
 }) => {
-  // 用户输入
-  const [userInput, setUserInput] = useState<string>('');
-  // 调整建议
+  console.log('[AgentConfigPanel] 组件已挂载');
+  
+  // 聊天界面引用
+  const chatInterfaceRef = useRef<ShenyuChatInterfaceHandle>(null);
+  
+  // 在挂载时检查ref
+  useEffect(() => {
+    console.log('[AgentConfigPanel] 检查chatInterfaceRef:', {
+      isChatInterfaceRefDefined: !!chatInterfaceRef,
+      isChatInterfaceCurrent: !!chatInterfaceRef.current,
+      hasChatInterfaceHandleSubmit: !!(chatInterfaceRef.current?.handleSubmit),
+      hasChatInterfaceUpdateAiMessage: !!(chatInterfaceRef.current?.updateAiMessage)
+    });
+  }, []);
+  
+  // 调整建议 - 保留原有状态
   const [adjustmentInput, setAdjustmentInput] = useState<string>('');
   // JSON输出
   const [jsonOutput, setJsonOutput] = useState<string>('');
@@ -95,7 +111,18 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
       note
     };
     
-    setInteractions(prev => [...prev, newEntry]);
+    console.log(`[AgentConfigPanel] 添加交互历史记录:`, {
+      类型: type,
+      备注: note || '无',
+      内容长度: content.length,
+      当前记录数: interactions.length
+    });
+    
+    setInteractions(prev => {
+      const newList = [...prev, newEntry];
+      console.log(`[AgentConfigPanel] 交互历史已更新，当前记录数: ${newList.length}`);
+      return newList;
+    });
   };
 
   // 从Context获取当前激活的模板
@@ -105,12 +132,18 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
   const [firstStagePrompt, setFirstStagePrompt] = useState<string>('');
   const [latestJsonOutput, setLatestJsonOutput] = useState<string>('');
   
-  // 生成Agent卡片 - 根据当前状态使用不同的提示词逻辑
-  const generateAgent = async () => {
-    if (!userInput.trim()) {
+  // 生成Agent卡片 - 集成新的聊天界面
+  const generateAgent = useCallback(async (content: string) => {
+    if (!content.trim()) {
       alert('请输入用户需求描述');
       return;
     }
+
+    console.log('[AgentConfigPanel] generateAgent被调用，当前状态：', {
+      hasGenerated,
+      isGenerating,
+      content: content.substring(0, 30) + (content.length > 30 ? '...' : '')
+    });
 
     setIsGenerating(true);
     
@@ -122,56 +155,88 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
       // 根据状态决定使用哪个阶段的提示词
       if (!hasGenerated) {
         // 初次生成 - 使用第一阶段提示词
-        prompt = activeTemplates.firstStage.replace('{#input}', userInput);
+        console.log('[AgentConfigPanel] 执行第一阶段提示词生成...');
+        prompt = activeTemplates.firstStage.replace('{#input}', content);
         interactionNote = '第一阶段生成提示词';
         userInputsData = {
-          input: userInput  // 使用实际的用户输入
+          input: content  // 使用实际的用户输入
         };
         
         // 保存第一阶段提示词，用于后续修改
         setFirstStagePrompt(prompt);
+        console.log('[AgentConfigPanel] 已保存第一阶段提示词，长度:', prompt.length);
       } else {
         // 修改已有内容 - 使用第二阶段提示词
+        console.log('[AgentConfigPanel] 执行第二阶段提示词生成...');
+        console.log('[AgentConfigPanel] 第二阶段状态:', {
+          hasFirstStagePrompt: !!firstStagePrompt,
+          firstStagePromptLength: firstStagePrompt?.length || 0,
+          hasLatestJsonOutput: !!latestJsonOutput,
+          latestJsonOutputLength: latestJsonOutput?.length || 0,
+          hasJsonOutput: !!jsonOutput,
+          jsonOutputLength: jsonOutput?.length || 0,
+          activeTemplatesID: activeTemplates.id,
+          hasSecondStageTemplate: !!activeTemplates.secondStage
+        });
+        
         // 1. 获取第一阶段的上下文
         // 2. 构建第二阶段提示词，替换占位符
         prompt = activeTemplates.secondStage
-          .replace('{#input}', userInput)
-          .replace('{#firstStagePrompt}', firstStagePrompt)
-          .replace('{#latestResult}', latestJsonOutput || jsonOutput);
+          .replace('{#input}', content)
+          .replace('{#firstStagePrompt}', firstStagePrompt || '')
+          .replace('{#latestResult}', latestJsonOutput || jsonOutput || '');
+        
+        console.log('[AgentConfigPanel] 第二阶段提示词构建完成，长度:', prompt.length);
         
         interactionNote = '第二阶段修改提示词';
         userInputsData = {
-          input: userInput,
-          firstStagePrompt: firstStagePrompt,
-          latestResult: latestJsonOutput || jsonOutput
+          input: content,
+          firstStagePrompt: firstStagePrompt || '',
+          latestResult: latestJsonOutput || jsonOutput || ''
         };
       }
       
       setCurrentPrompt(prompt);
       
       // 记录提示词
+      console.log('[AgentConfigPanel] 调用addInteraction记录提示词');
       addInteraction('prompt', prompt, interactionNote);
       
+      // 获取一个唯一的消息ID来更新对话
+      console.log('[AgentConfigPanel] 开始调用handleSubmit获取消息ID...');
+      const aiMessageId = await chatInterfaceRef.current?.handleSubmit(content);
+      console.log('[AgentConfigPanel] 获得的消息ID:', aiMessageId);
+      
+      if (!aiMessageId) {
+        console.error('[AgentConfigPanel] 错误: 未能获取有效的消息ID!');
+        throw new Error('消息ID未生成');
+      }
+      
       // 调用May的AI服务
+      console.log('[AgentConfigPanel] 开始调用API服务...');
       const response = await mayApi.executeShenyuRequest({
         userInputs: userInputsData,
         adminInputs: adminInputs,
         promptBlocks: [{ text: prompt }],
         controls: controlValues // 包含控件值
       });
+      console.log('[AgentConfigPanel] API服务调用完成, 获得响应');
       
       // 记录响应
+      console.log('[AgentConfigPanel] 调用addInteraction记录API响应');
       addInteraction('response', response.result, 'AI响应');
       
       // 设置原始响应
       setApiRawResponse(response.result);
       
       // 提取JSON部分并格式化
+      console.log('[AgentConfigPanel] 开始从响应中提取JSON...');
       const jsonRegex = /{[\s\S]*"adminInputs"[\s\S]*"promptBlocks"[\s\S]*}/g;
       const matches = response.result.match(jsonRegex);
       
       let jsonStr = '';
       if (matches && matches.length > 0) {
+        console.log('[AgentConfigPanel] 成功匹配到JSON内容');
         jsonStr = JSON.stringify(JSON.parse(matches[0]), null, 2);
         setJsonOutput(jsonStr);
         
@@ -180,9 +245,34 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
         
         // 解析JSON
         parseJsonConfig(jsonStr);
+        
+        // 更新对话流中的消息
+        console.log('[AgentConfigPanel] 调用updateAiMessage更新消息内容:', {
+          messageId: aiMessageId,
+          jsonLength: jsonStr.length,
+          responseLength: response.result.length
+        });
+        
+        try {
+          if (chatInterfaceRef.current) {
+            chatInterfaceRef.current.updateAiMessage(aiMessageId, jsonStr, response.result);
+            console.log('[AgentConfigPanel] updateAiMessage调用成功');
+          } else {
+            console.error('[AgentConfigPanel] 错误: chatInterfaceRef.current为null!');
+          }
+        } catch (updateError) {
+          console.error('[AgentConfigPanel] 更新AI消息时出错:', updateError);
+        }
       } else {
+        console.warn('[AgentConfigPanel] 未找到有效的JSON数据!');
         jsonStr = '未找到有效的JSON数据';
         setJsonOutput(jsonStr);
+        
+        // 更新对话流中的消息
+        console.log('[AgentConfigPanel] 调用updateAiMessage更新错误消息');
+        if (chatInterfaceRef.current) {
+          chatInterfaceRef.current.updateAiMessage(aiMessageId, jsonStr, response.result);
+        }
       }
       
       // 创建新的历史卡片ID
@@ -190,7 +280,7 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
       
       // 添加到历史卡片
       const newCard = {
-        input: userInput,
+        input: content,
         jsonOutput: jsonStr,
         apiRawResponse: response.result,
         timestamp: newCardId,
@@ -210,9 +300,6 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
         ...prev,
         [newCardId]: jsonStr
       }));
-      
-      // 清空输入框，准备下一次输入
-      setUserInput('');
       
       // 设置已生成状态
       setHasGenerated(true);
@@ -235,7 +322,7 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
     } finally {
       setIsGenerating(false);
     }
-  };
+  }, [activeTemplates, adminInputs, controlValues, firstStagePrompt, hasGenerated, jsonOutput, latestJsonOutput]);
 
   // 生成控件 - 先清空UI再渲染
   const generateControls = (jsonText: string, cardId?: number) => {
@@ -427,7 +514,6 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
     setHistoryCards([]);
     setActiveJsonTabs({});
     setEditableJsons({});
-    setUserInput('');
     // 重置提示词相关状态
     setFirstStagePrompt('');
     setLatestJsonOutput('');
@@ -447,13 +533,30 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
     }));
   };
 
+  // 设置全局生成函数 - 移动到generateAgent定义之后
+  useEffect(() => {
+    console.log('[AgentConfigPanel] 设置全局生成函数');
+    
+    // 在全局对象上设置generateAgent函数引用
+    (window as any).shenyuGenerateAgent = (content: string) => {
+      console.log('[全局函数] 直接调用generateAgent:', content);
+      return generateAgent(content);
+    };
+    
+    // 组件卸载时清理全局函数
+    return () => {
+      delete (window as any).shenyuGenerateAgent;
+      console.log('[AgentConfigPanel] 全局生成函数已移除');
+    };
+  }, [generateAgent]); // 依赖于generateAgent确保它已定义
+
   return (
     <div className="agent-config-panel" style={{
       display: 'flex',
       height: '100%',
       overflow: 'hidden'
     }}>
-      {/* 左侧面板 - 输入区和历史卡片 */}
+      {/* 左侧面板 - 神谕聊天界面 */}
       <div className="left-panel" style={{
         width: '33.3%',
         display: 'flex',
@@ -461,241 +564,23 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
         borderRight: '1px solid var(--border-color)',
         overflow: 'hidden'
       }}>
-        
-        {/* 中部历史卡片滚动区域 */}
-        <div 
-          ref={historyContainerRef}
-          className="history-cards" 
-          style={{
-            flex: 1,
-            padding: 'var(--space-md)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 'var(--space-md)',
-            overflow: 'auto'
+        {/* 聊天界面组件 */}
+        <ShenyuChatInterface 
+          ref={(handle) => {
+            chatInterfaceRef.current = handle;
+            console.log('[AgentConfigPanel] ShenyuChatInterface ref已设置:',
+              handle ? '成功' : '失败');
+            if (handle) {
+              console.log('[AgentConfigPanel] ShenyuChatInterface方法可用性:',
+                {
+                  handleSubmit: !!handle.handleSubmit,
+                  updateAiMessage: !!handle.updateAiMessage
+                });
+            }
           }}
-        >
-          {historyCards.length > 0 ? (
-            historyCards.map((card) => (
-              <div 
-                key={card.id} 
-                className="history-card"
-                style={{
-                  backgroundColor: 'var(--card-bg)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: 'var(--space-md)',
-                  border: '1px solid var(--border-color)'
-                }}
-              >
-                <div className="card-header" style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  marginBottom: 'var(--space-sm)',
-                  color: 'var(--text-white)',
-                  fontWeight: 'bold'
-                }}>
-                  <span>用户输入</span>
-                  <span style={{ color: 'var(--text-light-gray)', fontSize: 'var(--font-xs)' }}>
-                    {formatTime(card.timestamp)}
-                  </span>
-                </div>
-                
-                <div className="input-content" style={{
-                  marginBottom: 'var(--space-md)',
-                  backgroundColor: 'var(--main-bg)',
-                  padding: 'var(--space-sm)',
-                  borderRadius: 'var(--radius-sm)',
-                  color: 'var(--text-white)',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word'
-                }}>
-                  {card.input}
-                </div>
-                
-                {/* JSON/API输出区域 */}
-                <div className="output-section">
-                  {/* 选项卡切换 */}
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: 'var(--space-sm)'
-                  }}>
-                    <div style={{
-                      backgroundColor: 'var(--secondary-bg)',
-                      borderRadius: 'var(--radius-sm)',
-                      padding: '2px',
-                      display: 'flex'
-                    }}>
-                      <button
-                        onClick={() => setActiveJsonTabs(prev => ({...prev, [card.id]: 'json'}))}
-                        style={{
-                          backgroundColor: activeJsonTabs[card.id] === 'json' ? 'var(--main-bg)' : 'transparent',
-                          color: 'var(--text-white)',
-                          border: 'none',
-                          borderRadius: 'var(--radius-sm)',
-                          padding: 'var(--space-xs) var(--space-sm)',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        JSON
-                      </button>
-                      <button
-                        onClick={() => setActiveJsonTabs(prev => ({...prev, [card.id]: 'raw'}))}
-                        style={{
-                          backgroundColor: activeJsonTabs[card.id] === 'raw' ? 'var(--main-bg)' : 'transparent',
-                          color: 'var(--text-white)',
-                          border: 'none',
-                          borderRadius: 'var(--radius-sm)',
-                          padding: 'var(--space-xs) var(--space-sm)',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        API原始响应
-                      </button>
-                    </div>
-                    
-                    <button
-                      onClick={() => generateControls(editableJsons[card.id] || card.jsonOutput, card.id)}
-                      style={{
-                        backgroundColor: 'var(--brand-color)',
-                        color: 'var(--text-dark)',
-                        border: 'none',
-                        borderRadius: 'var(--radius-sm)',
-                        padding: 'var(--space-xs) var(--space-sm)',
-                        cursor: 'pointer',
-                        fontSize: 'var(--font-xs)'
-                      }}
-                    >
-                      生成控件
-                    </button>
-                  </div>
-                  
-                  {/* JSON/API内容展示 */}
-                  {activeJsonTabs[card.id] === 'json' ? (
-                    <div>
-                      <label htmlFor={`json-editor-${card.id}`} className="sr-only" style={{ display: 'none' }}>
-                        JSON编辑器
-                      </label>
-                      <textarea
-                        id={`json-editor-${card.id}`}
-                        value={editableJsons[card.id] || card.jsonOutput}
-                        onChange={(e) => handleJsonInputChange(e.target.value, card.id)}
-                        aria-label={`编辑JSON配置卡片${card.id}`}
-                        placeholder="JSON配置数据"
-                        style={{
-                          width: '100%',
-                          height: '200px',
-                          padding: 'var(--space-sm)',
-                          backgroundColor: 'var(--main-bg)',
-                          color: 'var(--text-white)',
-                          border: '1px solid var(--border-color)',
-                          borderRadius: 'var(--radius-sm)',
-                          fontFamily: 'monospace',
-                          fontSize: 'var(--font-xs)',
-                          resize: 'vertical'
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <pre style={{
-                      width: '100%',
-                      height: '200px',
-                      padding: 'var(--space-sm)',
-                      backgroundColor: 'var(--main-bg)',
-                      color: 'var(--text-light-gray)',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: 'var(--radius-sm)',
-                      fontFamily: 'monospace',
-                      fontSize: 'var(--font-xs)',
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-word',
-                      overflow: 'auto'
-                    }}>
-                      {card.apiRawResponse}
-                    </pre>
-                  )}
-                </div>
-              </div>
-            ))
-          ) : (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 'var(--space-lg)',
-              color: 'var(--text-light-gray)',
-              backgroundColor: 'var(--secondary-bg)',
-              borderRadius: 'var(--radius-md)'
-            }}>
-              <p>尚未生成任何Agent卡片，请在下方输入需求并点击"生成Agent卡片"按钮</p>
-            </div>
-          )}
-        </div>
-        
-        {/* 底部输入区 - 固定吸底 */}
-        <div className="input-area" style={{
-          backgroundColor: 'var(--card-bg)',
-          borderTop: '1px solid var(--border-color)',
-          padding: 'var(--space-md)'
-        }}>
-          <textarea
-            value={userInput}
-            onChange={(e) => setUserInput(e.target.value)}
-            placeholder="输入需求描述，例如：创建一个收集用户喜欢的动物的表单"
-            style={{
-              width: '100%',
-              height: '80px',
-              padding: 'var(--space-md)',
-              backgroundColor: 'var(--main-bg)',
-              color: 'var(--text-white)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-md)',
-              resize: 'none',
-              marginBottom: 'var(--space-sm)'
-            }}
-          />
-          
-          <div style={{
-            display: 'flex',
-            gap: 'var(--space-md)'
-          }}>
-            <button
-              onClick={resetToInitialState}
-              disabled={isGenerating || (!hasGenerated && historyCards.length === 0)}
-              style={{
-                flex: 1,
-                backgroundColor: 'var(--secondary-bg)',
-                color: 'var(--text-white)',
-                border: 'none',
-                borderRadius: 'var(--radius-sm)',
-                padding: 'var(--space-sm) var(--space-md)',
-                cursor: isGenerating || (!hasGenerated && historyCards.length === 0) ? 'not-allowed' : 'pointer',
-                opacity: isGenerating || (!hasGenerated && historyCards.length === 0) ? 0.7 : 1
-              }}
-            >
-              重置
-            </button>
-            
-            <button
-              onClick={generateAgent}
-              disabled={isGenerating || !userInput.trim()}
-              style={{
-                flex: 1,
-                backgroundColor: 'var(--brand-color)',
-                color: 'var(--text-dark)',
-                border: 'none',
-                borderRadius: 'var(--radius-sm)',
-                padding: 'var(--space-sm) var(--space-md)',
-                cursor: isGenerating || !userInput.trim() ? 'not-allowed' : 'pointer',
-                fontWeight: 'bold',
-                opacity: isGenerating || !userInput.trim() ? 0.7 : 1
-              }}
-            >
-              {isGenerating ? '生成中...' : '生成Agent卡片'}
-            </button>
-          </div>
-        </div>
+          onGenerateControls={generateControls}
+          onResetState={resetToInitialState}
+        />
       </div>
       
       {/* 使用中间面板组件 */}
