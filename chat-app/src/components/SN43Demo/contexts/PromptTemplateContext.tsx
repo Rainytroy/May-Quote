@@ -16,6 +16,7 @@ export interface PromptTemplateSet {
   updatedAt: number;
   isDefault?: boolean; // 标记是否为不可删除的默认模板
   version?: string; // 版本标识，用于检测内容更新
+  hidden?: boolean; // 标记是否在列表中隐藏，不向用户显示
 }
 
 interface PromptTemplateContextType {
@@ -42,7 +43,7 @@ export const PromptTemplateProvider: React.FC<{ children: React.ReactNode }> = (
     isDefault: true,
   };
 
-  // 迭代版提示词模板
+  // 迭代版提示词模板 - 不对用户显示，仅作为内部引用
   const advancedTemplate: PromptTemplateSet = {
     id: 'advanced',
     name: '迭代版提示词',
@@ -51,6 +52,7 @@ export const PromptTemplateProvider: React.FC<{ children: React.ReactNode }> = (
     createdAt: Date.now(),
     updatedAt: Date.now(),
     isDefault: true,
+    hidden: true, // 标记为隐藏，不在列表中显示
   };
   
   // 迭代版2.0提示词模板 (添加版本标识)
