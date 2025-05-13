@@ -45,18 +45,20 @@ const SN43DemoView: React.FC = () => {
             神谕Agent
           </div>
           
-          {/* API状态指示器 */}
-          <div style={{ marginLeft: 'auto', paddingRight: 'var(--space-md)' }}>
-            <ApiStatusIndicator />
+          {/* 版本信息 */}
+          <div style={{ 
+            marginLeft: 'auto',
+            color: 'var(--text-light-gray)',
+            fontSize: 'var(--font-xs)',
+            paddingRight: 'var(--space-md)'
+          }}>
+            SN43Demo v0.1.1
           </div>
           
-          {/* 分隔线 */}
-          <div style={{
-            width: '1px',
-            height: '24px',
-            backgroundColor: 'var(--border-color)',
-            margin: '0 var(--space-md)'
-          }}></div>
+          {/* API状态指示器 */}
+          <div style={{ paddingRight: 'var(--space-md)' }}>
+            <ApiStatusIndicator />
+          </div>
           
           {/* 标签页导航 */}
           <div 
@@ -121,31 +123,7 @@ const SN43DemoView: React.FC = () => {
           )}
         </div>
         
-        {/* 底部状态栏 */}
-        <div className="status-bar" style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          padding: 'var(--space-sm) var(--space-md)',
-          backgroundColor: 'var(--card-bg)',
-          color: 'var(--text-light-gray)',
-          fontSize: 'var(--font-xs)',
-          borderTop: '1px solid var(--border-color)'
-        }}>
-          <div style={{ 
-            display: 'flex',
-            alignItems: 'center',
-            color: 'var(--text-light-gray)'
-          }}>
-            <span style={{color: 'var(--brand-color)'}}>May</span>
-            <span style={{padding: '0 4px'}}>/</span>
-            <span>插件</span>
-            <span style={{padding: '0 4px'}}>/</span>
-            <span>神谕Agent</span>
-          </div>
-          <div>
-            SN43Demo v0.1.1
-          </div>
-        </div>
+
       </div>
     </PromptTemplateProvider>
   );

@@ -461,21 +461,6 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
         borderRight: '1px solid var(--border-color)',
         overflow: 'hidden'
       }}>
-        {/* 顶部标题区域 */}
-        <div style={{
-          padding: 'var(--space-md)',
-          borderBottom: '1px solid var(--border-color)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <h2 style={{ color: 'var(--text-white)', margin: 0 }}>Agent生成器</h2>
-          
-          {/* 导入API状态指示器组件，位于右上角 */}
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <ApiStatusIndicator />
-          </div>
-        </div>
         
         {/* 中部历史卡片滚动区域 */}
         <div 
