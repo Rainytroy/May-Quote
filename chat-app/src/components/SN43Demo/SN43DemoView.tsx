@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import AgentConfigPanel from './AgentConfigPanel';
 import PromptTemplateEditor from './PromptTemplateEditor'; 
 import { PromptTemplateProvider } from './contexts/PromptTemplateContext';
+import ApiStatusIndicator from './AgentConfigPanel/components/ApiStatusIndicator';
 
 type ActiveTab = 'generator' | 'templates';
 
@@ -42,6 +43,11 @@ const SN43DemoView: React.FC = () => {
             May <span style={{color: 'var(--text-light-gray)', padding: '0 4px'}}>/</span> 
             插件 <span style={{color: 'var(--text-light-gray)', padding: '0 4px'}}>/</span> 
             神谕Agent
+          </div>
+          
+          {/* API状态指示器 */}
+          <div style={{ marginLeft: 'auto', paddingRight: 'var(--space-md)' }}>
+            <ApiStatusIndicator />
           </div>
           
           {/* 分隔线 */}

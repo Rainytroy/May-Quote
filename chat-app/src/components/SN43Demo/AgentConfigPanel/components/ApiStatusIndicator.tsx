@@ -41,19 +41,16 @@ const ApiStatusIndicator: React.FC = () => {
     setApiConfig(mayApi.getApiConfig());
   };
   
-  // 获取简化的模型名称
-  const getShortModelName = () => {
+  // 获取模型名称，保留中文名称
+  const getModelName = () => {
     if (!apiConfig.modelName) return '未知模型';
     
-    // 尝试提取模型名称的主要部分
-    // 例如从 "火山DeepSeek V3 (deepseek-v3-250324)" 提取 "DeepSeek V3"
-    const match = apiConfig.modelName.match(/DeepSeek\s+V\d+/i);
-    if (match) return match[0];
+    // 从完整名称中提取主要部分(不包括括号里的内容)
+    // 例如从 "火山DeepSeek V3 (deepseek-v3-250324)" 提取 "火山DeepSeek V3"
+    const match = apiConfig.modelName.match(/(.*?)\s*\(/);
+    if (match) return match[1].trim();
     
-    // 如果没有匹配到特定模式，则返回前15个字符
-    return apiConfig.modelName.length > 15 
-      ? apiConfig.modelName.substring(0, 15) + '...' 
-      : apiConfig.modelName;
+    return apiConfig.modelName;
   };
   
   // 遮蔽API密钥
@@ -98,33 +95,36 @@ const ApiStatusIndicator: React.FC = () => {
           }}
         />
         
-        {/* 简化模型名称 */}
+        {/* 模型名称 - 显示中文全名 */}
         <span 
-          className="model-name-short"
+          className="model-name"
           style={{
             fontSize: 'var(--font-xs)',
             color: 'var(--text-light-gray)',
           }}
         >
-          {getShortModelName()}
+          {getModelName()}
         </span>
         
-        {/* 刷新按钮 */}
+        {/* 刷新按钮 - 添加hover时变为品牌色效果 */}
         <button
           onClick={(e) => {
             e.stopPropagation();
             refreshApiConfig();
           }}
+          onMouseOver={(e) => e.currentTarget.style.color = 'var(--brand-color)'}
+          onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-light-gray)'}
           style={{
             backgroundColor: 'transparent',
             color: 'var(--text-light-gray)',
             border: 'none',
             padding: '2px',
             cursor: 'pointer',
-            fontSize: 'var(--font-xs)',
+            fontSize: 'var(--font-sm)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            transition: 'color 0.2s ease',
           }}
           title="刷新API配置"
         >
@@ -140,7 +140,7 @@ const ApiStatusIndicator: React.FC = () => {
             position: 'absolute',
             top: 'calc(100% + 5px)',
             right: 0,
-            width: '250px',
+          width: '350px',
             backgroundColor: 'var(--card-bg)',
             padding: 'var(--space-md)',
             borderRadius: 'var(--radius-md)',
@@ -150,9 +150,6 @@ const ApiStatusIndicator: React.FC = () => {
           }}
         >
           <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
             marginBottom: 'var(--space-sm)',
           }}>
             <h3 style={{ 
@@ -162,20 +159,6 @@ const ApiStatusIndicator: React.FC = () => {
             }}>
               MayAPI配置状态
             </h3>
-            <button
-              onClick={refreshApiConfig}
-              style={{
-                backgroundColor: 'var(--secondary-bg)',
-                color: 'var(--text-white)',
-                border: 'none',
-                borderRadius: 'var(--radius-sm)',
-                padding: 'var(--space-xs) var(--space-sm)',
-                cursor: 'pointer',
-                fontSize: 'var(--font-xs)',
-              }}
-            >
-              刷新配置
-            </button>
           </div>
           
           <div style={{ 
@@ -183,17 +166,18 @@ const ApiStatusIndicator: React.FC = () => {
             fontFamily: 'monospace',
             fontSize: 'var(--font-xs)',
           }}>
-            <div>BaseURL: <span style={{ color: 'var(--text-white)' }}>{apiConfig.baseUrl}</span></div>
+            <div>BaseURL: <span style={{ color: 'var(--brand-color)' }}>{apiConfig.baseUrl}</span></div>
             <div>API密钥: <span style={{ color: apiConfig.apiKey ? 'var(--brand-color)' : 'var(--error-color)' }}>
               {maskApiKey(apiConfig.apiKey)}
             </span></div>
-            <div>模型: <span style={{ color: 'var(--text-white)' }}>
+            <div>模型: <span style={{ color: 'var(--brand-color)' }}>
               {apiConfig.modelName} <span style={{ color: 'var(--text-light-gray)' }}>({apiConfig.modelId})</span>
             </span></div>
-            <div>初始化状态: <span style={{ 
-              color: apiConfig.initialized ? 'var(--brand-color)' : 'var(--error-color)',
+            <div>连接状态: <span style={{ 
+              color: 'var(--brand-color)',
+              fontWeight: 'bold'
             }}>
-              {apiConfig.initialized ? '已初始化' : '未初始化'}
+              {apiConfig.initialized ? '已连接' : '未连接'}
             </span></div>
           </div>
         </div>

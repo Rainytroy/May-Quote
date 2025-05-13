@@ -4,7 +4,6 @@ import ChatInterface from './components/Chat/ChatInterface';
 import DraggableClipboardArea from './components/Export/DraggableClipboardArea';
 import ConversationList from './components/Conversation/ConversationList';
 import NewConversationDialog from './components/Dialog/NewConversationDialog';
-import ApiStatusIndicator from './components/SN43Demo/AgentConfigPanel/components/ApiStatusIndicator'; // 导入API状态指示器组件
 import { getApiKey, clearCache, getModel } from './utils/storage';
 import { getModelDisplayName } from './utils/model-adapters';
 import { useConversations } from './hooks/useConversations';
@@ -252,11 +251,6 @@ function App() {
             }}
           >
             {currentModelId ? `${getModelDisplayName(currentModelId)} / ${currentModelId}` : ''}
-          </div>
-          
-          {/* API状态指示器 */}
-          <div style={{ marginRight: '8px' }}>
-            <ApiStatusIndicator />
           </div>
           
           <button 
