@@ -241,8 +241,8 @@ const ShenyuMessageItem: React.FC<ShenyuMessageItemProps> = ({
 
   // 自定义代码块样式 (与之前版本保持一致或根据需要调整)
   const customCodeStyle: PrismTheme = {
-    'code[class*="language-"]': { color: '#ffffff', fontSize: '0.85em', fontFamily: 'Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace', direction: 'ltr', textAlign: 'left', whiteSpace: 'pre', wordSpacing: 'normal', wordBreak: 'normal', lineHeight: '1.3', MozTabSize: '4', OTabSize: '4', tabSize: '4', WebkitHyphens: 'none', MozHyphens: 'none', msHyphens: 'none', hyphens: 'none' },
-    'pre[class*="language-"]': { color: '#ffffff', fontSize: '0.85em', fontFamily: 'Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace', direction: 'ltr', textAlign: 'left', whiteSpace: 'pre', wordSpacing: 'normal', wordBreak: 'normal', lineHeight: '1.5', MozTabSize: '4', OTabSize: '4', tabSize: '4', WebkitHyphens: 'none', MozHyphens: 'none', msHyphens: 'none', hyphens: 'none', padding: '1em', margin: '0', overflow: 'auto', background: '#333333' },
+    'code[class*="language-"]': { color: '#ffffff', fontSize: '0.85em', fontFamily: 'Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace', direction: 'ltr', textAlign: 'left', whiteSpace: 'pre-wrap', wordSpacing: 'normal', wordBreak: 'break-word', lineHeight: '1.5', MozTabSize: '4', OTabSize: '4', tabSize: '4', WebkitHyphens: 'none', MozHyphens: 'none', msHyphens: 'none', hyphens: 'none' },
+    'pre[class*="language-"]': { color: '#ffffff', fontSize: '0.85em', fontFamily: 'Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace', direction: 'ltr', textAlign: 'left', whiteSpace: 'pre-wrap', wordSpacing: 'normal', wordBreak: 'break-word', lineHeight: '1.5', MozTabSize: '4', OTabSize: '4', tabSize: '4', WebkitHyphens: 'none', MozHyphens: 'none', msHyphens: 'none', hyphens: 'none', padding: '1em', margin: '0', overflow: 'auto', overflowX: 'hidden', background: '#333333' },
     ':not(pre) > code[class*="language-"]': { background: '#333333', padding: '0.1em', borderRadius: '0.3em', whiteSpace: 'normal' },
     'comment': { color: '#ffffff' }, 'prolog': { color: '#ffffff' }, 'doctype': { color: '#ffffff' }, 'cdata': { color: '#ffffff' }, 'punctuation': { color: '#ffffff' }, 'property': { color: '#ffffff' }, 'tag': { color: '#ffffff' }, 'boolean': { color: '#ffffff' }, 'number': { color: '#ffffff' }, 'constant': { color: '#ffffff' }, 'symbol': { color: '#ffffff' }, 'deleted': { color: '#ffffff' }, 'selector': { color: '#ffffff' }, 'attr-name': { color: '#ffffff' }, 'string': { color: '#ffffff' }, 'char': { color: '#ffffff' }, 'builtin': { color: '#ffffff' }, 'inserted': { color: '#ffffff' }, 'operator': { color: '#ffffff' }, 'entity': { color: '#ffffff' }, 'url': { color: '#ffffff' }, 'atrule': { color: '#ffffff' }, 'attr-value': { color: '#ffffff' }, 'keyword': { color: '#ffffff' }, 'function': { color: '#ffffff' }, 'regex': { color: '#ffffff' }, 'important': { color: '#ffffff' }, 'variable': { color: '#ffffff' }, 'bold': { fontWeight: 'bold' }, 'italic': { fontStyle: 'italic' }
   };
@@ -364,10 +364,26 @@ const ShenyuMessageItem: React.FC<ShenyuMessageItemProps> = ({
                         } catch (e) { return false; }
                       })();
                       
-                      if (isJsonContent) {
-                        console.log('[ShenyuMessageItem] 渲染为JSON格式');
+                      // 无论是JSON内容还是API原始响应，都使用SyntaxHighlighter统一样式
+                      if (isJsonContent || activeView === 'raw') {
+                        console.log('[ShenyuMessageItem] 渲染为JSON/API格式');
                         return (
-                          <SyntaxHighlighter style={customCodeStyle} language="json" wrapLines={true} wrapLongLines={true}>
+                          <SyntaxHighlighter 
+                            style={customCodeStyle} 
+                            language={isJsonContent ? "json" : "text"} 
+                            wrapLines={true} 
+                            wrapLongLines={true}
+                            customStyle={{
+                              whiteSpace: 'pre-wrap',
+                              wordBreak: 'break-word',
+                              overflowX: 'hidden',
+                              backgroundColor: '#333333', 
+                              fontSize: '0.85em',
+                              margin: 0, 
+                              padding: '0',
+                              lineHeight: '1.5'
+                            }}
+                          >
                             {content}
                           </SyntaxHighlighter>
                         );
@@ -393,9 +409,19 @@ const ShenyuMessageItem: React.FC<ShenyuMessageItemProps> = ({
                       marginTop: 'var(--space-sm)',
                       paddingTop: 'var(--space-sm)'
                     }}>
-                      <div style={{ backgroundColor: 'var(--secondary-bg)', borderRadius: 'var(--radius-sm)', padding: '2px', display: 'flex' }}>
-                        <button onClick={() => setActiveView('json')} style={{ backgroundColor: activeView === 'json' ? 'var(--main-bg)' : 'transparent', color: 'var(--text-white)', border: 'none', borderRadius: 'var(--radius-sm)', padding: 'var(--space-xs) var(--space-sm)', cursor: 'pointer', fontSize: 'var(--font-xs)' }}>JSON</button>
-                        <button onClick={() => setActiveView('raw')} style={{ backgroundColor: activeView === 'raw' ? 'var(--main-bg)' : 'transparent', color: 'var(--text-white)', border: 'none', borderRadius: 'var(--radius-sm)', padding: 'var(--space-xs) var(--space-sm)', cursor: 'pointer', fontSize: 'var(--font-xs)' }}>API原始响应</button>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <div style={{ backgroundColor: 'var(--secondary-bg)', borderRadius: 'var(--radius-sm)', padding: '2px', display: 'flex' }}>
+                          <button onClick={() => setActiveView('json')} style={{ backgroundColor: activeView === 'json' ? 'var(--main-bg)' : 'transparent', color: 'var(--text-white)', border: 'none', borderRadius: 'var(--radius-sm)', padding: 'var(--space-xs) var(--space-sm)', cursor: 'pointer', fontSize: 'var(--font-xs)' }}>JSON</button>
+                          <button onClick={() => setActiveView('raw')} style={{ backgroundColor: activeView === 'raw' ? 'var(--main-bg)' : 'transparent', color: 'var(--text-white)', border: 'none', borderRadius: 'var(--radius-sm)', padding: 'var(--space-xs) var(--space-sm)', cursor: 'pointer', fontSize: 'var(--font-xs)' }}>API原始响应</button>
+                        </div>
+                        <div style={{ 
+                          marginLeft: 'var(--space-sm)',
+                          color: '#666',
+                          fontSize: 'var(--font-xs)',
+                          fontWeight: 'normal'
+                        }}>
+                          神谕版本：{getTemplateName()}
+                        </div>
                       </div>
                       <button onClick={handleGenerateControls} style={{ backgroundColor: 'var(--brand-color)', color: 'var(--text-dark)', border: 'none', borderRadius: 'var(--radius-sm)', padding: 'var(--space-xs) var(--space-sm)', cursor: 'pointer', fontSize: 'var(--font-xs)', display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v8"></path><path d="M8 12h8"></path></svg>
