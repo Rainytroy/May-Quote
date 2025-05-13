@@ -2,6 +2,9 @@ import { useCallback } from 'react';
 import { ShenyuChatInterfaceHandle } from '../../Chat/ShenyuChatInterface';
 import { mayApi } from '../../api/mayApi';
 import { PromptBlock } from '../../types';
+import { createApiClient } from '../../../../services/ai-service';
+import { getApiKey, getModel } from '../../../../utils/storage';
+import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 
 export interface Message {
   id: string;
@@ -32,19 +35,26 @@ export const usePromptRunner = ({
 }: UsePromptRunnerParams) => {
   // 替换提示词中的占位符
   const replacePromptPlaceholders = useCallback((text: string, userInput: string) => {
+    console.log(`[PromptRunner] 开始替换占位符, 原始文本长度: ${text.length}字符`);
     let result = text;
     
     // 替换基本输入
+    const basicInputCount = (text.match(/\{#input\}/g) || []).length;
     result = result.replace(/\{#input\}/g, userInput);
+    console.log(`[PromptRunner] 替换基本输入 {#input} => ${userInput.substring(0, 20)}... (${basicInputCount}处)`);
     
     // 替换控件输入值
     Object.entries(controlValues).forEach(([key, value]) => {
       // 替换格式例如 {#inputB1} 中的B1对应控件ID
       const placeholder = `{#input${key}}`;
-      result = result.replace(new RegExp(placeholder, 'g'), String(value || ''));
+      const pattern = new RegExp(placeholder, 'g');
+      const matches = (text.match(pattern) || []).length;
+      
+      result = result.replace(pattern, String(value || ''));
+      console.log(`[PromptRunner] 替换控件输入 ${placeholder} => ${String(value || '').substring(0, 20)}... (${matches}处)`);
     });
     
-    console.log('[usePromptRunner] 替换占位符:', {
+    console.log('[PromptRunner] 替换占位符完成:', {
       原文长度: text.length,
       替换后长度: result.length,
       替换数量: (text.match(/\{#input.*?\}/g) || []).length
@@ -53,33 +63,87 @@ export const usePromptRunner = ({
     return result;
   }, [controlValues]);
   
+  // 直接使用API客户端发送聊天消息
+  const sendChatDirectly = useCallback(async (messages: { role: 'user' | 'assistant' | 'system', content: string }[]) => {
+    console.log(`[PromptRunner] 开始直接发送聊天请求，消息数量: ${messages.length}`);
+    
+    // 获取API密钥和模型ID
+    const apiKey = getApiKey();
+    const modelId = getModel();
+      
+    if (!apiKey) {
+      throw new Error('API密钥未设置');
+    }
+    
+    console.log(`[PromptRunner] 使用模型: ${modelId}, API密钥长度: ${apiKey.length}`);
+    
+    // 创建客户端并发送请求
+    const startTime = Date.now();
+    console.log(`[PromptRunner] 创建API客户端...`);
+    const client = createApiClient(apiKey, modelId);
+    
+    // 转换为OpenAI格式的消息
+    const openAIMessages = messages as ChatCompletionMessageParam[];
+    
+    console.log(`[PromptRunner] 发送聊天请求, 消息预览:`, 
+      openAIMessages.map(m => {
+        const contentPreview = typeof m.content === 'string' 
+          ? m.content.substring(0, 20) + '...'
+          : '[非文本内容]';
+        return `${m.role}: ${contentPreview}`;
+      }));
+    
+    // 发送请求并获取响应
+    const completion = await client.chat.completions.create({
+      messages: openAIMessages,
+      model: modelId,
+      temperature: 0.7
+    });
+    
+    const endTime = Date.now();
+    const content = completion.choices[0]?.message?.content || '无结果';
+    
+    console.log(`[PromptRunner] 收到AI响应, 耗时: ${endTime - startTime}ms, 内容长度: ${content.length}`);
+    console.log(`[PromptRunner] 响应预览: ${content.substring(0, 50)}...`);
+    
+    return {
+      content,
+      finishReason: completion.choices[0]?.finish_reason || 'stop'
+    };
+  }, []);
+  
   // 运行Agent - 依次执行promptBlocks，替换占位符
   const runAgent = useCallback(async () => {
+    console.log('\n====================================');
+    console.log(`[PromptRunner] 开始运行Agent: ${agentName}`);
+    console.log('====================================\n');
+    
     // 检查是否有提示词块
     if (promptBlocks.length === 0) {
-      console.warn('[usePromptRunner] 无法运行Agent: 没有提示词块');
+      console.warn('[PromptRunner] 无法运行Agent: 没有提示词块');
       return false;
     }
     
-    console.log('[usePromptRunner] 开始运行Agent:', {
-      agentName,
-      promptBlocksCount: promptBlocks.length
-    });
+    console.log(`[PromptRunner] 提示词块数量: ${promptBlocks.length}`);
     
     try {
       // 首先发送一条用户消息，内容为"运行：[Agent名称]"
+      console.log(`[PromptRunner] 发送初始化消息: 运行：${agentName}`);
       const runMessageId = await chatInterfaceRef.current?.handleSubmit(`运行：${agentName}`);
       
       if (!runMessageId) {
-        console.error('[usePromptRunner] 发送运行消息失败');
+        console.error('[PromptRunner] 发送运行消息失败, chatInterfaceRef可能未初始化');
         return false;
       }
       
+      console.log(`[PromptRunner] 成功创建消息，ID: ${runMessageId}`);
+      
       // 依次运行每个promptBlock
-      console.log('[usePromptRunner] 开始依次运行提示词块...');
+      console.log('[PromptRunner] 开始依次运行提示词块...');
       
       // 创建一个包含上下文的数组
-      const messageHistory: { role: 'user' | 'assistant', content: string }[] = [
+      const messageHistory: { role: 'user' | 'assistant' | 'system', content: string }[] = [
+        { role: 'system', content: `你是神谕(Shenyu)助手，正在协助运行Agent: ${agentName}` },
         { role: 'user', content: `运行：${agentName}` }
       ];
       
@@ -88,39 +152,55 @@ export const usePromptRunner = ({
         ? userMessages[0].content 
         : agentName;
       
+      console.log(`[PromptRunner] 用户原始输入: ${userInput.substring(0, 50)}...`);
+      
       // 依次运行每个promptBlock
       for (let i = 0; i < promptBlocks.length; i++) {
+        console.log(`\n===== 提示词块 ${i+1}/${promptBlocks.length} =====`);
+        
+        const startTime = Date.now();
         const originalBlock = promptBlocks[i];
-        console.log(`[usePromptRunner] 运行第 ${i+1}/${promptBlocks.length} 个提示词块`);
+        
+        console.log(`[PromptRunner] 原始提示词(${originalBlock.text.length}字符):`);
+        console.log(originalBlock.text.substring(0, 100) + (originalBlock.text.length > 100 ? '...' : ''));
         
         // 替换提示词中的占位符
         const processedText = replacePromptPlaceholders(originalBlock.text, userInput);
+        
+        console.log(`[PromptRunner] 替换后提示词(${processedText.length}字符):`);
+        console.log(processedText.substring(0, 100) + (processedText.length > 100 ? '...' : ''));
         
         // 添加处理后的提示词作为用户消息，但不显示在UI中
         messageHistory.push({ role: 'user', content: processedText });
         
         // 显示AI响应（不显示用户消息）
+        console.log(`[PromptRunner] 创建隐藏的用户消息...`);
         const aiMessageId = await chatInterfaceRef.current?.handleSubmit(processedText, true);
         
         if (!aiMessageId) {
-          console.error(`[usePromptRunner] 为提示词块 ${i+1} 创建消息ID失败`);
+          console.error(`[PromptRunner] 为提示词块 ${i+1} 创建消息ID失败`);
           continue;
         }
         
+        console.log(`[PromptRunner] 成功创建AI消息占位，ID: ${aiMessageId}`);
+        
         try {
-          // 调用May的常规对话API，使用累积的对话历史
-          // 使用类型断言绕过类型检查
-          const response = await (mayApi as any).sendChatMessage({
-            messages: messageHistory,
-            stream: false
-          });
+          console.log(`[PromptRunner] 开始调用API发送消息...`);
+          
+          // 直接使用API客户端发送聊天消息
+          const response = await sendChatDirectly(messageHistory);
+          
+          const aiResponse = response.content;
+          const endTime = Date.now();
+          
+          console.log(`[PromptRunner] 块 ${i+1} 执行完成，耗时: ${endTime - startTime}ms`);
           
           // 更新对话历史
-          const aiResponse = response.content || '未能获取有效响应';
           messageHistory.push({ role: 'assistant', content: aiResponse });
           
           // 更新消息UI - 显示为普通文本而不是JSON
           if (chatInterfaceRef.current) {
+            console.log(`[PromptRunner] 更新UI消息...`);
             chatInterfaceRef.current.updateAiMessage(
               aiMessageId, 
               aiResponse, // 显示文本内容，不是JSON
@@ -130,27 +210,35 @@ export const usePromptRunner = ({
           }
           
           // 添加短暂延迟，使执行看起来更自然
-          await new Promise(resolve => setTimeout(resolve, 800));
+          const delayTime = 800;
+          console.log(`[PromptRunner] 添加${delayTime}ms延迟...`);
+          await new Promise(resolve => setTimeout(resolve, delayTime));
+          
         } catch (error) {
-          console.error(`[usePromptRunner] 运行提示词块 ${i+1} 时出错:`, error);
+          console.error(`[PromptRunner] 运行提示词块 ${i+1} 时出错:`, error);
+          
           if (chatInterfaceRef.current) {
+            const errorMessage = `运行错误: ${error instanceof Error ? error.message : '未知错误'}`;
             chatInterfaceRef.current.updateAiMessage(
               aiMessageId,
-              `运行错误: ${error instanceof Error ? error.message : '未知错误'}`,
-              `运行错误: ${error instanceof Error ? error.message : '未知错误'}`,
+              errorMessage,
+              errorMessage,
               "May the 神谕 be with you"
             );
           }
         }
       }
       
-      console.log('[usePromptRunner] 所有提示词块运行完毕');
+      console.log('\n====================================');
+      console.log('[PromptRunner] 所有提示词块运行完毕');
+      console.log('====================================\n');
+      
       return true;
     } catch (error) {
-      console.error('[usePromptRunner] 运行Agent时发生错误:', error);
+      console.error('[PromptRunner] 运行Agent时发生错误:', error);
       return false;
     }
-  }, [agentName, promptBlocks, chatInterfaceRef, replacePromptPlaceholders, userMessages]);
+  }, [agentName, promptBlocks, chatInterfaceRef, replacePromptPlaceholders, userMessages, sendChatDirectly]);
 
   return { runAgent };
 };
