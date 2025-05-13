@@ -36,6 +36,7 @@ export const usePromptRunner = ({
   // 替换提示词中的占位符
   const replacePromptPlaceholders = useCallback((text: string, userInput: string) => {
     console.log(`[PromptRunner] 开始替换占位符, 原始文本长度: ${text.length}字符`);
+    console.log(`[PromptRunner] 当前控件值:`, controlValues);
     let result = text;
     
     // 替换基本输入
@@ -43,21 +44,39 @@ export const usePromptRunner = ({
     result = result.replace(/\{#input\}/g, userInput);
     console.log(`[PromptRunner] 替换基本输入 {#input} => ${userInput.substring(0, 20)}... (${basicInputCount}处)`);
     
+    // 检查是否有占位符需要替换
+    const placeholderMatches = text.match(/\{#input.*?\}/g) || [];
+    console.log(`[PromptRunner] 发现占位符: ${placeholderMatches.length}个:`, placeholderMatches);
+    
     // 替换控件输入值
     Object.entries(controlValues).forEach(([key, value]) => {
       // 替换格式例如 {#inputB1} 中的B1对应控件ID
       const placeholder = `{#input${key}}`;
       const pattern = new RegExp(placeholder, 'g');
-      const matches = (text.match(pattern) || []).length;
+      const matchesCount = (result.match(pattern) || []).length;
       
-      result = result.replace(pattern, String(value || ''));
-      console.log(`[PromptRunner] 替换控件输入 ${placeholder} => ${String(value || '').substring(0, 20)}... (${matches}处)`);
+      if (matchesCount > 0) {
+        const oldResult = result;
+        result = result.replace(pattern, String(value || ''));
+        console.log(`[PromptRunner] 替换控件输入 ${placeholder} => ${String(value || '').substring(0, 20)}... (${matchesCount}处)`);
+        console.log(`[PromptRunner] 替换前片段: ${oldResult.substring(Math.max(0, oldResult.indexOf(placeholder) - 20), oldResult.indexOf(placeholder) + placeholder.length + 20)}`);
+        console.log(`[PromptRunner] 替换后片段: ${result.substring(Math.max(0, oldResult.indexOf(placeholder) - 20), Math.min(result.length, oldResult.indexOf(placeholder) + String(value || '').length + 20))}`);
+      } else {
+        console.log(`[PromptRunner] 未找到占位符 ${placeholder}`);
+      }
     });
+    
+    // 检查是否还有未替换的占位符
+    const remainingPlaceholders = result.match(/\{#input.*?\}/g) || [];
+    if (remainingPlaceholders.length > 0) {
+      console.warn(`[PromptRunner] 警告: 仍有${remainingPlaceholders.length}个占位符未替换:`, remainingPlaceholders);
+    }
     
     console.log('[PromptRunner] 替换占位符完成:', {
       原文长度: text.length,
       替换后长度: result.length,
-      替换数量: (text.match(/\{#input.*?\}/g) || []).length
+      原始占位符数量: placeholderMatches.length,
+      剩余占位符数量: remainingPlaceholders.length
     });
     
     return result;

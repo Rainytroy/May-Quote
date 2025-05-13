@@ -230,16 +230,55 @@ const ShenyuMessageItem: React.FC<ShenyuMessageItemProps> = ({
               </div>
             ) : (
               <>
-                {/* JSON/API响应内容 */}
+                {/* JSON/API响应内容 - 根据内容类型决定渲染方式 */}
                 <div style={{ maxHeight: '400px', overflow: 'auto' }}>
-                  <SyntaxHighlighter
-                    style={atomDark}
-                    language="json"
-                    wrapLines={true}
-                    wrapLongLines={true}
-                  >
-                    {getDisplayContent()}
-                  </SyntaxHighlighter>
+                  {(() => {
+                    // 检查是否是JSON字符串
+                    const content = getDisplayContent();
+                    const isJsonContent = (() => {
+                      try {
+                        // 尝试检测是否是JSON格式 - 以{ 开头且包含"adminInputs"和"promptBlocks"
+                        return content.trim().startsWith('{') && 
+                          content.includes('"adminInputs"') && 
+                          content.includes('"promptBlocks"');
+                      } catch (e) {
+                        return false;
+                      }
+                    })();
+                    
+                    if (isJsonContent) {
+                      // 如果是JSON，使用语法高亮显示
+                      console.log('[ShenyuMessageItem] 渲染为JSON格式');
+                      return (
+                        <SyntaxHighlighter
+                          style={atomDark}
+                          language="json"
+                          wrapLines={true}
+                          wrapLongLines={true}
+                        >
+                          {content}
+                        </SyntaxHighlighter>
+                      );
+                    } else {
+                      // 如果不是JSON，渲染为普通文本
+                      // 这里可以实现Markdown渲染
+                      console.log('[ShenyuMessageItem] 渲染为Markdown格式');
+                      return (
+                        <div 
+                          style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+                          // 使用dangerouslySetInnerHTML仅用于开发环境
+                          // 在生产环境应使用安全的Markdown渲染库
+                          dangerouslySetInnerHTML={{ 
+                            __html: content
+                              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+                              .replace(/\*([^*]*)\*/g, '<em>$1</em>') // Italic
+                              .replace(/`([^`]*)`/g, '<code>$1</code>') // Inline code
+                              .replace(/\n/g, '<br/>') // Line breaks
+                          }} 
+                        />
+                      );
+                    }
+                  })()}
                 </div>
                 
                 {/* 底部工具栏 */}
