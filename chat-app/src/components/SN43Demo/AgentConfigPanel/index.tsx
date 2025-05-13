@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { Message } from './hooks/usePromptRunner';
 import { ControlDefinition } from '../Controls/DynamicControl';
 import ControlsContainer from '../Controls/ControlsContainer';
 import { AdminInputs, PromptBlock, Card, GlobalPromptBlocks } from '../types';
@@ -103,6 +104,9 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
   // Agent名称状态 - 默认为用户第一条消息的前20个字符
   const [agentName, setAgentName] = useState<string>('未命名Agent');
   
+  // 聊天消息状态 - 存储所有用户和AI的消息
+  const [chatMessages, setChatMessages] = useState<Message[]>([]);
+  
   // 添加历史卡片后滚动到底部
   useEffect(() => {
     if (historyContainerRef.current && historyCards.length > 0) {
@@ -155,7 +159,30 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
     console.log('[AgentConfigPanel] Agent名称已更新:', newName);
   }, []);
   
-  // 运行Agent - 依次执行promptBlocks
+  // 替换提示词中的占位符
+  const replacePromptPlaceholders = useCallback((text: string, userInput: string) => {
+    let result = text;
+    
+    // 替换基本输入
+    result = result.replace(/\{#input\}/g, userInput);
+    
+    // 替换控件输入值
+    Object.entries(controlValues).forEach(([key, value]) => {
+      // 替换格式例如 {#inputB1} 中的B1对应控件ID
+      const placeholder = `{#input${key}}`;
+      result = result.replace(new RegExp(placeholder, 'g'), String(value || ''));
+    });
+    
+    console.log('[AgentConfigPanel] 替换占位符:', {
+      原文长度: text.length,
+      替换后长度: result.length,
+      替换数量: (text.match(/\{#input.*?\}/g) || []).length
+    });
+    
+    return result;
+  }, [controlValues]);
+  
+  // 运行Agent - 依次执行promptBlocks，替换占位符
   const runAgent = useCallback(async () => {
     // 检查是否有卡片和promptBlocks
     if (cards.length === 0 || promptBlocks.length === 0) {
@@ -186,16 +213,24 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
         { role: 'user', content: `运行：${agentName}` }
       ];
       
+      // 假设第一条消息包含了用户的原始需求
+      const userInput = chatMessages.length > 0 && chatMessages[0].role === 'user' 
+        ? chatMessages[0].content 
+        : agentName;
+      
       // 依次运行每个promptBlock
       for (let i = 0; i < promptBlocks.length; i++) {
-        const block = promptBlocks[i];
+        const originalBlock = promptBlocks[i];
         console.log(`[AgentConfigPanel] 运行第 ${i+1}/${promptBlocks.length} 个提示词块`);
         
-        // 添加提示词块作为用户消息但不显示在UI中
-        messageHistory.push({ role: 'user', content: block.text });
+        // 替换提示词中的占位符
+        const processedText = replacePromptPlaceholders(originalBlock.text, userInput);
         
-        // 显示AI响应
-        const aiMessageId = await chatInterfaceRef.current?.handleSubmit(block.text, true);
+        // 添加处理后的提示词作为用户消息，但不显示在UI中
+        messageHistory.push({ role: 'user', content: processedText });
+        
+        // 显示AI响应（不显示用户消息）
+        const aiMessageId = await chatInterfaceRef.current?.handleSubmit(processedText, true);
         
         if (!aiMessageId) {
           console.error(`[AgentConfigPanel] 为提示词块 ${i+1} 创建消息ID失败`);
@@ -203,29 +238,28 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
         }
         
         try {
-          // 调用May的AI服务，使用累积的对话历史
-          const response = await mayApi.executeShenyuRequest({
-            userInputs: { context: JSON.stringify(messageHistory) },
-            adminInputs: adminInputs,
-            promptBlocks: [block],
-            controls: controlValues
+          // 调用May的常规对话API，使用累积的对话历史
+          const response = await mayApi.sendChatMessage({
+            messages: messageHistory,
+            stream: false
           });
           
           // 更新对话历史
-          messageHistory.push({ role: 'assistant', content: response.result });
+          const aiResponse = response.content || '未能获取有效响应';
+          messageHistory.push({ role: 'assistant', content: aiResponse });
           
-          // 更新消息UI
+          // 更新消息UI - 显示为普通文本而不是JSON
           if (chatInterfaceRef.current) {
             chatInterfaceRef.current.updateAiMessage(
               aiMessageId, 
-              response.result, 
-              response.result,
+              aiResponse, // 显示文本内容，不是JSON
+              aiResponse, // 原始响应也是文本
               "May the 神谕 be with you" // 自定义发送者名称
             );
           }
           
           // 添加短暂延迟，使执行看起来更自然
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise(resolve => setTimeout(resolve, 800));
         } catch (error) {
           console.error(`[AgentConfigPanel] 运行提示词块 ${i+1} 时出错:`, error);
           if (chatInterfaceRef.current) {
@@ -243,7 +277,7 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
     } catch (error) {
       console.error('[AgentConfigPanel] 运行Agent时发生错误:', error);
     }
-  }, [cards, promptBlocks, agentName, adminInputs, controlValues]);
+  }, [cards, promptBlocks, agentName, controlValues, replacePromptPlaceholders, chatMessages]);
   
   // 生成Agent卡片 - 集成新的聊天界面
   const generateAgent = useCallback(async (content: string) => {
