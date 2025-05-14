@@ -120,10 +120,33 @@ export function replacePromptPlaceholders(
     }
   }
   
-  // 3. 尝试匹配跨卡片引用 {#card1.inputB3}
+  // 3. 构建卡片输入值字典，用于处理跨卡片输入引用
+  // 这里使用与processedBlocksDict相同的键名格式，确保一致性
+  const cardInputValues: Record<string, string> = {};
+  if (depth === 0) { // 只在顶层构建一次
+    cards.forEach(card => {
+      if (card.adminInputs) {
+        Object.entries(card.adminInputs).forEach(([inputKey, inputValue]) => {
+          if (inputValue) {
+            // 提取默认值部分 (从 <def>xxx</def> 中)
+            const valueStr = String(inputValue);
+            const defaultMatch = valueStr.match(/<def>(.*?)<\/def>/);
+            const value = defaultMatch ? defaultMatch[1] : valueStr;
+            
+            // 保存到卡片输入字典中，键名格式: "card1.inputB13"
+            // 确保与查找时使用的键名格式一致
+            cardInputValues[`${card.id}.${inputKey}`] = value;
+          }
+        });
+      }
+    });
+    console.log(`[PromptProcessor] 构建了跨卡片输入字典，共 ${Object.keys(cardInputValues).length} 项`);
+  }
+
+  // 4. 尝试匹配跨卡片输入引用 {#card1.inputB3}
   const crossCardReferences = result.match(/\{#card[0-9]+\.input[^}]+\}/g) || [];
   if (crossCardReferences.length > 0) {
-    console.log(`[PromptProcessor] 检测到 ${crossCardReferences.length} 个跨卡片引用，尝试处理`);
+    console.log(`[PromptProcessor] 检测到 ${crossCardReferences.length} 个跨卡片输入引用，尝试处理`);
     
     // 尝试解析和替换跨卡片引用
     crossCardReferences.forEach(ref => {
@@ -133,23 +156,45 @@ export function replacePromptPlaceholders(
         return;
       }
       
+      // 标记为已处理，避免循环引用
+      processedRefs.add(ref);
+      
       // 提取卡片ID和输入字段ID
       const match = ref.match(/\{#card([0-9]+)\.input([^}]+)\}/);
       if (match) {
         const cardId = match[1];
         const inputId = match[2];
-        const keyToFind = `inputB${inputId}`;
         
-        if (controlValues[keyToFind]) {
-          const oldResult = result;
-          result = result.replace(new RegExp(escapeRegExp(ref), 'g'), String(controlValues[keyToFind]));
+        // *** 关键修改 ***
+        // 构建引用键，格式与字典构建时一致："card1.inputB13"
+        const cardPrefix = `card${cardId}`;
+        const inputKey = inputId.startsWith('B') ? `inputB${inputId.substring(1)}` : `inputB${inputId}`;
+        const refKey = `${cardPrefix}.${inputKey}`;
+        
+        // 查找并替换 - 首先尝试卡片输入字典
+        if (cardInputValues[refKey]) {
+          const valueToUse = String(cardInputValues[refKey]);
+          result = result.replace(new RegExp(escapeRegExp(ref), 'g'), valueToUse);
           replacedCount++;
           
-          console.log(`[PromptProcessor] 替换了跨卡片引用 ${ref} => "${String(controlValues[keyToFind]).substring(0, 30)}..."`);
-        } else {
-          console.log(`[PromptProcessor] 未找到值来替换跨卡片引用: ${ref}`);
-          if (!unreplacedList.includes(ref)) {
-            unreplacedList.push(ref);
+          console.log(`[PromptProcessor] 成功替换跨卡片输入引用 ${ref} => "${valueToUse.substring(0, 30)}${valueToUse.length > 30 ? '...' : ''}"`);
+          console.log(`[PromptProcessor] 使用的键: ${refKey}`);
+        }
+        // 退化到原始逻辑：尝试从controlValues中查找
+        else {
+          const fallbackKey = `inputB${inputId}`;
+          if (controlValues[fallbackKey]) {
+            const valueToUse = String(controlValues[fallbackKey]);
+            result = result.replace(new RegExp(escapeRegExp(ref), 'g'), valueToUse);
+            replacedCount++;
+            
+            console.log(`[PromptProcessor] 从controlValues替换了跨卡片引用 ${ref} => "${valueToUse.substring(0, 30)}${valueToUse.length > 30 ? '...' : ''}"`);
+          } else {
+            console.log(`[PromptProcessor] 未找到值来替换跨卡片引用: ${ref}`);
+            console.log(`[PromptProcessor] 尝试过的键: ${refKey}, ${fallbackKey}`);
+            if (!unreplacedList.includes(ref)) {
+              unreplacedList.push(ref);
+            }
           }
         }
       }
