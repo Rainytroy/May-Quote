@@ -221,6 +221,11 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
     
     setIsGenerating(true);
     
+    // 先清空现有卡片和控件，避免UI残留
+    console.log('[AgentConfigPanel] 生成前清空现有UI组件');
+    setCards([]);
+    setControlDefinitions([]);
+    
     try {
       let prompt: string;
       let interactionNote: string;
