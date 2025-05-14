@@ -50,16 +50,6 @@ const CardPreviewPanel: React.FC<CardPreviewPanelProps> = ({
     }
     
     console.log('[CardPreviewPanel] "运行"按钮点击，开始处理...');
-    
-    // 先清空DOM中的内容，避免UI残留
-    const multiCardContainer = document.querySelector('.cards-preview');
-    if (multiCardContainer) {
-      console.log('[CardPreviewPanel] 清空现有UI内容，避免残留');
-      // 保留容器但清空内部内容
-      multiCardContainer.innerHTML = '';
-      // 短暂延时确保UI完全清空
-      await new Promise(resolve => setTimeout(resolve, 10));
-    }
 
     // 1. 从DOM获取最新的控件值 (与handleViewPrompt类似)
     const inputElements = document.querySelectorAll('input, textarea, select');
