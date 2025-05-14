@@ -1,8 +1,11 @@
-import { Conversation, ConversationMeta } from '../types';
+import { 
+  Conversation, 
+  ConversationMeta 
+} from '../sharedTypes';
 
 // 数据库配置
 const DB_NAME = 'may-app-db';
-const DB_VERSION = 2; // 版本升级到2，以便添加新的存储对象
+const DB_VERSION = 3; // 版本升级到3，以便支持扩展字段
 const CONVERSATION_STORE = 'conversations';
 const META_STORE = 'conversation-meta';
 const CONFIG_STORE = 'app-config'; // 新增：配置存储对象
@@ -57,6 +60,13 @@ export async function openDatabase(): Promise<IDBDatabase> {
           db.createObjectStore(CONFIG_STORE, { keyPath: 'key' });
           console.log('已创建配置存储对象');
         }
+      }
+      
+      // 版本3：支持扩展字段(May-Shenyu整合)
+      if (oldVersion < 3) {
+        console.log('升级数据库以支持May-Shenyu整合扩展字段');
+        // 不需要修改数据库结构，因为IndexedDB可以自动处理对象中的新字段
+        // 但我们可以在这里添加日志或执行其他必要的迁移任务
       }
     };
   });
