@@ -7,7 +7,7 @@ import { usePromptTemplates } from '../contexts/PromptTemplateContext';
 
 // 定义组件接口
 export interface ShenyuChatInterfaceHandle {
-  updateAiMessage: (messageId: string, jsonOutput: string, apiRawResponse: string, customSender?: string, type?: 'json' | 'prompt') => void;
+  updateAiMessage: (messageId: string, jsonOutput: string, apiRawResponse: string, customSender?: string, type?: 'json' | 'prompt' | 'progress', progressInfo?: any) => void;
   handleSubmit: (content: string, hideUserMessage?: boolean) => Promise<string | undefined>;
 }
 
@@ -136,13 +136,14 @@ const ShenyuChatInterface = forwardRef<ShenyuChatInterfaceHandle, ShenyuChatInte
   };
   
   // 提供给外部更新AI消息的方法
-  const updateAiMessage = (messageId: string, jsonOutput: string, apiRawResponse: string, customSender?: string, type?: 'json' | 'prompt') => {
+  const updateAiMessage = (messageId: string, jsonOutput: string, apiRawResponse: string, customSender?: string, type?: 'json' | 'prompt' | 'progress', progressInfo?: any) => {
     console.log('[ShenyuChatInterface] 开始更新AI消息:', {
       messageId, 
       jsonAvailable: !!jsonOutput, 
       apiResponseAvailable: !!apiRawResponse,
       hasCustomSender: !!customSender,
       type: type || 'json', // 默认为json类型
+      hasProgressInfo: !!progressInfo,
       currentMessages: messages.length
     });
 
@@ -170,7 +171,8 @@ const ShenyuChatInterface = forwardRef<ShenyuChatInterfaceHandle, ShenyuChatInte
               jsonOutput,
               apiRawResponse,
               type: type || 'json', // 设置消息类型
-              ...(customSender ? { sender: customSender } : {})
+              ...(customSender ? { sender: customSender } : {}),
+              ...(type === 'progress' && progressInfo ? { progress: progressInfo } : {})
             } 
           : msg
       );

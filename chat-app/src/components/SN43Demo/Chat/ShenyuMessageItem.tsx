@@ -19,7 +19,14 @@ export interface ShenyuMessage {
   apiRawResponse?: string; // API原始响应
   activeTemplate?: string; // 当前使用的模板ID
   sender?: string;        // 自定义发送者名称
-  type?: 'json' | 'prompt'; // 消息类型：json(默认) 或 prompt(纯文本提示词)
+  type?: 'json' | 'prompt' | 'progress'; // 消息类型：json(默认) 或 prompt(纯文本提示词) 或 progress(运行进度)
+  progress?: {                          // 进度信息，仅当type='progress'时使用
+    current: number;                    // 当前执行的块数
+    total: number;                      // 总块数
+    completed: boolean;                 // 是否完成
+    cardBlocks: number;                 // 卡片提示词块数
+    globalBlocks: number;               // 全局提示词块数
+  };
 }
 
 interface ShenyuMessageItemProps {
@@ -350,6 +357,66 @@ const ShenyuMessageItem: React.FC<ShenyuMessageItemProps> = ({
                   <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                     {getDisplayContent()}
                   </ReactMarkdown>
+                </div>
+              ) : message.type === 'progress' ? (
+                /* Progress类型消息 - 运行进度显示 */
+                <div className="progress-message" style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 'var(--space-sm)'
+                }}>
+                  {/* 进度条行 */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--space-xs)'
+                  }}>
+                    {/* 进度方块显示 */}
+                    {Array.from({length: message.progress?.total || 0}).map((_, index) => (
+                      <div 
+                        key={index}
+                        style={{
+                          width: '16px',
+                          height: '16px',
+                          border: '1px solid var(--border-color)',
+                          backgroundColor: index < (message.progress?.current || 0) ? 'var(--brand-color)' : 'var(--main-bg)',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          fontSize: '8px',
+                          color: index < (message.progress?.current || 0) ? 'var(--text-dark)' : 'var(--text-light-gray)'
+                        }}
+                      >
+                        {index < (message.progress?.current || 0) ? '✓' : ' '}
+                      </div>
+                    ))}
+                    
+                    {/* 运行状态文本 */}
+                    <span style={{marginLeft: 'var(--space-sm)'}}>
+                      {message.progress?.completed ? '运行完毕' : `运行中 ${message.progress?.current || 0}/${message.progress?.total || 0}`}
+                    </span>
+                  </div>
+                  
+                  {/* 标题行 */}
+                  <div style={{
+                    fontWeight: 'bold',
+                    marginTop: 'var(--space-xs)'
+                  }}>
+                    <span>运行：</span>{message.sender || agentName}
+                  </div>
+                  
+                  {/* 引用内容行 */}
+                  <div style={{
+                    marginTop: 'var(--space-xs)',
+                    padding: 'var(--space-sm) var(--space-md)',
+                    borderLeft: '4px solid var(--brand-color)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    color: 'var(--text-light-gray)'
+                  }}>
+                    {message.progress?.completed 
+                      ? `共执行了 ${message.progress?.total || 0} 个提示词块 (卡片 ${message.progress?.cardBlocks || 0} 个，全局 ${message.progress?.globalBlocks || 0} 个)，请查看下方消息了解详情。`
+                      : 'May the 神谕 be with you'}
+                  </div>
                 </div>
               ) : (
                 /* 默认JSON类型消息 - 原有的JSON/API双视图 */

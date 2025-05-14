@@ -101,8 +101,12 @@ export const usePromptExecutor = ({
     setIsRunning(true);
     
     try {
+      // 首先处理所有卡片和全局块
+      const cardBlocks = processedResults.cardBlocks;
+      const globalBlocks = processedResults.globalBlocks;
+      
       // 合并卡片块和全局块，按顺序处理
-      const allBlocks = [...processedResults.cardBlocks, ...processedResults.globalBlocks];
+      const allBlocks = [...cardBlocks, ...globalBlocks];
       
       if (allBlocks.length === 0) {
         console.warn('[PromptExecutor] 没有提示词块可执行');
@@ -125,21 +129,27 @@ export const usePromptExecutor = ({
         return;
       }
       
-      // 更新运行消息 - 使用纯文本格式，移除HTML标签
+      // 创建进度信息对象
+      const progressInfo = { 
+        current: 0, 
+        total: allBlocks.length, 
+        completed: false,
+        cardBlocks: cardBlocks.length,
+        globalBlocks: globalBlocks.length
+      };
+      
+      // 更新运行消息 - 使用progress类型
       chatInterfaceRef.current.updateAiMessage(
         runningMessageId,
-        `May the 神谕 be with you\n\n运行：${agentName}\n\n正在加载提示词块...`,
+        `运行提示词执行器: ${agentName}`, // 基本内容
         '',
         'May the 神谕 be with you',
-        'prompt'
+        'progress', // 使用'progress'类型
+        progressInfo // 传递进度信息对象
       );
       
       // 创建上下文数组，用于传递给API
       const context: string[] = [];
-      
-      // 首先处理所有卡片提示词块
-      const cardBlocks = allBlocks.filter(b => !b.isGlobal);
-      const globalBlocks = allBlocks.filter(b => b.isGlobal);
       
       // 处理卡片提示词块
       console.log(`[PromptExecutor] 执行 ${cardBlocks.length} 个卡片提示词块`);
