@@ -165,9 +165,10 @@ export const usePromptExecutor = ({
           console.warn(`[PromptExecutor] 提示词块 ${block.blockId} 有 ${block.unreplacedCount} 个占位符未能替换:`, block.unreplacedList);
         }
         
-        // 创建显示消息
+        // 创建显示消息 - 使用卡片标题作为消息标识
+        const blockTitle = `${block.cardTitle}`;
         const blockMessageId = await chatInterfaceRef.current.handleSubmit(
-          `提示词块 (卡片) ${i+1}/${cardBlocks.length}: ${block.blockId}`, 
+          `提示词块 (卡片) ${i+1}/${cardBlocks.length}: ${blockTitle}`, 
           true // 隐藏用户消息
         );
         
@@ -176,16 +177,8 @@ export const usePromptExecutor = ({
           continue;
         }
         
-        // 显示提示词 - 简化标题，移除提示词内容
-        const blockTitle = `${block.cardTitle}`;
-        
-        chatInterfaceRef.current.updateAiMessage(
-          blockMessageId,
-          `## ${blockTitle}\n\n*处理中...*`,
-          processedText,
-          'May the 神谕 be with you',
-          'prompt'
-        );
+        // 不立即更新消息，保留默认的loading状态
+        // 让所有提示词块保持一致的loading动画
         
         // 调用API获取响应
         console.log(`[PromptExecutor] 发送提示词 ${block.blockId} 到API...`);
@@ -253,9 +246,10 @@ export const usePromptExecutor = ({
           console.warn(`[PromptExecutor] 全局提示词块 ${block.blockId} 有 ${block.unreplacedCount} 个占位符未能替换:`, block.unreplacedList);
         }
         
-        // 创建显示消息
+        // 创建显示消息 - 使用统一的"总结"标题
+        const blockTitle = `总结`;
         const blockMessageId = await chatInterfaceRef.current.handleSubmit(
-          `提示词块 (全局) ${i+1}/${globalBlocks.length}: ${block.blockId}`, 
+          `提示词块 (全局) ${i+1}/${globalBlocks.length}: ${blockTitle}`, 
           true // 隐藏用户消息
         );
         
@@ -264,16 +258,8 @@ export const usePromptExecutor = ({
           continue;
         }
         
-        // 显示提示词 - 改为"总结"
-        const blockTitle = `总结`;
-        
-        chatInterfaceRef.current.updateAiMessage(
-          blockMessageId,
-          `## ${blockTitle}\n\n*处理中...*`,
-          processedText,
-          'May the 神谕 be with you',
-          'prompt'
-        );
+        // 不立即更新消息，保留默认的loading状态
+        // 让所有提示词块保持一致的loading动画
         
         // 调用API获取响应
         console.log(`[PromptExecutor] 发送全局提示词 ${block.blockId} 到API...`);
