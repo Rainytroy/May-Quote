@@ -221,11 +221,6 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
     
     setIsGenerating(true);
     
-    // 先清空现有卡片和控件，避免UI残留
-    console.log('[AgentConfigPanel] 生成前清空现有UI组件');
-    setCards([]);
-    setControlDefinitions([]);
-    
     try {
       let prompt: string;
       let interactionNote: string;
@@ -321,6 +316,11 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
         
         // 更新最新JSON结果，用于后续修改
         setLatestJsonOutput(jsonStr);
+        
+        // 在获取JSON响应后、解析前清空现有UI，避免UI残留
+        console.log('[AgentConfigPanel] 解析JSON前清空现有UI组件');
+        setCards([]);
+        setControlDefinitions([]);
         
         // 解析JSON
         parseJsonConfig(jsonStr);
