@@ -143,7 +143,7 @@ export const usePromptExecutor = ({
         runningMessageId,
         `运行提示词执行器: ${agentName}`, // 基本内容
         '',
-        'May the 神谕 be with you',
+        agentName, // 使用UI顶部的Agent名称
         'progress', // 使用'progress'类型
         progressInfo // 传递进度信息对象
       );
@@ -207,6 +207,17 @@ export const usePromptExecutor = ({
           );
           
           console.log(`[PromptExecutor] 提示词块 ${block.blockId} 执行完成`);
+          
+          // 更新进度信息
+          progressInfo.current += 1;
+          chatInterfaceRef.current.updateAiMessage(
+            runningMessageId,
+            `运行提示词执行器: ${agentName}`, // 基本内容
+            '',
+            agentName,
+            'progress', // 使用'progress'类型
+            progressInfo // 传递更新后的进度信息
+          );
           
           // 添加短暂延迟，避免请求过快
           await new Promise(resolve => setTimeout(resolve, 500));
@@ -285,6 +296,17 @@ export const usePromptExecutor = ({
           
           console.log(`[PromptExecutor] 全局提示词块 ${block.blockId} 执行完成`);
           
+          // 更新进度信息
+          progressInfo.current += 1;
+          chatInterfaceRef.current.updateAiMessage(
+            runningMessageId,
+            `运行提示词执行器: ${agentName}`, // 基本内容
+            '',
+            agentName,
+            'progress', // 使用'progress'类型
+            progressInfo // 传递更新后的进度信息
+          );
+          
           // 添加短暂延迟，避免请求过快
           await new Promise(resolve => setTimeout(resolve, 500));
         } catch (error) {
@@ -308,13 +330,18 @@ export const usePromptExecutor = ({
       // 完成执行，显示摘要
       console.log('[PromptExecutor] 所有提示词块执行完毕');
       
-      // 更新运行消息 - 使用纯文本格式，保持一致性
+      // 更新进度信息为完成状态
+      progressInfo.completed = true;
+      progressInfo.current = allBlocks.length; // 确保进度显示为满格
+      
+      // 更新运行消息 - 保持progress类型一致性
       chatInterfaceRef.current.updateAiMessage(
         runningMessageId,
-        `执行完成\n\n运行：${agentName}\n\n共执行了 ${allBlocks.length} 个提示词块 (卡片 ${cardBlocks.length} 个，全局 ${globalBlocks.length} 个)，请查看下方消息了解详情。`,
+        `运行提示词执行器: ${agentName}`,
         '',
-        'May the 神谕 be with you',
-        'prompt'
+        agentName,
+        'progress', // 保持为progress类型，确保UI样式一致
+        progressInfo // 传递带有completed=true的进度信息
       );
       
     } catch (error) {
