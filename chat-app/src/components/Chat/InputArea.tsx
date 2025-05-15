@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useReference } from '../../contexts/ReferenceContext';
 import ReferenceTag from '../Reference/ReferenceTag';
+import ModeSelector from '../ModeSelector';
 
 interface InputAreaProps {
   onSendMessage: (content: string) => void;
@@ -83,6 +84,10 @@ const InputArea: React.FC<InputAreaProps> = ({
       )}
       
       <div className="input-container" ref={inputContainerRef}>
+        <ModeSelector 
+          currentMode="may"
+          className="input-mode-selector"
+        />
         <textarea
           ref={textareaRef}
           value={message}

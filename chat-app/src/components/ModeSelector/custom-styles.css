@@ -1,0 +1,120 @@
+/**
+* 自定义模式选择器样式
+ *
+ * 实现深灰色风格的下拉菜单设计
+ */
+
+/* 主容器 */
+.custom-mode-selector {
+  position: relative;
+  height: auto; /* 自动高度而不是固定 */
+  width: 80px;
+  display: flex;
+  align-items: stretch; /* 垂直拉伸 */
+  background-color: transparent;
+  border-right: 1px solid var(--border-color);
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  transition: background-color 0.15s ease;
+  outline: none;
+  align-self: stretch; /* 填充父容器 */
+  flex-shrink: 0; /* 不收缩 */
+}
+
+.custom-mode-selector:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.custom-mode-selector:focus {
+  outline: none;
+}
+
+/* 禁用状态 */
+.custom-mode-selector.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 选中显示区域 */
+.mode-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  flex-grow: 1; /* 填充容器剩余空间 */
+  align-self: stretch; /* 拉伸到父容器高度 */
+}
+
+/* 选中的文本 */
+.mode-text {
+  color: #A5E887; /* 品牌绿色 */
+  font-weight: 500;
+  font-size: var(--font-sm);
+}
+
+/* 箭头图标 */
+.mode-arrow {
+  color: #A5E887; /* 品牌绿色 */
+  font-size: 9px;
+  margin-left: 5px;
+}
+
+/* 下拉菜单 */
+.mode-dropdown {
+  position: fixed; /* 改为fixed，避免被父元素的overflow裁剪 */
+  /* 其他样式保持不变 */
+  width: 120px; /* 下拉菜单宽度比显示区域宽 */
+  background-color: #1e1e1e; /* 深灰色背景 */
+  border: 1px solid #333; /* 深色描边 */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  border-radius: var(--radius-sm);
+  z-index: 9999; /* 提高z-index确保在最上层 */
+  overflow: hidden;
+  margin-top: 4px; /* 下拉菜单下方显示时的间距 */
+  margin-bottom: 4px; /* 下拉菜单上方显示时的间距 */
+}
+
+/* 选项 */
+.mode-option {
+  color: #A5E887; /* 品牌绿色 */
+  padding: 10px 16px; /* 增加内边距 */
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  font-weight: 500;
+  font-size: var(--font-sm);
+  border-bottom: 1px solid #333;
+}
+
+.mode-option:last-child {
+  border-bottom: none;
+}
+
+/* 悬停状态 */
+.mode-option:hover {
+  background-color: #2a2a2a; /* 深灰色 */
+}
+
+/* 选中状态 */
+.mode-option.selected {
+  background-color: #2d2d2d; /* 更深的灰色 */
+  box-shadow: inset 0 0 0 1px #444; /* 内侧描边 */
+}
+
+/* 输入区域中的样式 */
+.input-mode-selector {
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+  border: none !important;
+  border-right: 1px solid var(--border-color) !important;
+  align-self: stretch; /* 拉伸到父容器高度 */
+  height: auto !important; /* 自动高度 */
+  display: flex !important; /* 弹性布局 */
+  align-items: stretch !important; /* 内容垂直拉伸 */
+}

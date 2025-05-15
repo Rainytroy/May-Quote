@@ -1,0 +1,12 @@
+/**
+ * 模式选择器基础样式
+ * 保持兼容性，确保可以正确导入
+ */
+
+/* 此文件基础样式已经被custom-styles.css替代，保留为空仅供兼容性 */
+.mode-selector {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+}
