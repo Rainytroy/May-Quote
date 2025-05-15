@@ -1,0 +1,202 @@
+/**
+ * 神谕消息气泡样式
+ */
+
+/* 消息容器 */
+.shenyu-message-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+/* 发送者名称样式 */
+.shenyu-message-sender {
+  font-size: 12px;
+  color: var(--text-secondary, #666);
+  margin-bottom: 4px;
+  padding-left: 8px;
+}
+
+/* 基础消息气泡样式 */
+.shenyu-message {
+  background-color: var(--card-bg, #ffffff);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-color, #eaeaea);
+}
+
+/* JSON消息特有样式 */
+.json-message {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* JSON消息元信息 */
+.json-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 16px;
+  background-color: var(--brand-color, #3498db);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.json-meta-item {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+}
+
+.json-meta-label {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+  margin-right: 5px;
+}
+
+.json-meta-value {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* JSON内容区域 */
+.json-content {
+  position: relative;
+  max-height: 400px;
+  overflow-y: auto;
+  font-family: 'Consolas', 'Monaco', 'Andale Mono', monospace;
+  line-height: 1.5;
+  padding: 0;
+  background-color: #2d2d2d;
+}
+
+.json-code {
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+
+.json-raw {
+  padding: 16px;
+  margin: 0;
+  background-color: #2d2d2d;
+  color: #ccc;
+  white-space: pre-wrap;
+}
+
+/* JSON底部操作区 */
+.json-actions {
+  display: flex;
+  padding: 8px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: #383838;
+}
+
+.json-view-mode-btn {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+  margin-right: 8px;
+}
+
+.json-view-mode-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.json-view-mode-btn.active {
+  background-color: var(--brand-color, #3498db);
+  color: white;
+  border-color: var(--brand-color, #3498db);
+}
+
+/* 加载指示器 */
+.shenyu-loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: 16px;
+  color: var(--text-white, #ffffff);
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: var(--brand-color, #3498db);
+  border-radius: 50%;
+  margin-right: 8px;
+  animation: spin 1s linear infinite;
+}
+
+/* 加载时的打字指示器 */
+.typing-indicator {
+  display: inline-block;
+  margin-left: var(--space-xs);
+}
+
+.typing-indicator .dot {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: var(--text-white);
+  margin: 0 2px;
+  opacity: 0.7;
+}
+
+.typing-indicator .dot:nth-child(1) {
+  animation: blink 1s infinite;
+}
+
+.typing-indicator .dot:nth-child(2) {
+  animation: blink 1s infinite 0.2s;
+}
+
+.typing-indicator .dot:nth-child(3) {
+  animation: blink 1s infinite 0.4s;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* JSON错误提示 */
+.json-error {
+  padding: 16px;
+  background-color: #fff3f3;
+  border-left: 3px solid #ff6b6b;
+}
+
+.error-title {
+  font-weight: 600;
+  color: #d63031;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.error-message {
+  color: #666;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}

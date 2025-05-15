@@ -1,7 +1,9 @@
 import React, { useRef, useEffect } from 'react';
 import MessageItem, { Message } from './MessageItem';
-
+import { useMode } from '../../contexts/ModeContext';
+import ShenyuMessageBubble from '../Shenyu/ui/messages/ShenyuMessageBubble';
 import { ClipboardItem } from '../../types';
+import { ShenyuMessage } from '../Shenyu/types';
 
 interface MessageListProps {
   messages: Message[];
@@ -26,6 +28,9 @@ const MessageList: React.FC<MessageListProps> = ({
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
+  // 获取当前模式 - 移到顶层，避免条件渲染问题
+  const { currentMode } = useMode();
+  
   // 当新消息添加时自动滚动到底部
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -46,19 +51,36 @@ const MessageList: React.FC<MessageListProps> = ({
   
   return (
     <div className="message-list">
-      {messages.map((message) => (
-        <MessageItem 
-          key={message.id} 
-          message={message} 
-          onContextMenu={onContextMenu}
-          onCopy={onCopy}
-          onQuote={onQuote}
-          onAddToClipboard={onAddToClipboard}
-          onAddSelectedTextToClipboard={onAddSelectedTextToClipboard}
-          onQuoteToNewConversation={onQuoteToNewConversation}
-          onOpenQuoteDialog={onOpenQuoteDialog}
-        />
-      ))}
+      {messages.map((message) => {
+        // 检查是否为神谕消息
+        const isShenyuMessage = 'isShenyu' in message && message.isShenyu;
+        
+        // 只根据消息类型渲染不同组件，不依赖当前模式
+        if (isShenyuMessage && message.role === 'assistant') {
+          return (
+            <ShenyuMessageBubble
+              key={message.id}
+              message={message as ShenyuMessage}
+              loading={!!message.loading}
+            />
+          );
+        } else {
+          // 默认使用普通消息组件
+          return (
+            <MessageItem 
+              key={message.id} 
+              message={message} 
+              onContextMenu={onContextMenu}
+              onCopy={onCopy}
+              onQuote={onQuote}
+              onAddToClipboard={onAddToClipboard}
+              onAddSelectedTextToClipboard={onAddSelectedTextToClipboard}
+              onQuoteToNewConversation={onQuoteToNewConversation}
+              onOpenQuoteDialog={onOpenQuoteDialog}
+            />
+          );
+        }
+      })}
       <div ref={messagesEndRef} />
     </div>
   );

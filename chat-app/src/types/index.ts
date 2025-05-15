@@ -30,7 +30,7 @@ export interface ClipboardItem {
 export interface ClipboardTab {
   id: string;              // Tab唯一标识
   title: string;           // Tab标题
-  type: 'clipboard' | 'custom'; // Tab类型
+  type: 'clipboard' | 'custom' | 'shenyu'; // Tab类型
   closable: boolean;       // 是否可关闭
 }
 

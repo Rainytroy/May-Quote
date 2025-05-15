@@ -9,6 +9,7 @@ import SortModeList from './SortModeList';
 import { useClipboardSelection } from '../../hooks/useClipboardSelection';
 import { useSortMode } from '../../hooks/useSortMode';
 import { useReference } from '../../contexts/ReferenceContext';
+import { useMode } from '../../contexts/ModeContext';
 
 interface DraggableClipboardAreaProps {
   items?: ClipboardItem[];
@@ -46,11 +47,24 @@ const DraggableClipboardArea: React.FC<DraggableClipboardAreaProps> = ({
   // 获取引用上下文
   const { addReference } = useReference();
   
+  // 获取当前模式
+  const { currentMode } = useMode();
+  
   // Tab状态
   const [tabs, setTabs] = useState<ClipboardTabType[]>([
-    { id: 'clipboard', title: '剪贴板', type: 'clipboard', closable: false }
+    { id: 'clipboard', title: '剪贴板', type: 'clipboard', closable: false },
+    { id: 'shenyu', title: '神谕', type: 'shenyu', closable: false }
   ]);
   const [activeTabId, setActiveTabId] = useState('clipboard');
+  
+  // 根据当前模式自动切换tab
+  useEffect(() => {
+    if (currentMode === 'may') {
+      setActiveTabId('clipboard');
+    } else if (currentMode === 'shenyu') {
+      setActiveTabId('shenyu');
+    }
+  }, [currentMode]);
   
   // 剪贴板项目状态 - 保持本地副本以便拖拽排序
   const [clipboardItems, setClipboardItems] = useState<ClipboardItem[]>([]);
@@ -254,54 +268,81 @@ const DraggableClipboardArea: React.FC<DraggableClipboardAreaProps> = ({
         style={{
           flex: 1,
           overflowY: 'auto',
-          padding: clipboardItems.length > 0 ? 'var(--space-md)' : 0,
-          paddingBottom: (selectMode || sortMode) ? 'calc(var(--space-md) + 60px)' : 'var(--space-md)', // 为工具栏预留空间
+          padding: clipboardItems.length > 0 && activeTabId === 'clipboard' ? 'var(--space-md)' : 0,
+          paddingBottom: (selectMode || sortMode) && activeTabId === 'clipboard' ? 'calc(var(--space-md) + 60px)' : 'var(--space-md)', // 为工具栏预留空间
           position: 'relative',
           scrollBehavior: 'smooth', // 添加平滑滚动效果
         }}
       >
-        {/* 根据当前模式展示不同的内容 */}
-        {sortMode ? (
-          // 排序模式 - 使用简化的上下按钮控制排序
-          <SortModeList 
-            items={clipboardItems}
-            lastItemRef={lastItemRef}
-            onMoveUp={(itemId) => {
-              // 调用移动方法并获取新排序的数组
-              const newItems = moveItemUp(itemId);
-              
-              // 如果成功移动了项目，更新本地状态以刷新视图
-              if (newItems) {
-                setClipboardItems([...newItems]);
-              }
-            }}
-            onMoveDown={(itemId) => {
-              // 调用移动方法并获取新排序的数组
-              const newItems = moveItemDown(itemId);
-              
-              // 如果成功移动了项目，更新本地状态以刷新视图
-              if (newItems) {
-                setClipboardItems([...newItems]);
-              }
-            }}
-          />
-        ) : (
-          // 正常模式 - 禁用拖拽功能，只有排序模式才允许拖拽
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <ClipboardDraggableList 
+        {/* 神谕Tab内容 */}
+        {activeTabId === 'shenyu' && (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            padding: 'var(--space-lg)',
+            color: 'var(--text-mid-gray)',
+            textAlign: 'center'
+          }}>
+            <div style={{ 
+              fontSize: 'var(--font-lg)',
+              marginBottom: 'var(--space-md)',
+              color: 'var(--brand-color)'
+            }}>
+              神谕区域
+            </div>
+            <div style={{ fontSize: 'var(--font-sm)' }}>
+              此区域将用于显示神谕相关内容
+            </div>
+          </div>
+        )}
+        
+        {/* 剪贴板内容 - 仅在剪贴板tab激活时显示 */}
+        {activeTabId === 'clipboard' && (
+          sortMode ? (
+            // 排序模式 - 使用简化的上下按钮控制排序
+            <SortModeList 
               items={clipboardItems}
-              selectMode={selectMode} // 使用实际的selectMode
-              isDragDisabled={true} // 非排序模式下禁用拖拽功能
-              selectedItems={selectedItems}
-              onItemSelect={handleItemSelect}
-              onCopy={onCopy}
-              onQuote={onQuote}
-              onLocate={onLocate}
-              onDelete={handleDeleteItem}
-              droppableId={droppableId}
-              lastItemRef={lastItemRef as React.RefObject<HTMLDivElement>}
+              lastItemRef={lastItemRef}
+              onMoveUp={(itemId) => {
+                // 调用移动方法并获取新排序的数组
+                const newItems = moveItemUp(itemId);
+                
+                // 如果成功移动了项目，更新本地状态以刷新视图
+                if (newItems) {
+                  setClipboardItems([...newItems]);
+                }
+              }}
+              onMoveDown={(itemId) => {
+                // 调用移动方法并获取新排序的数组
+                const newItems = moveItemDown(itemId);
+                
+                // 如果成功移动了项目，更新本地状态以刷新视图
+                if (newItems) {
+                  setClipboardItems([...newItems]);
+                }
+              }}
             />
-          </DragDropContext>
+          ) : (
+            // 正常模式 - 禁用拖拽功能，只有排序模式才允许拖拽
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <ClipboardDraggableList 
+                items={clipboardItems}
+                selectMode={selectMode}
+                isDragDisabled={true} // 非排序模式下禁用拖拽功能
+                selectedItems={selectedItems}
+                onItemSelect={handleItemSelect}
+                onCopy={onCopy}
+                onQuote={onQuote}
+                onLocate={onLocate}
+                onDelete={handleDeleteItem}
+                droppableId={droppableId}
+                lastItemRef={lastItemRef as React.RefObject<HTMLDivElement>}
+              />
+            </DragDropContext>
+          )
         )}
         
         {/* 根据当前模式显示不同的工具栏 */}

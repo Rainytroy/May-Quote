@@ -1,71 +1,48 @@
 /**
- * 日期和时间处理工具函数
+ * 日期工具函数
  */
 
 /**
- * 格式化时间戳为智能显示的时间文本
- * 规则：
- * - 今天的消息：只显示时间（13:45）
- * - 昨天的消息：显示"昨天 13:45"
- * - 本周内的消息：显示"周一 13:45"
- * - 更早的消息：显示完整日期"2025年4月25日 13:45"
- * 
- * @param timestamp 时间戳（毫秒）
- * @returns 格式化后的时间文本
+ * 格式化日期为智能时间显示
+ * - 当天显示为"HH:MM"
+ * - 昨天显示为"昨天 HH:MM"
+ * - 本年内显示为"M月D日 HH:MM"
+ * - 其他显示为"YYYY年M月D日 HH:MM"
  */
 export function formatSmartTime(timestamp: number): string {
   const date = new Date(timestamp);
   const now = new Date();
   
-  // 获取时间部分（时:分）
-  const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  // 获取小时和分钟并补零
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const timeStr = `${hours}:${minutes}`;
   
-  // 计算日期差异
-  const isToday = isSameDay(date, now);
-  const isYesterday = checkIsYesterday(timestamp); // 使用更准确的昨天检测函数
-  
-  // 是否是本周
-  const startOfWeek = new Date(now);
-  startOfWeek.setHours(0, 0, 0, 0);
-  startOfWeek.setDate(now.getDate() - now.getDay()); // 设置为本周日（周首日）
-  const isThisWeek = date >= startOfWeek;
-  
-  if (isToday) {
-    return time; // 今天只显示时间
-  } else if (isYesterday) {
-    return `昨天 ${time}`; // 昨天
-  } else if (isThisWeek) {
-    // 本周内显示周几
-    const weekday = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][date.getDay()];
-    return `${weekday} ${time}`;
-  } else {
-    // 更早的消息显示完整日期
-    return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${time}`;
+  // 检查是否是今天
+  if (
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear()
+  ) {
+    return timeStr;
   }
-}
-
-/**
- * 判断两个日期是否是同一天
- */
-function isSameDay(date1: Date, date2: Date): boolean {
-  return (
-    date1.getFullYear() === date2.getFullYear() &&
-    date1.getMonth() === date2.getMonth() &&
-    date1.getDate() === date2.getDate()
-  );
-}
-
-/**
- * 检查给定的时间戳是否为昨天
- * 这个函数更准确地检测"昨天"，避免时区和夏令时问题
- */
-function checkIsYesterday(timestamp: number): boolean {
-  const date = new Date(timestamp);
-  const now = new Date();
   
-  // 复制当前日期，并设置为昨天的同一时刻
+  // 检查是否是昨天
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
+  if (
+    date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear()
+  ) {
+    return `昨天 ${timeStr}`;
+  }
   
-  return isSameDay(date, yesterday);
+  // 检查是否是本年
+  if (date.getFullYear() === now.getFullYear()) {
+    return `${date.getMonth() + 1}月${date.getDate()}日 ${timeStr}`;
+  }
+  
+  // 其他情况显示完整日期
+  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${timeStr}`;
 }

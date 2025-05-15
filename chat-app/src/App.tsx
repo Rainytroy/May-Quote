@@ -10,6 +10,9 @@ import { useConversations } from './hooks/useConversations';
 import { ClipboardItem } from './types';
 import { exportAsMarkdown, exportAsPDF } from './utils/export-utils';
 import { ReferenceProvider } from './contexts/ReferenceContext';
+import { ModeProvider } from './contexts/ModeContext';
+import DebugToggleButton from './components/Shenyu/ui/debug/DebugToggleButton';
+import ShenyuDebugPanel from './components/Shenyu/ui/debug/ShenyuDebugPanel';
 import './styles/global.css'; // 引入全局样式
 
 // 主应用组件
@@ -19,6 +22,7 @@ function App() {
   const [hasApiKey, setHasApiKey] = useState(false);
   const [currentModelId, setCurrentModelId] = useState('');
   const [isDevLinkHovered, setIsDevLinkHovered] = useState(false);
+  const [isDebugPanelOpen, setIsDebugPanelOpen] = useState(false);
   
   // 获取对话管理Hook
   const {
@@ -211,11 +215,18 @@ function App() {
   };
 
   return (
-    <ReferenceProvider>
-      <div className="app-container">
+    <ModeProvider>
+      <ReferenceProvider>
+        <div className="app-container">
         {/* 顶部导航 */}
         <nav className="navbar">
           <div className="logo">May</div>
+          
+          {/* 调试按钮 - 在Logo后面添加 */}
+          <DebugToggleButton
+            isActive={isDebugPanelOpen}
+            onClick={() => setIsDebugPanelOpen(!isDebugPanelOpen)}
+          />
           
           {/* 开发者信息 */}
           <a
@@ -447,7 +458,14 @@ function App() {
           onCancel={handleCloseQuoteDialog}
         />
       </div>
-    </ReferenceProvider>
+      
+      {/* 神谕调试面板 */}
+      <ShenyuDebugPanel 
+        isOpen={isDebugPanelOpen}
+        onClose={() => setIsDebugPanelOpen(false)}
+      />
+      </ReferenceProvider>
+    </ModeProvider>
   );
 }
 

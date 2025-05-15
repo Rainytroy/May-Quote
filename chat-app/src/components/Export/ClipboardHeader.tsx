@@ -85,7 +85,7 @@ const ClipboardHeader: React.FC<ClipboardHeaderProps> = ({
         ))}
       </div>
       
-      {/* 工具栏 */}
+      {/* 工具栏 - 根据当前标签页确定是否显示 */}
       <div 
         className="clipboard-toolbar"
         style={{
@@ -98,154 +98,157 @@ const ClipboardHeader: React.FC<ClipboardHeaderProps> = ({
         }}
       >
         <div className="toolbar-title">
-          剪贴板内容 ({itemCount})
+          {activeTabId === 'clipboard' ? `剪贴板内容 (${itemCount})` : '神谕'}
         </div>
         
-        <div className="toolbar-actions" style={{ display: 'flex', gap: 'var(--space-xs)' }}>
-          {/* 更多按钮 */}
-          <div style={{ position: 'relative' }}>
-            <button
-              className="more-menu-button"
-              onClick={() => setShowMoreMenu(!showMoreMenu)}
-              aria-label="更多操作"
-              title="更多操作"
-              style={{
-                backgroundColor: 'transparent',
-                border: 'none',
-                color: 'var(--text-light-gray)',
-                padding: '6px',
-                borderRadius: 'var(--radius-sm)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-              }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="1"></circle>
-                <circle cx="19" cy="12" r="1"></circle>
-                <circle cx="5" cy="12" r="1"></circle>
-              </svg>
-            </button>
-            
-            {/* 更多菜单 */}
-            {showMoreMenu && (
-              <div
-                className="more-menu-content"
+        {/* 工具栏操作按钮 - 仅在剪贴板标签页时显示 */}
+        {activeTabId === 'clipboard' && (
+          <div className="toolbar-actions" style={{ display: 'flex', gap: 'var(--space-xs)' }}>
+            {/* 更多按钮 */}
+            <div style={{ position: 'relative' }}>
+              <button
+                className="more-menu-button"
+                onClick={() => setShowMoreMenu(!showMoreMenu)}
+                aria-label="更多操作"
+                title="更多操作"
                 style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  backgroundColor: 'var(--card-bg)',
-                  border: '1px solid var(--border-color)',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-light-gray)',
+                  padding: '6px',
                   borderRadius: 'var(--radius-sm)',
-                  padding: 'var(--space-xs) 0',
-                  minWidth: '160px',
-                  zIndex: 10,
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
                 }}
               >
-                <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-                  <li>
-                    <button
-                      onClick={() => {
-                        onSelectMode();
-                        setShowMoreMenu(false);
-                      }}
-                      style={{
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        color: 'var(--text-white)',
-                        padding: 'var(--space-xs) var(--space-md)',
-                        textAlign: 'left',
-                        width: '100%',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      选择
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      onClick={() => {
-                        onSortMode();
-                        setShowMoreMenu(false);
-                      }}
-                      style={{
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        color: 'var(--text-white)',
-                        padding: 'var(--space-xs) var(--space-md)',
-                        textAlign: 'left',
-                        width: '100%',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      排序
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      onClick={() => {
-                        onExportMarkdown();
-                        setShowMoreMenu(false);
-                      }}
-                      style={{
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        color: 'var(--text-white)',
-                        padding: 'var(--space-xs) var(--space-md)',
-                        textAlign: 'left',
-                        width: '100%',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      导出为Markdown
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      onClick={() => {
-                        onExportPDF();
-                        setShowMoreMenu(false);
-                      }}
-                      style={{
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        color: 'var(--text-white)',
-                        padding: 'var(--space-xs) var(--space-md)',
-                        textAlign: 'left',
-                        width: '100%',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      导出为PDF
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      onClick={() => {
-                        onClearAll();
-                        setShowMoreMenu(false);
-                      }}
-                      style={{
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        color: 'var(--error-color)',
-                        padding: 'var(--space-xs) var(--space-md)',
-                        textAlign: 'left',
-                        width: '100%',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      清空剪贴板
-                    </button>
-                  </li>
-                </ul>
-              </div>
-            )}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="1"></circle>
+                  <circle cx="19" cy="12" r="1"></circle>
+                  <circle cx="5" cy="12" r="1"></circle>
+                </svg>
+              </button>
+              
+              {/* 更多菜单 */}
+              {showMoreMenu && (
+                <div
+                  className="more-menu-content"
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    backgroundColor: 'var(--card-bg)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: 'var(--space-xs) 0',
+                    minWidth: '160px',
+                    zIndex: 10,
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                  }}
+                >
+                  <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                    <li>
+                      <button
+                        onClick={() => {
+                          onSelectMode();
+                          setShowMoreMenu(false);
+                        }}
+                        style={{
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          color: 'var(--text-white)',
+                          padding: 'var(--space-xs) var(--space-md)',
+                          textAlign: 'left',
+                          width: '100%',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        选择
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => {
+                          onSortMode();
+                          setShowMoreMenu(false);
+                        }}
+                        style={{
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          color: 'var(--text-white)',
+                          padding: 'var(--space-xs) var(--space-md)',
+                          textAlign: 'left',
+                          width: '100%',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        排序
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => {
+                          onExportMarkdown();
+                          setShowMoreMenu(false);
+                        }}
+                        style={{
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          color: 'var(--text-white)',
+                          padding: 'var(--space-xs) var(--space-md)',
+                          textAlign: 'left',
+                          width: '100%',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        导出为Markdown
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => {
+                          onExportPDF();
+                          setShowMoreMenu(false);
+                        }}
+                        style={{
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          color: 'var(--text-white)',
+                          padding: 'var(--space-xs) var(--space-md)',
+                          textAlign: 'left',
+                          width: '100%',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        导出为PDF
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => {
+                          onClearAll();
+                          setShowMoreMenu(false);
+                        }}
+                        style={{
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          color: 'var(--error-color)',
+                          padding: 'var(--space-xs) var(--space-md)',
+                          textAlign: 'left',
+                          width: '100%',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        清空剪贴板
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </>
   );

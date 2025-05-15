@@ -36,6 +36,7 @@ export type {
  */
 export interface ShenyuMessage extends MayMessage {
   isShenyu?: boolean;              // 标识是否为神谕消息
+  type?: 'json' | 'prompt' | 'process'; // 消息类型
   sender?: string;                 // 消息发送者标识
   originalUserInput?: string;      // 原始用户输入，用于二阶段提示词
   shenyuData?: {                   // 神谕特有数据

@@ -2,9 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useReference } from '../../contexts/ReferenceContext';
 import ReferenceTag from '../Reference/ReferenceTag';
 import ModeSelector from '../ModeSelector';
+import { useMode } from '../../contexts/ModeContext';
+import { getShenyuSystemPrompt, triggerDebugEvent } from '../Shenyu/utils/shenyuSystemPrompt';
+import { ChatMode } from '../Shenyu/types';
 
 interface InputAreaProps {
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string, mode?: string) => void;
   disabled?: boolean;
   placeholder?: string;
 }
@@ -38,13 +41,41 @@ const InputArea: React.FC<InputAreaProps> = ({
     }
   }, [message]);
   
+  // 获取当前模式
+  const { currentMode } = useMode();
+  
   // 发送消息处理
   const handleSendMessage = () => {
     const trimmedMessage = message.trim();
     if ((trimmedMessage || references.length > 0) && !disabled) {
       // 使用引用内容和用户输入构建完整提示
-      const fullPrompt = getFullPrompt(trimmedMessage);
-      onSendMessage(fullPrompt);
+      let fullPrompt = getFullPrompt(trimmedMessage);
+      
+      // 神谕模式下添加系统提示词
+      if (currentMode === 'shenyu') {
+        // 记录原始用户输入用于调试
+        const originalUserInput = fullPrompt;
+        
+        // 获取神谕系统提示词
+        const systemPrompt = getShenyuSystemPrompt(fullPrompt);
+        
+        // 记录请求信息到调试工具
+        triggerDebugEvent({
+          systemPrompt,
+          userInput: originalUserInput,
+          contextMessagesCount: 0, // 这里无法获取上下文消息数量，由useChat内部处理
+          fullPayload: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: originalUserInput }
+          ]
+        });
+        
+        // 这里我们不修改用户输入内容，系统提示词的添加由useChat内部处理
+        // 我们只是记录用于调试目的
+      }
+      
+      // 传递当前模式作为第二个参数，确保与消息一起准确传递
+      onSendMessage(fullPrompt, currentMode);
       setMessage('');
       // 清除所有引用
       clearAllReferences();
@@ -85,7 +116,6 @@ const InputArea: React.FC<InputAreaProps> = ({
       
       <div className="input-container" ref={inputContainerRef}>
         <ModeSelector 
-          currentMode="may"
           className="input-mode-selector"
         />
         <textarea

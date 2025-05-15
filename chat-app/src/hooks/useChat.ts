@@ -4,6 +4,13 @@ import { sendMessageStream } from '../services/ai-service';
 import { preprocessMessages } from '../utils/model-adapters';
 import { Message } from '../components/Chat/MessageItem';
 import { generateId } from '../utils/storage-db';
+import { useMode } from '../contexts/ModeContext';
+import { 
+  getShenyuSystemPrompt, 
+  logPromptStructure, 
+  isValidJsonContent,
+  triggerDebugEvent
+} from '../components/Shenyu/utils/shenyuSystemPrompt';
 
 export interface ChatState {
   messages: Message[];
@@ -24,8 +31,9 @@ export function useChat(
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // 使用ref来追踪最新的消息，避免闭包问题
+  // 使用ref来追踪最新的消息和响应内容，避免闭包问题
   const messagesRef = useRef<Message[]>([]);
+  const responseContentRef = useRef<string>(''); // 用于跟踪最终的API响应
   messagesRef.current = messages;
   
   // 当conversationId变化时，清空消息
@@ -38,8 +46,14 @@ export function useChat(
     }
   }, [conversationId]);
   
+  // 获取当前模式
+  const { currentMode } = useMode();
+  
   // 发送消息
-  const sendMessage = useCallback(async (content: string) => {
+  const sendMessage = useCallback(async (content: string, messageMode?: string) => {
+    // 使用传入的消息模式或当前模式
+    const effectiveMode = messageMode || currentMode;
+    console.log(`[useChat] 发送消息使用模式: ${effectiveMode}`);
     const apiKey = getApiKey();
     if (!apiKey) {
       setError('请先设置API密钥');
@@ -60,7 +74,12 @@ export function useChat(
       role: 'assistant',
       content: '',
       timestamp: Date.now(),
-      loading: true
+      loading: true,
+      // 如果是神谕模式，直接标记为神谕消息
+      ...(effectiveMode === 'shenyu' && {
+        isShenyu: true,
+        type: 'json' // 默认使用json类型
+      })
     };
     
     // 添加消息到状态
@@ -82,11 +101,59 @@ export function useChat(
           content: msg.content || '' // 确保content至少为空字符串
         }));
       
+      // 处理神谕模式的提示词 - 使用消息附带的模式而不是React状态
+      if (effectiveMode === 'shenyu') {
+        // 获取系统提示词
+        const shenyuPrompt = getShenyuSystemPrompt(content);
+        
+        // 修改用户消息，将提示词模板直接添加到用户消息中
+        // 找到最后一条用户消息（就是当前发送的消息）
+        for (let i = apiMessages.length - 1; i >= 0; i--) {
+          if (apiMessages[i].role === 'user') {
+            // 替换用户消息内容为模板格式（原始内容已经包含在模板的{#input}中）
+            apiMessages[i].content = shenyuPrompt;
+            break;
+          }
+        }
+        
+        // 添加一个空的系统提示词，作为基础上下文
+        apiMessages.unshift({
+          role: 'system',
+          content: '你是一个能力强大的AI助手，专门用于生成JSON格式的结构化提示词。请严格按照用户消息中提供的指南操作。'
+        });
+        
+        // 记录请求结构用于调试，注意这里不会实际发送数据，仅用于调试显示
+        const debugData = logPromptStructure(apiMessages[0].content, apiMessages.slice(1), content);
+        
+        // 触发调试事件，显示在调试面板中
+        triggerDebugEvent({
+          systemPrompt: apiMessages[0].content,
+          userInput: content,
+          contextMessagesCount: apiMessages.length - 2, // 减去系统提示词和当前用户消息
+          fullPayload: apiMessages
+        });
+      }
+      
       // 获取当前选择的模型
       const model = getModel();
       
       // 处理流式响应中的进度更新
       const handleProgress = (text: string) => {
+        // 更新响应引用 (在组件顶层声明)
+        responseContentRef.current = text;
+        
+        // 将最新的响应发送到调试面板（仅在神谕模式下）
+        if (effectiveMode === 'shenyu') {
+          triggerDebugEvent({
+            systemPrompt: apiMessages[0].content,
+            userInput: content,
+            contextMessagesCount: apiMessages.length - 2,
+            fullPayload: apiMessages,
+            response: text // 将当前响应内容传递给调试面板
+          });
+        }
+        
+        // 更新UI中的消息
         setMessages(prevMessages => {
           // 确保有消息且数组不为空
           if (!prevMessages || prevMessages.length === 0) {
@@ -98,9 +165,13 @@ export function useChat(
           // 确保lastMessage存在且具有role属性
           if (lastMessage && lastMessage.role === 'assistant' && lastMessage.loading) {
             // 更新AI消息内容
+            // 保留原有的isShenyu和type标记，只更新内容
             const newMessages = [
               ...prevMessages.slice(0, -1),
-              { ...lastMessage, content: text }
+              { 
+                ...lastMessage, 
+                content: text
+              }
             ];
             messagesRef.current = newMessages; // 更新ref
             return newMessages;
@@ -142,7 +213,11 @@ export function useChat(
         if (lastMessage.role === 'assistant' && lastMessage.loading) {
           const newMessages = [
             ...prevMessages.slice(0, -1),
-            { ...lastMessage, loading: false }
+            { 
+              ...lastMessage, 
+              loading: false
+              // 不再根据内容判断消息类型，保持已有的类型标记
+            }
           ];
           messagesRef.current = newMessages; // 更新ref
           return newMessages;
