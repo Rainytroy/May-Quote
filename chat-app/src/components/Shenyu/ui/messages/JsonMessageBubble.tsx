@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { extractJsonStructureInfo } from '../../utils/shenyuSystemPrompt';
 import { ShenyuMessage } from '../../types';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -31,6 +31,19 @@ const JsonMessageBubble: React.FC<JsonMessageBubbleProps> = ({
 
   // 初始状态设为已高亮模式
   const [viewMode, setViewMode] = useState<'highlighted' | 'raw'>('highlighted');
+  
+  // 添加自动触发事件的逻辑 - 当消息加载完成时
+  useEffect(() => {
+    // 如果消息内容存在且已加载完成(不在loading状态)
+    if (!loading && message.content && jsonInfo.isValidJson) {
+      console.log('[JsonMessageBubble] JSON消息加载完成，自动触发事件');
+      
+      // 自动触发事件，传递JSON内容
+      window.dispatchEvent(new CustomEvent('shenyu-view-json', {
+        detail: { jsonContent: contentWithoutMarkdown }
+      }));
+    }
+  }, [loading, message.content, contentWithoutMarkdown, jsonInfo.isValidJson]);
   
   // 自定义代码块样式 - 使用Record代替PrismTheme类型
   const customCodeStyle: Record<string, any> = {
@@ -118,18 +131,26 @@ const JsonMessageBubble: React.FC<JsonMessageBubbleProps> = ({
             </button>
           </div>
         </div>
-        <button style={{ 
-          backgroundColor: 'var(--brand-color)', 
-          color: 'var(--text-dark)', 
-          border: 'none', 
-          borderRadius: 'var(--radius-sm)', 
-          padding: 'var(--space-xs) var(--space-sm)', 
-          cursor: 'pointer', 
-          fontSize: 'var(--font-xs)', 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: 'var(--space-xs)' 
-        }}>
+        <button 
+          onClick={() => {
+            // 触发事件，传递JSON内容
+            window.dispatchEvent(new CustomEvent('shenyu-view-json', {
+              detail: { jsonContent: contentWithoutMarkdown }
+            }));
+          }}
+          style={{ 
+            backgroundColor: 'var(--brand-color)', 
+            color: 'var(--text-dark)', 
+            border: 'none', 
+            borderRadius: 'var(--radius-sm)', 
+            padding: 'var(--space-xs) var(--space-sm)', 
+            cursor: 'pointer', 
+            fontSize: 'var(--font-xs)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 'var(--space-xs)' 
+          }}
+        >
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
             <path d="M12 8v8"></path>

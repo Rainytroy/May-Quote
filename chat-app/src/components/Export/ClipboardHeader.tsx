@@ -32,6 +32,7 @@ const ClipboardHeader: React.FC<ClipboardHeaderProps> = ({
 }) => {
   // 更多操作菜单状态
   const [showMoreMenu, setShowMoreMenu] = React.useState(false);
+  const [showPromptPreview, setShowPromptPreview] = React.useState(false);
   
   // 创建点击外部关闭菜单的效果
   React.useEffect(() => {
@@ -58,6 +59,17 @@ const ClipboardHeader: React.FC<ClipboardHeaderProps> = ({
       document.removeEventListener('click', handleClickOutside);
     };
   }, [showMoreMenu]);
+  
+  // 向外部发送查看提示词事件
+  const handleViewPrompt = () => {
+    // 通过事件触发ShenyuCardView中的setShowPromptPreview
+    window.dispatchEvent(new CustomEvent('shenyu-view-prompt'));
+  };
+  
+  // 向外部发送运行事件
+  const handleRun = () => {
+    window.dispatchEvent(new CustomEvent('shenyu-run'));
+  };
   
   return (
     <>
@@ -101,10 +113,10 @@ const ClipboardHeader: React.FC<ClipboardHeaderProps> = ({
           {activeTabId === 'clipboard' ? `剪贴板内容 (${itemCount})` : '神谕'}
         </div>
         
-        {/* 工具栏操作按钮 - 仅在剪贴板标签页时显示 */}
-        {activeTabId === 'clipboard' && (
+        {/* 工具栏操作按钮 - 根据当前标签页显示不同内容 */}
+        {activeTabId === 'clipboard' ? (
           <div className="toolbar-actions" style={{ display: 'flex', gap: 'var(--space-xs)' }}>
-            {/* 更多按钮 */}
+            {/* 更多按钮 - 剪贴板标签页 */}
             <div style={{ position: 'relative' }}>
               <button
                 className="more-menu-button"
@@ -247,6 +259,55 @@ const ClipboardHeader: React.FC<ClipboardHeaderProps> = ({
                 </div>
               )}
             </div>
+          </div>
+        ) : (
+          // 神谕标签页按钮
+          <div className="toolbar-actions" style={{ display: 'flex', gap: 'var(--space-xs)' }}>
+            {/* 查看提示词按钮 */}
+            <button
+              onClick={handleViewPrompt}
+              style={{ 
+                backgroundColor: 'var(--secondary-bg)',
+                color: 'var(--text-white)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-sm)',
+                padding: 'var(--space-xs) var(--space-sm)',
+                fontSize: 'var(--font-xs)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--space-xs)'
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+              </svg>
+              查看提示词
+            </button>
+            
+            {/* 运行按钮 */}
+            <button 
+              onClick={handleRun}
+              style={{ 
+                backgroundColor: 'var(--brand-color)',
+                color: 'var(--text-dark)',
+                border: 'none',
+                borderRadius: 'var(--radius-sm)',
+                padding: 'var(--space-xs) var(--space-sm)',
+                fontSize: 'var(--font-xs)',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--space-xs)'
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              运行
+            </button>
           </div>
         )}
       </div>

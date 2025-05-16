@@ -10,6 +10,7 @@ import { useClipboardSelection } from '../../hooks/useClipboardSelection';
 import { useSortMode } from '../../hooks/useSortMode';
 import { useReference } from '../../contexts/ReferenceContext';
 import { useMode } from '../../contexts/ModeContext';
+import ShenyuTabContent from '../../components/Shenyu/ui/ShenyuTabContent';
 
 interface DraggableClipboardAreaProps {
   items?: ClipboardItem[];
@@ -276,27 +277,7 @@ const DraggableClipboardArea: React.FC<DraggableClipboardAreaProps> = ({
       >
         {/* 神谕Tab内容 */}
         {activeTabId === 'shenyu' && (
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-            padding: 'var(--space-lg)',
-            color: 'var(--text-mid-gray)',
-            textAlign: 'center'
-          }}>
-            <div style={{ 
-              fontSize: 'var(--font-lg)',
-              marginBottom: 'var(--space-md)',
-              color: 'var(--brand-color)'
-            }}>
-              神谕区域
-            </div>
-            <div style={{ fontSize: 'var(--font-sm)' }}>
-              此区域将用于显示神谕相关内容
-            </div>
-          </div>
+          <ShenyuTabContent />
         )}
         
         {/* 剪贴板内容 - 仅在剪贴板tab激活时显示 */}
