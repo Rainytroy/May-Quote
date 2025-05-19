@@ -207,6 +207,8 @@ export function useChat(
         handleError
       );
       
+      console.log('[useChat] finalCompleteText from sendMessageStream. Length:', finalCompleteText.length, 'Content sample:', finalCompleteText.substring(0, 50) + "...", finalCompleteText.substring(finalCompleteText.length - 50));
+
       // 完成加载，更新最后的AI消息状态
       setMessages(prevMessages => {
         const lastMessage = prevMessages[prevMessages.length - 1];
@@ -243,6 +245,12 @@ export function useChat(
       // React 的 setMessages 是异步的，但 ref 的更新是同步的（在 setter 函数内）
       // 此处的 messagesRef.current 应该已经包含了 loading:false 和 finalContentFromStream 的更新
       if (updateConversation && conversationId) {
+        if (messagesRef.current && messagesRef.current.length > 0) {
+          const lastAiMsg = messagesRef.current[messagesRef.current.length - 1];
+          if (lastAiMsg && lastAiMsg.role === 'assistant') {
+            console.log('[useChat] Before updateConversation - Last AI message content. Length:', lastAiMsg.content?.length, 'Content sample:', lastAiMsg.content?.substring(0, 50) + "...", lastAiMsg.content?.substring((lastAiMsg.content?.length || 0) - 50));
+          }
+        }
         updateConversation(messagesRef.current);
       }
     }

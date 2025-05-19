@@ -254,6 +254,12 @@ export function useConversations() {
       }
       
       // 保存到数据库
+      if (updatedConversation.messages && updatedConversation.messages.length > 0) {
+        const lastAiMsg = updatedConversation.messages[updatedConversation.messages.length - 1];
+        if (lastAiMsg && lastAiMsg.role === 'assistant') {
+          console.log('[useConversations] Before saveConversation - Last AI message content. Length:', lastAiMsg.content?.length, 'Content sample:', lastAiMsg.content?.substring(0, 50) + "...", lastAiMsg.content?.substring((lastAiMsg.content?.length || 0) - 50));
+        }
+      }
       await saveConversation(updatedConversation);
       
       // 更新状态

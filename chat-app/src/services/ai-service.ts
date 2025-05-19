@@ -74,6 +74,7 @@ export const sendMessageStream = async (
       onProgress(fullText);
     }
     
+    console.log('[ai-service] sendMessageStream returning fullText. Length:', fullText.length, 'Content sample:', fullText.substring(0, 50) + "...", fullText.substring(fullText.length - 50));
     return fullText;
   } catch (error: any) {
     console.error('AI API流式响应错误:', error);
