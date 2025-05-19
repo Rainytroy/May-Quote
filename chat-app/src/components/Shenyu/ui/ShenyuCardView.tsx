@@ -53,38 +53,41 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
   // 保存每个提示词块的折叠状态
   const [collapsedPrompts, setCollapsedPrompts] = useState<Record<string, boolean>>({});
   
-  // 在JSON内容变化时重新解析
+  // 在JSON内容变化时重新解析 - 简化版
   useEffect(() => {
+    console.log('[ShenyuCardView] jsonContent发生变化，长度:', jsonContent ? jsonContent.length : 0);
+    
+    // 处理空内容情况
     if (!jsonContent) {
+      console.log('[ShenyuCardView] jsonContent为空，重置卡片');
       setCards([]);
       setGlobalPromptBlocks({});
       return;
     }
     
     try {
-      // 提取JSON结构信息
-      const jsonInfo = extractJsonStructureInfo(jsonContent);
+      // 尝试直接解析JSON
+      const parsedJson = JSON.parse(jsonContent);
+      console.log('[ShenyuCardView] 成功解析JSON');
       
-      if (jsonInfo.isValidJson && jsonInfo.jsonContent) {
-        // 解析JSON内容
-        const parsedJson = JSON.parse(jsonInfo.jsonContent);
-        
-        // 设置卡片和全局提示词块
-        if (parsedJson.cards && Array.isArray(parsedJson.cards)) {
-          setCards(parsedJson.cards);
-        }
-        
-        if (parsedJson.globalPromptBlocks && typeof parsedJson.globalPromptBlocks === 'object') {
-          setGlobalPromptBlocks(parsedJson.globalPromptBlocks);
-        }
-        
-        // 设置配置名称
-        if (parsedJson.name && typeof parsedJson.name === 'string') {
-          setConfigName(parsedJson.name);
-        }
-      }
+      // 设置卡片
+      const cardsArray = Array.isArray(parsedJson.cards) ? parsedJson.cards : [];
+      setCards(cardsArray);
+      
+      // 设置全局提示词块
+      const globalBlocks = parsedJson.globalPromptBlocks && typeof parsedJson.globalPromptBlocks === 'object' ? 
+        parsedJson.globalPromptBlocks : {};
+      setGlobalPromptBlocks(globalBlocks);
+      
+      // 设置配置名称
+      const name = parsedJson.name && typeof parsedJson.name === 'string' ? 
+        parsedJson.name : '神谕卡片';
+      setConfigName(name);
+      
     } catch (error) {
-      console.error('解析JSON内容失败:', error);
+      console.error('[ShenyuCardView] 解析JSON失败，重置卡片');
+      setCards([]);
+      setGlobalPromptBlocks({});
     }
   }, [jsonContent]);
   
@@ -123,7 +126,7 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
         controlValues={
           // 从卡片的adminInputs中提取控件值
           cards.reduce((values, card) => {
-            if (card.adminInputs) {
+            if (card && card.adminInputs) {
               Object.entries(card.adminInputs).forEach(([key, value]) => {
                 // 提取默认值
                 const valueStr = String(value || '');

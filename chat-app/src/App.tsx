@@ -329,6 +329,7 @@ function App() {
           {/* 剪贴板区域 */}
           <DraggableClipboardArea 
             className="clipboard-area"
+            activeConversationId={activeConversationId} // <--- 添加 activeConversationId prop
             items={activeConversation?.clipboardItems || []}
             onCopy={(id) => console.log('复制剪贴板项', id)}
             onLocate={(id) => {

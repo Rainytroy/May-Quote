@@ -133,7 +133,9 @@ const JsonMessageBubble: React.FC<JsonMessageBubbleProps> = ({
         </div>
         <button 
           onClick={() => {
-            // 触发事件，传递JSON内容
+            // 直接传递原始JSON内容，不做任何格式处理
+            console.log('[JsonMessageBubble] 点击查看按钮，传递原始JSON');
+            
             window.dispatchEvent(new CustomEvent('shenyu-view-json', {
               detail: { jsonContent: contentWithoutMarkdown }
             }));

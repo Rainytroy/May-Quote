@@ -13,6 +13,7 @@ import { useMode } from '../../contexts/ModeContext';
 import ShenyuTabContent from '../../components/Shenyu/ui/ShenyuTabContent';
 
 interface DraggableClipboardAreaProps {
+  activeConversationId?: string | null; // <--- 添加 activeConversationId prop
   items?: ClipboardItem[];
   onCopy?: (itemId: string) => void;
   onQuote?: (itemId: string) => void;
@@ -33,6 +34,7 @@ interface DraggableClipboardAreaProps {
  * 使用react-beautiful-dnd实现流畅的拖拽体验
  */
 const DraggableClipboardArea: React.FC<DraggableClipboardAreaProps> = ({
+  activeConversationId, // <--- 解构 activeConversationId
   items = [],
   onCopy,
   onQuote,
@@ -277,7 +279,7 @@ const DraggableClipboardArea: React.FC<DraggableClipboardAreaProps> = ({
       >
         {/* 神谕Tab内容 */}
         {activeTabId === 'shenyu' && (
-          <ShenyuTabContent />
+          <ShenyuTabContent activeConversationId={activeConversationId} /> // <--- 传递 activeConversationId
         )}
         
         {/* 剪贴板内容 - 仅在剪贴板tab激活时显示 */}

@@ -44,6 +44,7 @@ export interface Conversation {
   clipboardItems: ClipboardItem[]; // 与对话关联的剪贴板项
   createdAt: number;      // 创建时间戳
   updatedAt: number;      // 最后更新时间戳
+  shenyuJson?: string;    // 神谕JSON数据，可选字段
 }
 
 /**
@@ -56,4 +57,5 @@ export interface ConversationMeta {
   preview: string;    // 最后一条消息的预览（截取）
   messageCount: number; // 消息数量
   updatedAt: number;  // 最后更新时间
+  shenyuJson?: string; // 神谕JSON数据，可选字段
 }

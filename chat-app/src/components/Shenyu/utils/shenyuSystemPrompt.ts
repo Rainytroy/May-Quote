@@ -57,11 +57,13 @@ export interface DebugEventData {
 export function isValidJsonContent(content: string): boolean {
   try {
     // 尝试将内容解析为JSON
-    JSON.parse(content);
-    // 同时确保内容包含card和promptBlock等关键结构
-    return content.includes('"cards"') && 
-          (content.includes('"promptBlocks"') || content.includes('"promptBlock'));
+    const parsed = JSON.parse(content);
+    
+    // 简化版：只要能被解析为对象即可
+    return typeof parsed === 'object' && parsed !== null;
   } catch (e) {
+    // 简化错误日志：仅显示解析失败信息，不显示具体错误
+    console.log('[isValidJsonContent] JSON解析失败');
     return false;
   }
 }
@@ -80,9 +82,19 @@ export function extractJsonStructureInfo(content: string): {
   hasGlobalPrompt?: boolean;
 } {
   try {
+    // 检查是否有内容
+    if (!content || content.trim() === '') {
+      console.log('[extractJsonStructureInfo] 内容为空');
+      return {
+        isValidJson: false,
+        jsonContent: null
+      };
+    }
+    
     // 检查是否为有效JSON
     const isValid = isValidJsonContent(content);
     if (!isValid) {
+      console.log('[extractJsonStructureInfo] 非有效JSON');
       return {
         isValidJson: false,
         jsonContent: null
@@ -92,24 +104,38 @@ export function extractJsonStructureInfo(content: string): {
     // 解析JSON
     const json = JSON.parse(content);
     
+    // 确保基本结构存在，如果没有，创建默认值
+    const safeJson = {
+      cards: Array.isArray(json.cards) ? json.cards : [],
+      globalPromptBlocks: json.globalPromptBlocks && typeof json.globalPromptBlocks === 'object' ? 
+        json.globalPromptBlocks : {},
+      name: json.name || '神谕配置'
+    };
+    
     // 提取卡片和提示词块信息
-    const cards = json.cards?.length || 0;
+    const cards = safeJson.cards.length;
     
     // 计算adminInputs总数
     let adminInputsCount = 0;
-    json.cards?.forEach((card: any) => {
-      adminInputsCount += Object.keys(card.adminInputs || {}).length;
+    safeJson.cards.forEach((card: any) => {
+      if (card && card.adminInputs) {
+        adminInputsCount += Object.keys(card.adminInputs).length;
+      }
     });
     
     // 计算promptBlocks总数
     let promptBlocksCount = 0;
-    json.cards?.forEach((card: any) => {
-      promptBlocksCount += Object.keys(card.promptBlocks || {}).length;
+    safeJson.cards.forEach((card: any) => {
+      if (card && card.promptBlocks) {
+        promptBlocksCount += Object.keys(card.promptBlocks).length;
+      }
     });
     
     // 检查是否有全局提示词
-    const hasGlobalPrompt = !!json.globalPromptBlocks && 
-                           Object.keys(json.globalPromptBlocks).length > 0;
+    const hasGlobalPrompt = Object.keys(safeJson.globalPromptBlocks).length > 0;
+    
+    console.log('[extractJsonStructureInfo] 解析成功，卡片数:', cards, 
+      '输入项:', adminInputsCount, '提示词块:', promptBlocksCount);
     
     return {
       isValidJson: true,
@@ -120,6 +146,7 @@ export function extractJsonStructureInfo(content: string): {
       hasGlobalPrompt
     };
   } catch (e) {
+    console.error('[extractJsonStructureInfo] 解析异常:', e);
     return {
       isValidJson: false,
       jsonContent: null

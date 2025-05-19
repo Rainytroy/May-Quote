@@ -100,7 +100,9 @@ export const dbService = {
             title: conversation.title,
             preview,
             messageCount: conversation.messages.length,
-            updatedAt: conversation.updatedAt
+            updatedAt: conversation.updatedAt,
+            // 添加神谕JSON字段，如果存在的话
+            ...(conversation.shenyuJson ? { shenyuJson: conversation.shenyuJson } : {})
           };
           
           await db.conversationMetas.put(meta);

@@ -198,23 +198,25 @@ export function useChat(
         console.log(`[模型适配] 消息已预处理: ${apiMessages.length} -> ${processedMessages.length} 条消息`);
       }
       
-      // 发送消息并处理流式响应
-      await sendMessageStream(
+      // 发送消息并处理流式响应，直接捕获最终的完整文本
+      const finalCompleteText = await sendMessageStream(
         apiKey,
         processedMessages,
         model,
-        handleProgress,
+        handleProgress, // handleProgress 仍然用于UI的实时更新和调试面板
         handleError
       );
       
       // 完成加载，更新最后的AI消息状态
       setMessages(prevMessages => {
         const lastMessage = prevMessages[prevMessages.length - 1];
-        if (lastMessage.role === 'assistant' && lastMessage.loading) {
+        // 确保 lastMessage 存在并且是正在加载的助手消息
+        if (lastMessage && lastMessage.role === 'assistant' && lastMessage.loading) {
           const newMessages = [
             ...prevMessages.slice(0, -1),
             { 
               ...lastMessage, 
+              content: finalCompleteText, // 使用从 sendMessageStream 直接返回的完整文本
               loading: false
               // 不再根据内容判断消息类型，保持已有的类型标记
             }
@@ -237,11 +239,14 @@ export function useChat(
       setIsLoading(false);
       
       // 如果提供了更新回调，则更新对话
+      // 确保在 finally 块中 messagesRef.current 是最新的
+      // React 的 setMessages 是异步的，但 ref 的更新是同步的（在 setter 函数内）
+      // 此处的 messagesRef.current 应该已经包含了 loading:false 和 finalContentFromStream 的更新
       if (updateConversation && conversationId) {
         updateConversation(messagesRef.current);
       }
     }
-  }, [updateConversation, conversationId]); // 依赖updateConversation和conversationId
+  }, [updateConversation, conversationId, currentMode]); // 添加 currentMode 到依赖项，因为它在回调内部使用
   
   // 清空所有消息
   const clearMessages = useCallback(() => {
