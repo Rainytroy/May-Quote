@@ -24,6 +24,8 @@ export interface Message extends OriginalMessage {
   apiRawResponse?: string;
   sender?: string;
   progress?: ProgressInfo;
+  hasAutoRendered?: boolean; // 标记JSON气泡是否已自动渲染过，一次性永久标记
+  isActiveShenyuMessage?: boolean; // 标记是否为当前活动的神谕消息
 }
 
 /**

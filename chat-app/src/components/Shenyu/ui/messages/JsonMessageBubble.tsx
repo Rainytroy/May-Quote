@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { extractJsonStructureInfo } from '../../utils/shenyuSystemPrompt';
 import { ShenyuMessage } from '../../types';
+import { Message } from '../../../../sharedTypes'; // 导入扩展后的Message类型
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import './MessageBubble.css';
 
@@ -35,28 +36,34 @@ const JsonMessageBubble: React.FC<JsonMessageBubbleProps> = ({
   // 记录前一次的loading状态，用于检测状态变化
   const prevLoadingRef = useRef<boolean | undefined>(loading);
   
-  // 处理状态变化和事件触发
+  // 恢复自动渲染逻辑 - 由于我们已解决对话切换时的覆盖问题，可以安全地恢复此功能
   useEffect(() => {
-    // 关键检测：从loading=true变为loading=false，表示新消息生成完成
-    if (prevLoadingRef.current === true && loading === false && 
-        message.content && jsonInfo.isValidJson) {
-      console.log(`[JsonMessageBubble] 消息生成完成，自动触发事件。Message ID: ${message.id}`);
-      
-      // 自动触发事件，传递JSON内容
-      window.dispatchEvent(new CustomEvent('shenyu-view-json', {
-        detail: { jsonContent: contentWithoutMarkdown }
-      }));
+    // 只处理JSON类型的消息
+    if (message.type === 'json' && message.content && jsonInfo.isValidJson) {
+      // 检查是否已经自动渲染过 - 使用Message对象自身的属性，确保切换对话后也能保持状态
+      if (!(message as Message).hasAutoRendered) {
+        console.log(`[JsonMessageBubble] 首次展示JSON消息，自动触发渲染。Message ID: ${message.id}`);
+        
+        // 标记为已自动渲染 - 直接修改消息对象，这个修改将在内存中保持
+        (message as Message).hasAutoRendered = true;
+        
+        // 触发渲染事件
+        window.dispatchEvent(new CustomEvent('shenyu-view-json', {
+          detail: { 
+            jsonContent: contentWithoutMarkdown,
+            messageId: message.id 
+          }
+        }));
+      } else {
+        console.log(`[JsonMessageBubble] JSON消息已经自动渲染过，跳过。Message ID: ${message.id}`);
+      }
     }
-    
-    // 更新状态引用(始终执行)
-    prevLoadingRef.current = loading;
-  }, [loading, message.content, contentWithoutMarkdown, jsonInfo.isValidJson, message.id]);
+  }, [message, message.content, contentWithoutMarkdown, jsonInfo.isValidJson]);
   
   // 处理组件生命周期事件
   useEffect(() => {
     // 仅执行一次的挂载逻辑
-    console.log(`[JsonMessageBubble] 组件挂载，初始loading状态: ${loading}。Message ID: ${message.id}`);
-    prevLoadingRef.current = loading;
+    console.log(`[JsonMessageBubble] 组件挂载，Message ID: ${message.id}, hasAutoRendered: ${(message as Message).hasAutoRendered || false}`);
     
     return () => {
       // 清理逻辑
@@ -152,11 +159,14 @@ const JsonMessageBubble: React.FC<JsonMessageBubbleProps> = ({
         </div>
         <button 
           onClick={() => {
-            // 直接传递原始JSON内容，不做任何格式处理
-            console.log('[JsonMessageBubble] 点击查看按钮，传递原始JSON');
+            // 直接传递原始JSON内容和消息ID
+            console.log('[JsonMessageBubble] 点击查看按钮，传递原始JSON和消息ID:', message.id);
             
             window.dispatchEvent(new CustomEvent('shenyu-view-json', {
-              detail: { jsonContent: contentWithoutMarkdown }
+              detail: { 
+                jsonContent: contentWithoutMarkdown,
+                messageId: message.id 
+              }
             }));
           }}
           style={{ 

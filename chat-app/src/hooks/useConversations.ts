@@ -139,10 +139,9 @@ export function useConversations() {
    */
   const selectConversation = useCallback(async (conversationId: string) => {
     try {
-      // 先保存当前对话（如果有）
-      if (activeConversation) {
-        await saveConversation(activeConversation);
-      }
+      // 移除保存当前对话的逻辑，以避免覆盖最新的神谕活动消息标记
+      // 这解决了在E-B-C-D-A-F序列后切换对话，再返回时活动消息标记被覆盖的问题
+      console.log(`[useConversations] 选择对话 ${conversationId}，跳过保存当前对话以避免覆盖神谕活动消息标记`);
       
       // 加载选中的对话
       const conversation = await getConversation(conversationId);

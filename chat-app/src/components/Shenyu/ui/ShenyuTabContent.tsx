@@ -3,6 +3,7 @@ import { useMode } from '../../../contexts/ModeContext';
 import ShenyuCardView from './ShenyuCardView';
 import { getActiveConversationId, getConversation, saveConversation } from '../../../utils/db';
 import { ConversationMeta } from '../../../types';
+import { Message } from '../../../sharedTypes'; // 导入扩展后的Message类型
 
 interface ShenyuTabContentProps {
   className?: string;
@@ -21,7 +22,8 @@ const ShenyuTabContent: React.FC<ShenyuTabContentProps> = ({
 }) => {
   // JSON内容状态
   const [jsonContent, setJsonContent] = useState<string>('');
-  // 保存状态跟踪
+  // 加载和保存状态跟踪
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const skipNextLoadRef = useRef<boolean>(false);
   const lastSavedJsonRef = useRef<string>('');
@@ -74,17 +76,23 @@ const ShenyuTabContent: React.FC<ShenyuTabContentProps> = ({
     }
   };
   
-  // 从数据库加载JSON - 增强版，尊重保存状态
-  const loadShenyuJson = async () => {
+    // 从数据库加载JSON - 增强版，尊重保存状态，支持活动消息优先
+    const loadShenyuJson = async () => {
+      console.log(`[ShenyuTabContent] 开始加载神谕JSON，当前对话ID: ${activeConversationId}, 时间戳: ${new Date().toISOString()}`);
     // 如果当前有保存操作，或者明确标记跳过加载，则跳过
     if (isSaving || skipNextLoadRef.current) {
       console.log('[ShenyuTabContent] 跳过加载，因为', 
                   isSaving ? '有保存操作正在进行' : '设置了跳过标记');
       skipNextLoadRef.current = false; // 重置跳过标记
-      return '';
+      // 返回特殊标记，表示跳过而不是无数据
+      return '[SKIP_LOADING]';
     }
     
-    if (!activeConversationId) return ''; // <--- 使用 prop
+    // 确保有有效的对话ID
+    if (!activeConversationId) {
+      console.log('[ShenyuTabContent] 无有效对话ID，无法加载数据');
+      return '';
+    }
     try {
       // 获取当前对话
       const conversation = await getConversation(activeConversationId); // <--- 使用 prop
@@ -93,7 +101,25 @@ const ShenyuTabContent: React.FC<ShenyuTabContentProps> = ({
         return '';
       }
       
-      // 直接返回原始JSON字符串，不做任何处理
+      // 检查是否有活动神谕消息
+      if (conversation.messages) {
+        // 使用类型断言将消息转换为扩展后的Message类型
+        const messages = conversation.messages as Message[];
+        const activeMessage = messages.find(msg => (msg as Message).isActiveShenyuMessage === true);
+        
+        if (activeMessage && (activeMessage as Message).type === 'json' && activeMessage.content) {
+          // 如果有活动消息，使用其内容而不是shenyuJson
+          const content = activeMessage.content.replace(/^```json\s*\n|\n```\s*$/g, '');
+          console.log(`[ShenyuTabContent] 找到活动消息 ID: ${activeMessage.id}，使用其内容代替shenyuJson`);
+          
+          // 更新最后保存的内容引用
+          lastSavedJsonRef.current = content;
+          
+          return content;
+        }
+      }
+      
+      // 如果没有活动消息，则使用对话的shenyuJson
       const json = conversation.shenyuJson || '';
       console.log('[ShenyuTabContent] 已加载神谕JSON数据，长度:', json.length, 'for conversation:', activeConversationId);
       
@@ -125,11 +151,12 @@ const ShenyuTabContent: React.FC<ShenyuTabContentProps> = ({
   
   // 监听JSON查看事件
   useEffect(() => {
-    // 处理查看JSON事件的回调 - 优化版，协调保存和UI更新
+    // 处理查看JSON事件的回调 - 优化版，改为先保存数据库，再更新UI
     const handleViewJson = async (event: Event) => {
       const customEvent = event as CustomEvent;
       if (customEvent.detail && customEvent.detail.jsonContent) {
         const newJson = customEvent.detail.jsonContent;
+        const messageId = customEvent.detail.messageId; // 获取消息ID
         
         // 如果已经在保存中，忽略新请求
         if (isSaving) {
@@ -140,8 +167,8 @@ const ShenyuTabContent: React.FC<ShenyuTabContentProps> = ({
         // 设置跳过下一次加载的标记 - 防止保存过程中的自动加载
         skipNextLoadRef.current = true;
         
-        // 1. 先更新UI（提高响应性）
-        setJsonContent(newJson);
+        // 显示加载状态
+        setIsLoading(true);
         
         // 尝试激活神谕标签页
         try {
@@ -153,16 +180,91 @@ const ShenyuTabContent: React.FC<ShenyuTabContentProps> = ({
           console.error('[ShenyuTabContent] 无法激活神谕标签页:', error);
         }
         
-        // 2. 然后等待保存操作完成（不再使用void忽略Promise）
-        const saveSuccess = await saveShenyuJson(newJson);
-        
-        // 3. 保存失败时回滚UI或重新加载
-        if (!saveSuccess) {
-          console.log('[ShenyuTabContent] 保存失败，重新加载数据...');
-          const savedJson = await loadShenyuJson();
-          if (savedJson) {
-            setJsonContent(savedJson);
+        try {
+          // 1. 先保存到数据库
+          if (activeConversationId && messageId) {
+            console.log(`[ShenyuTabContent] 标记消息 ${messageId} 为活动消息`);
+            
+            // 获取当前对话
+            const conversation = await getConversation(activeConversationId);
+            if (conversation && conversation.messages) {
+              // 重置所有消息的活动状态
+              const messages = conversation.messages as Message[];
+              const updatedMessages = messages.map(msg => ({
+                ...msg,
+                isActiveShenyuMessage: msg.id === messageId // 只有匹配ID的消息被标记为活动
+              }));
+              
+              // 保存对话和JSON内容
+              await saveConversation({
+                ...conversation,
+                messages: updatedMessages,
+                shenyuJson: newJson
+              });
+              
+              console.log(`[ShenyuTabContent] 成功更新活动消息状态和保存JSON`);
+            } else {
+              // 如果无法获取消息数组，仍然保存JSON内容
+              const saveSuccess = await saveShenyuJson(newJson);
+              if (!saveSuccess) {
+                throw new Error('保存JSON失败');
+              }
+            }
+          } else {
+            // 如果没有messageId，退回到原来的保存逻辑
+            const saveSuccess = await saveShenyuJson(newJson);
+            if (!saveSuccess) {
+              throw new Error('保存JSON失败');
+            }
           }
+          
+          // 2. 然后从数据库重新加载最新状态
+          if (!activeConversationId) {
+            throw new Error('无效的对话ID');
+          }
+          
+          const freshConversation = await getConversation(activeConversationId);
+          if (!freshConversation) {
+            throw new Error('加载最新对话失败');
+          }
+          
+          // 检查是否有活动消息，优先使用活动消息的内容
+          let contentToDisplay = '';
+          if (freshConversation.messages) {
+            const messages = freshConversation.messages as Message[];
+            const activeMessage = messages.find(msg => (msg as Message).isActiveShenyuMessage === true);
+            
+            if (activeMessage && (activeMessage as Message).type === 'json' && activeMessage.content) {
+              contentToDisplay = activeMessage.content.replace(/^```json\s*\n|\n```\s*$/g, '');
+              console.log(`[ShenyuTabContent] 从数据库加载活动消息 ${activeMessage.id} 内容进行显示`);
+            } else if (freshConversation.shenyuJson) {
+              contentToDisplay = freshConversation.shenyuJson;
+              console.log(`[ShenyuTabContent] 从数据库加载shenyuJson内容进行显示`);
+            }
+          } else if (freshConversation.shenyuJson) {
+            contentToDisplay = freshConversation.shenyuJson;
+          }
+          
+          // 3. 最后更新UI（使用数据库中的最新状态）
+          if (contentToDisplay) {
+            setJsonContent(contentToDisplay);
+          } else {
+            throw new Error('找不到有效的JSON内容显示');
+          }
+          
+        } catch (error) {
+          console.error('[ShenyuTabContent] 保存或加载失败:', error);
+          // 尝试从数据库重新加载，以回滚UI
+          const savedJson = await loadShenyuJson();
+          if (savedJson && savedJson !== '[SKIP_LOADING]') {
+            setJsonContent(savedJson);
+          } else {
+            // 如果完全失败，显示错误状态或空状态
+            clearShenyuUI();
+          }
+        } finally {
+          // 无论成功或失败，都要关闭加载状态
+          setIsLoading(false);
         }
       }
     };
@@ -200,6 +302,12 @@ const ShenyuTabContent: React.FC<ShenyuTabContentProps> = ({
       // 加载对话相关的神谕数据 - loadShenyuJson 现在会使用 activeConversationId prop
       const savedJson = await loadShenyuJson(); 
       
+      // 处理跳过加载的特殊标记
+      if (savedJson === '[SKIP_LOADING]') {
+        console.log('[ShenyuTabContent] 检测到跳过加载标记，保持当前UI状态');
+        return; // 保持当前UI状态，不做任何更改
+      }
+      
       if (savedJson) {
         console.log('[ShenyuTabContent] 成功从数据库加载神谕数据');
         setJsonContent(savedJson);
@@ -212,6 +320,47 @@ const ShenyuTabContent: React.FC<ShenyuTabContentProps> = ({
     // 立即加载数据
     fetchSavedJson();
     
+    // 添加处理对话切换回当前对话的逻辑
+    const handleConversationSwitch = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      // 检测切换回当前对话
+      if (customEvent.detail?.newConversationId === activeConversationId) {
+        console.log('[ShenyuTabContent] 检测到切换回当前对话，强制重新加载神谕状态');
+        
+        // 稍微延迟以确保所有数据库操作完成
+        setTimeout(async () => {
+          if (!activeConversationId) return;
+          
+          try {
+            setIsLoading(true);
+            
+            // 直接从数据库获取最新状态，绕过缓存
+            const freshConversation = await getConversation(activeConversationId);
+            if (freshConversation && freshConversation.messages) {
+              // 查找标记为活动的消息
+              const messages = freshConversation.messages as Message[];
+              const activeMessage = messages.find(msg => (msg as Message).isActiveShenyuMessage === true);
+              
+              if (activeMessage && (activeMessage as Message).type === 'json' && activeMessage.content) {
+                // 如果找到活动消息，使用其内容
+                const content = activeMessage.content.replace(/^```json\s*\n|\n```\s*$/g, '');
+                console.log(`[ShenyuTabContent] 对话切换后找到活动消息：${activeMessage.id}，更新UI`);
+                setJsonContent(content);
+              } else if (freshConversation.shenyuJson) {
+                // 否则使用对话的shenyuJson
+                console.log(`[ShenyuTabContent] 对话切换后未找到活动消息，使用shenyuJson更新UI`);
+                setJsonContent(freshConversation.shenyuJson);
+              }
+            }
+          } catch (error) {
+            console.error('[ShenyuTabContent] 切换对话后重新加载神谕状态失败:', error);
+          } finally {
+            setIsLoading(false);
+          }
+        }, 300); // 延迟300毫秒以确保所有数据库操作完成
+      }
+    };
+    
     // 监听创建新对话事件 - 这部分可以保留，作为一种补充机制
     // 但主要的状态同步应由 activeConversationId prop 驱动
     const handleConversationChange = (event: Event) => {
@@ -223,12 +372,14 @@ const ShenyuTabContent: React.FC<ShenyuTabContentProps> = ({
       }
     };
     
-    // 添加全局监听器
+    // 添加所有事件监听器
+    window.addEventListener('conversation-switched', handleConversationSwitch);
     window.addEventListener('conversation-created', handleConversationChange);
     window.addEventListener('conversation-switched', handleConversationChange);
     
-    // 清理函数
+    // 合并的清理函数
     return () => {
+      window.removeEventListener('conversation-switched', handleConversationSwitch);
       window.removeEventListener('conversation-created', handleConversationChange);
       window.removeEventListener('conversation-switched', handleConversationChange);
     };
@@ -238,8 +389,33 @@ const ShenyuTabContent: React.FC<ShenyuTabContentProps> = ({
     <div className={`shenyu-tab-content ${className || ''}`} style={{
       width: '100%',
       height: '100%',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      position: 'relative'
     }}>
+      {isLoading && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 10
+        }}>
+          <div style={{
+            padding: '10px 20px',
+            backgroundColor: 'var(--main-bg)',
+            borderRadius: 'var(--radius-sm)',
+            color: 'var(--text-white)',
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)'
+          }}>
+            <span>数据保存中...</span>
+          </div>
+        </div>
+      )}
       <ShenyuCardView 
         jsonContent={jsonContent}
       />
