@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { extractJsonStructureInfo } from '../../utils/shenyuSystemPrompt';
 import { ShenyuMessage } from '../../types';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -32,18 +32,37 @@ const JsonMessageBubble: React.FC<JsonMessageBubbleProps> = ({
   // 初始状态设为已高亮模式
   const [viewMode, setViewMode] = useState<'highlighted' | 'raw'>('highlighted');
   
-  // 添加自动触发事件的逻辑 - 当消息加载完成时
+  // 记录前一次的loading状态，用于检测状态变化
+  const prevLoadingRef = useRef<boolean | undefined>(loading);
+  
+  // 处理状态变化和事件触发
   useEffect(() => {
-    // 如果消息内容存在且已加载完成(不在loading状态)
-    if (!loading && message.content && jsonInfo.isValidJson) {
-      console.log('[JsonMessageBubble] JSON消息加载完成，自动触发事件');
+    // 关键检测：从loading=true变为loading=false，表示新消息生成完成
+    if (prevLoadingRef.current === true && loading === false && 
+        message.content && jsonInfo.isValidJson) {
+      console.log(`[JsonMessageBubble] 消息生成完成，自动触发事件。Message ID: ${message.id}`);
       
       // 自动触发事件，传递JSON内容
       window.dispatchEvent(new CustomEvent('shenyu-view-json', {
         detail: { jsonContent: contentWithoutMarkdown }
       }));
     }
-  }, [loading, message.content, contentWithoutMarkdown, jsonInfo.isValidJson]);
+    
+    // 更新状态引用(始终执行)
+    prevLoadingRef.current = loading;
+  }, [loading, message.content, contentWithoutMarkdown, jsonInfo.isValidJson, message.id]);
+  
+  // 处理组件生命周期事件
+  useEffect(() => {
+    // 仅执行一次的挂载逻辑
+    console.log(`[JsonMessageBubble] 组件挂载，初始loading状态: ${loading}。Message ID: ${message.id}`);
+    prevLoadingRef.current = loading;
+    
+    return () => {
+      // 清理逻辑
+      console.log(`[JsonMessageBubble] 组件卸载。Message ID: ${message.id}`);
+    };
+  }, []); // 空依赖数组确保只执行一次
   
   // 自定义代码块样式 - 使用Record代替PrismTheme类型
   const customCodeStyle: Record<string, any> = {

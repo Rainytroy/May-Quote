@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useMode } from '../../../contexts/ModeContext';
 import ShenyuCardView from './ShenyuCardView';
 import { getActiveConversationId, getConversation, saveConversation } from '../../../utils/db';
@@ -21,13 +21,29 @@ const ShenyuTabContent: React.FC<ShenyuTabContentProps> = ({
 }) => {
   // JSON内容状态
   const [jsonContent, setJsonContent] = useState<string>('');
+  // 保存状态跟踪
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const skipNextLoadRef = useRef<boolean>(false);
+  const lastSavedJsonRef = useRef<string>('');
   // 当前对话ID - 不再使用内部 state，直接使用 activeConversationId prop
   // const [conversationId, setConversationId] = useState<string>(''); 
   const { currentMode } = useMode();
   
-  // 保存JSON到数据库 - 简化版，直接使用Conversation对象
+  // 保存JSON到数据库 - 增强版，带状态跟踪和错误处理
   const saveShenyuJson = async (json: string) => {
-    if (!activeConversationId) return; // <--- 使用 prop
+    if (!activeConversationId) return false; // <--- 使用 prop
+    if (isSaving) {
+      console.log('[ShenyuTabContent] 已有保存操作进行中，忽略新请求');
+      return false;
+    }
+    
+    // 如果内容与上次保存的相同，跳过保存
+    if (json === lastSavedJsonRef.current) {
+      console.log('[ShenyuTabContent] 内容未变化，跳过保存');
+      return true;
+    }
+    
+    setIsSaving(true);
     try {
       console.log('[ShenyuTabContent] 保存神谕JSON，长度:', json.length, 'for conversation:', activeConversationId);
       
@@ -35,7 +51,8 @@ const ShenyuTabContent: React.FC<ShenyuTabContentProps> = ({
       const conversation = await getConversation(activeConversationId); // <--- 使用 prop
       if (!conversation) {
         console.error('[ShenyuTabContent] 保存失败: 未找到对话', activeConversationId);
-        return;
+        setIsSaving(false);
+        return false;
       }
       
       // 直接保存原始JSON字符串，不做任何处理
@@ -44,14 +61,29 @@ const ShenyuTabContent: React.FC<ShenyuTabContentProps> = ({
         shenyuJson: json // 直接保存原始字符串
       });
       
+      // 更新最后保存的内容引用
+      lastSavedJsonRef.current = json;
+      
       console.log('[ShenyuTabContent] 成功保存神谕JSON到对话', activeConversationId);
+      return true;
     } catch (error) {
       console.error('[ShenyuTabContent] 保存神谕JSON失败:', error, 'for conversation:', activeConversationId);
+      return false;
+    } finally {
+      setIsSaving(false);
     }
   };
   
-  // 从数据库加载JSON - 简化版，直接从Conversation对象读取
+  // 从数据库加载JSON - 增强版，尊重保存状态
   const loadShenyuJson = async () => {
+    // 如果当前有保存操作，或者明确标记跳过加载，则跳过
+    if (isSaving || skipNextLoadRef.current) {
+      console.log('[ShenyuTabContent] 跳过加载，因为', 
+                  isSaving ? '有保存操作正在进行' : '设置了跳过标记');
+      skipNextLoadRef.current = false; // 重置跳过标记
+      return '';
+    }
+    
     if (!activeConversationId) return ''; // <--- 使用 prop
     try {
       // 获取当前对话
@@ -64,6 +96,9 @@ const ShenyuTabContent: React.FC<ShenyuTabContentProps> = ({
       // 直接返回原始JSON字符串，不做任何处理
       const json = conversation.shenyuJson || '';
       console.log('[ShenyuTabContent] 已加载神谕JSON数据，长度:', json.length, 'for conversation:', activeConversationId);
+      
+      // 更新最后保存的内容引用
+      lastSavedJsonRef.current = json;
       
       return json;
     } catch (error) {
@@ -90,16 +125,23 @@ const ShenyuTabContent: React.FC<ShenyuTabContentProps> = ({
   
   // 监听JSON查看事件
   useEffect(() => {
-    // 处理查看JSON事件的回调
-    const handleViewJson = (event: Event) => {
+    // 处理查看JSON事件的回调 - 优化版，协调保存和UI更新
+    const handleViewJson = async (event: Event) => {
       const customEvent = event as CustomEvent;
       if (customEvent.detail && customEvent.detail.jsonContent) {
         const newJson = customEvent.detail.jsonContent;
-        // 设置新内容
-        setJsonContent(newJson);
         
-        // 保存到数据库 (使用void忽略Promise) - saveShenyuJson 现在会使用 activeConversationId prop
-        void saveShenyuJson(newJson); 
+        // 如果已经在保存中，忽略新请求
+        if (isSaving) {
+          console.log('[ShenyuTabContent] 忽略查看请求，因为有保存操作正在进行');
+          return;
+        }
+        
+        // 设置跳过下一次加载的标记 - 防止保存过程中的自动加载
+        skipNextLoadRef.current = true;
+        
+        // 1. 先更新UI（提高响应性）
+        setJsonContent(newJson);
         
         // 尝试激活神谕标签页
         try {
@@ -109,6 +151,18 @@ const ShenyuTabContent: React.FC<ShenyuTabContentProps> = ({
           }
         } catch (error) {
           console.error('[ShenyuTabContent] 无法激活神谕标签页:', error);
+        }
+        
+        // 2. 然后等待保存操作完成（不再使用void忽略Promise）
+        const saveSuccess = await saveShenyuJson(newJson);
+        
+        // 3. 保存失败时回滚UI或重新加载
+        if (!saveSuccess) {
+          console.log('[ShenyuTabContent] 保存失败，重新加载数据...');
+          const savedJson = await loadShenyuJson();
+          if (savedJson) {
+            setJsonContent(savedJson);
+          }
         }
       }
     };

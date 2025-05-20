@@ -2,7 +2,8 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { getApiKey, getModel } from '../utils/storage';
 import { sendMessageStream } from '../services/ai-service';
 import { preprocessMessages } from '../utils/model-adapters';
-import { Message } from '../components/Chat/MessageItem';
+import { Message as OriginalMessage } from '../components/Chat/MessageItem';
+import { Message } from '../sharedTypes'; // 导入扩展后的Message类型
 import { generateId } from '../utils/storage-db';
 import { useMode } from '../contexts/ModeContext';
 import { 
@@ -198,13 +199,17 @@ export function useChat(
         console.log(`[模型适配] 消息已预处理: ${apiMessages.length} -> ${processedMessages.length} 条消息`);
       }
       
-      // 发送消息并处理流式响应，直接捕获最终的完整文本
+      // 确定是否是神谕JSON类型
+      const isShenyuJson = effectiveMode === 'shenyu' && tempAiMessage.type === 'json';
+      
+      // 发送消息并处理响应，神谕JSON类型使用非流式请求
       const finalCompleteText = await sendMessageStream(
         apiKey,
         processedMessages,
         model,
         handleProgress, // handleProgress 仍然用于UI的实时更新和调试面板
-        handleError
+        handleError,
+        { isShenyuJson } // 传递标志给 sendMessageStream
       );
       
       console.log('[useChat] finalCompleteText from sendMessageStream. Length:', finalCompleteText.length, 'Content sample:', finalCompleteText.substring(0, 50) + "...", finalCompleteText.substring(finalCompleteText.length - 50));

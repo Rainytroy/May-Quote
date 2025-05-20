@@ -55,11 +55,33 @@ export const sendMessageStream = async (
   messages: ChatCompletionMessageParam[],
   model: string = 'deepseek-r1-250120',
   onProgress: (text: string) => void,
-  onError: (error: string) => void
+  onError: (error: string) => void,
+  options: { isShenyuJson?: boolean } = {} // 新增参数对象，包含是否为神谕JSON请求的标志
 ) => {
   try {
     const client = createApiClient(apiKey, model);
     
+    // 对于神谕JSON请求，使用非流式处理
+    if (options.isShenyuJson) {
+      console.log('[ai-service] 神谕JSON请求使用非流式处理');
+      
+      // 非流式请求
+      const response = await client.chat.completions.create({
+        messages,
+        model,
+        stream: false,
+      });
+      
+      const responseText = response.choices[0]?.message?.content || '';
+      console.log('[ai-service] 非流式神谕JSON响应完成. Length:', responseText.length, 'Content sample:', responseText.substring(0, 50) + "...", responseText.substring(responseText.length - 50));
+      
+      // 仍然调用一次 onProgress 以便更新UI状态
+      onProgress(responseText);
+      
+      return responseText;
+    }
+    
+    // 其他所有类型的请求使用流式处理
     const stream = await client.chat.completions.create({
       messages,
       model,
@@ -74,7 +96,7 @@ export const sendMessageStream = async (
       onProgress(fullText);
     }
     
-    console.log('[ai-service] sendMessageStream returning fullText. Length:', fullText.length, 'Content sample:', fullText.substring(0, 50) + "...", fullText.substring(fullText.length - 50));
+    console.log('[ai-service] 流式响应完成. Length:', fullText.length, 'Content sample:', fullText.substring(0, 50) + "...", fullText.substring(fullText.length - 50));
     return fullText;
   } catch (error: any) {
     console.error('AI API流式响应错误:', error);
