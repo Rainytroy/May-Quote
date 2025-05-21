@@ -58,7 +58,7 @@ const PromptMessageBubble: React.FC<PromptMessageBubbleProps> = ({
         
         {/* 显示加载指示器，仅在流式生成状态下显示，放在内容底部 */}
         {message.isStreaming && (
-          <span className="typing-indicator" style={{ display: 'inline-block', marginLeft: 'var(--space-xs)' }}>
+          <span className="typing-indicator" style={{ marginLeft: 'var(--space-xs)' }}>
             <span className="dot" style={{ 
               display: 'inline-block', 
               width: '4px', 
