@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, GlobalPromptBlocks } from '../../SN43Demo/types';
 import { extractJsonStructureInfo } from '../utils/shenyuSystemPrompt';
 import ShenyuPromptPreviewModal from './ShenyuPromptPreviewModal';
@@ -27,6 +27,9 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
   // 提示词预览弹窗状态
   const [showPromptPreview, setShowPromptPreview] = useState(false);
   
+  // 存储用户修改的输入值
+  const [inputValues, setInputValues] = useState<Record<string, string>>({});
+  
   // 监听标题栏中的"查看提示词"和"运行"按钮点击事件
   useEffect(() => {
     // 查看提示词事件处理函数
@@ -53,12 +56,13 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
           return;
         }
         
-        // 调用神谕执行服务
+        // 调用神谕执行服务，传入用户修改的输入值
         const success = await executeShenyuAgent(
           cards,
           globalPromptBlocks,
           configName,
-          activeConversationId
+          activeConversationId,
+          inputValues // 传入用户修改的输入值
         );
         
         if (success) {
@@ -82,7 +86,7 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
       window.removeEventListener('shenyu-view-prompt', handleViewPrompt);
       window.removeEventListener('shenyu-run', handleRun);
     };
-  }, [cards, globalPromptBlocks, configName]); // 添加依赖，确保每次状态变化时更新事件处理函数
+  }, [cards, globalPromptBlocks, configName, inputValues]); // 添加inputValues到依赖数组，确保捕获最新值
   
   // 保存每个提示词块的折叠状态
   const [collapsedPrompts, setCollapsedPrompts] = useState<Record<string, boolean>>({});
@@ -117,6 +121,22 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
       const name = parsedJson.name && typeof parsedJson.name === 'string' ? 
         parsedJson.name : '神谕卡片';
       setConfigName(name);
+      
+      // 初始化输入值
+      const initialInputs: Record<string, string> = {};
+      cardsArray.forEach((card: Card) => {
+        if (card && card.adminInputs) {
+          Object.entries(card.adminInputs).forEach(([key, value]) => {
+            // 提取默认值
+            const valueStr = String(value || '');
+            const defaultMatch = valueStr.match(/<def>(.*?)<\/def>/);
+            const defaultValue = defaultMatch ? defaultMatch[1] : '';
+            
+            initialInputs[key] = defaultValue;
+          });
+        }
+      });
+      setInputValues(initialInputs);
       
     } catch (error) {
       console.error('[ShenyuCardView] 解析JSON失败，重置卡片');
@@ -157,22 +177,7 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
         onClose={() => setShowPromptPreview(false)}
         cards={cards}
         globalPromptBlocks={globalPromptBlocks}
-        controlValues={
-          // 从卡片的adminInputs中提取控件值
-          cards.reduce((values, card) => {
-            if (card && card.adminInputs) {
-              Object.entries(card.adminInputs).forEach(([key, value]) => {
-                // 提取默认值
-                const valueStr = String(value || '');
-                const defaultMatch = valueStr.match(/<def>(.*?)<\/def>/);
-                const defaultValue = defaultMatch ? defaultMatch[1] : '';
-                
-                values[key] = defaultValue;
-              });
-            }
-            return values;
-          }, {} as Record<string, any>)
-        }
+        controlValues={inputValues} // 使用用户自定义的输入值
         agentName={configName}
       />
       
@@ -273,17 +278,29 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
                           }}>
                             {labelText || key}:
                           </div>
-                          <div style={{
-                            backgroundColor: 'var(--main-bg)',
-                            color: 'var(--text-white)',
-                            padding: 'var(--space-xs) var(--space-sm)',
-                            borderRadius: 'var(--radius-sm)',
-                            width: '100%',
-                            border: '1px solid var(--border-color)',
-                            fontSize: 'var(--font-sm)'
-                          }}>
-                            {defaultValue}
-                          </div>
+                          <input 
+                            type="text"
+                            value={inputValues[key] !== undefined ? inputValues[key] : defaultValue}
+                            onChange={(e) => {
+                              setInputValues(prev => ({
+                                ...prev,
+                                [key]: e.target.value
+                              }));
+                            }}
+                            aria-label={labelText || key}
+                            title={labelText || key}
+                            placeholder={defaultValue}
+                            style={{
+                              backgroundColor: 'var(--main-bg)',
+                              color: 'var(--text-white)',
+                              padding: 'var(--space-xs) var(--space-sm)',
+                              borderRadius: 'var(--radius-sm)',
+                              width: '100%',
+                              border: '1px solid var(--border-color)',
+                              fontSize: 'var(--font-sm)',
+                              outline: 'none'
+                            }}
+                          />
                         </div>
                       );
                     })}

@@ -77,9 +77,9 @@ export function replacePromptPlaceholders(
   // 对每个controlValues进行占位符替换并打印详细日志
   let replacedCount = basicInputCount;
   for (const [key, value] of Object.entries(controlValues)) {
-    if (!value && value !== 0 && value !== false) {
-      console.log(`[PromptProcessor] 跳过空值控件: ${key}`);
-      continue; // 跳过空值
+    if (value === undefined || value === null) {
+      console.log(`[PromptProcessor] 跳过undefined/null控件: ${key}`);
+      continue; // 只跳过undefined和null值，允许空字符串
     }
     
     // 尝试多种可能的占位符格式

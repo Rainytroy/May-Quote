@@ -1,4 +1,10 @@
-/* 仅保留进度气泡的样式，移除所有自定义的prompt气泡样式 */
+/* 神谕消息气泡样式 */
+
+/* 提示词气泡固定宽度样式 */
+.prompt-message-content {
+  width: 80%;
+  max-width: 800px;
+}
 
 /* 进度气泡特有样式 */
 .shenyu-process-message-content {

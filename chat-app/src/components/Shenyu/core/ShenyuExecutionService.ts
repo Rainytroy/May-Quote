@@ -57,7 +57,8 @@ export const executeShenyuAgent = async (
   cards: Card[],
   globalPromptBlocks: GlobalPromptBlocks,
   configName: string,
-  conversationId: string
+  conversationId: string,
+  customInputValues?: Record<string, string>
 ): Promise<boolean> => {
   if (!conversationId) {
     console.error('[ShenyuExecutionService] 无有效对话ID，无法执行');
@@ -67,22 +68,33 @@ export const executeShenyuAgent = async (
   try {
     console.log('[ShenyuExecutionService] 开始执行神谕Agent, 对话ID:', conversationId);
     
-    // 从卡片的adminInputs中提取控件值，复用ShenyuPromptPreviewModal中的逻辑
-    const controlValues = cards.reduce((values, card) => {
-      if (card && card.adminInputs) {
-        Object.entries(card.adminInputs).forEach(([key, value]) => {
-          // 提取默认值
-          const valueStr = String(value || '');
-          const defaultMatch = valueStr.match(/<def>(.*?)<\/def>/);
-          const defaultValue = defaultMatch ? defaultMatch[1] : '';
-          
-          values[key] = defaultValue;
-        });
-      }
-      return values;
-    }, {} as Record<string, any>);
+    // 从卡片的adminInputs中提取控件值，或使用用户自定义的输入值
+    let controlValues: Record<string, any>;
+    
+    if (customInputValues) {
+      // 如果提供了自定义输入值，则使用它
+      controlValues = customInputValues;
+      console.log('[ShenyuExecutionService] 使用用户修改后的输入值:', controlValues);
+    } else {
+      // 否则提取默认值，复用ShenyuPromptPreviewModal中的逻辑
+      controlValues = cards.reduce((values, card) => {
+        if (card && card.adminInputs) {
+          Object.entries(card.adminInputs).forEach(([key, value]) => {
+            // 提取默认值
+            const valueStr = String(value || '');
+            const defaultMatch = valueStr.match(/<def>(.*?)<\/def>/);
+            const defaultValue = defaultMatch ? defaultMatch[1] : '';
+            
+            values[key] = defaultValue;
+          });
+        }
+        return values;
+      }, {} as Record<string, any>);
+      console.log('[ShenyuExecutionService] 使用默认输入值:', controlValues);
+    }
 
     // 处理所有提示词块
+    console.log('[ShenyuExecutionService] 使用以下控件值处理提示词:', JSON.stringify(controlValues));
     const processResult = processAllPrompts(cards, globalPromptBlocks, controlValues, configName, '');
     
     // 计算总块数
