@@ -6,6 +6,12 @@
   max-width: 800px;
 }
 
+/* 进度消息内容样式 */
+.process-message-content {
+  min-width: 140px;
+  white-space: nowrap;
+}
+
 /* 进度气泡方块样式 */
 .process-blocks-container {
   display: flex;
@@ -155,6 +161,7 @@
 .shenyu-loading-dots {
   display: inline-flex;
   margin-left: 4px;
+  white-space: nowrap;
 }
 
 .shenyu-dot {
