@@ -429,7 +429,7 @@ export function processAllPrompts(
     
     globalProcessedPrompts.push({
       cardId: 'global',
-      cardTitle: '全局提示词',
+      cardTitle: '总结',
       blockId,
       original: text,
       processed,

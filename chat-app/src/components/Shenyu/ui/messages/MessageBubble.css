@@ -7,31 +7,17 @@
   max-width: 800px;
 }
 
-/* 提示词气泡顶部工具栏 */
-.prompt-toolbar {
-  background-color: rgba(0, 0, 0, 0.2);
-  padding: 8px 12px;
-  border-top-left-radius: var(--radius-md);
-  border-top-right-radius: var(--radius-md);
-  margin-bottom: 1px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
+/* 提示词气泡顶部标题 */
 .prompt-title {
-  color: var(--text-white);
+  color: #666666;
   font-size: 13px;
   font-weight: 500;
+  margin-bottom: 8px;
+  padding: 4px 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 90%;
-}
-
-/* 主内容区 */
-.prompt-content {
-  padding: var(--space-sm);
 }
 
 /* 确保加载指示器中的点不换行 */
