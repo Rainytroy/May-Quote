@@ -13,7 +13,7 @@ class TemplateDatabase extends Dexie {
   templates!: Dexie.Table<PromptTemplate, string>;
 
   constructor() {
-    super('may-template-db');
+    super('may-shenyu-template-db');
     
     // 定义数据库结构
     this.version(1).stores({
@@ -244,7 +244,50 @@ export const templateDbService = {
    * 激活模板
    */
   async activateTemplate(id: string): Promise<boolean> {
-    return this.updateTemplate(id, { isActive: 1 });
+    try {
+      // 添加详细日志
+      console.log(`[TemplateDB] 开始激活模板: ${id}`);
+      
+      // 获取模板，确认是否存在
+      const template = await templateDb.templates.get(id);
+      if (!template) {
+        console.error(`[TemplateDB] 激活模板失败: 未找到ID为 ${id} 的模板`);
+        return false;
+      }
+      
+      // 如果模板已经是激活状态，直接返回成功
+      if (template.isActive === 1) {
+        console.log(`[TemplateDB] 模板 ${id} 已经是激活状态`);
+        return true;
+      }
+      
+      // 使用事务处理激活操作
+      await templateDb.transaction('rw', templateDb.templates, async () => {
+        console.log(`[TemplateDB] 开始事务: 取消所有模板的激活状态并激活模板 ${id}`);
+        
+        // 取消所有模板的激活状态
+        const deactivatedCount = await templateDb.templates
+          .where('isActive')
+          .equals(1)
+          .modify({ isActive: 0 });
+        
+        console.log(`[TemplateDB] 已取消 ${deactivatedCount} 个模板的激活状态`);
+        
+        // 激活目标模板
+        await templateDb.templates.update(id, { 
+          isActive: 1,
+          updatedAt: Date.now()
+        });
+        
+        console.log(`[TemplateDB] 已激活模板 ${id}`);
+      });
+      
+      console.log(`[TemplateDB] 成功完成模板 ${id} 的激活`);
+      return true;
+    } catch (error) {
+      console.error(`[TemplateDB] 激活模板 ${id} 时发生错误:`, error);
+      return false;
+    }
   },
   
   /**
