@@ -160,7 +160,9 @@ export const executeShenyuAgent = async (
         model,              // 模型名称 
         block.processed,    // 处理过的提示词
         promptMessageId,    // 消息ID
-        conversationId      // 对话ID
+        conversationId,     // 对话ID
+        block.cardTitle,    // 卡片标题
+        block.blockId       // 提示词块ID
       );
       
       // 注意：现在不需要额外创建和添加消息，因为sendModel内部已经处理了消息的创建和添加
@@ -250,7 +252,14 @@ const updateProcessMessage = async (
 };
 
 // 发送到模型并获取响应 - 使用流式API
-const sendModel = async (model: string, prompt: string, messageId: string, conversationId: string): Promise<string> => {
+const sendModel = async (
+  model: string, 
+  prompt: string, 
+  messageId: string, 
+  conversationId: string,
+  promptTitle?: string,
+  promptBlockId?: string
+): Promise<string> => {
   try {
     console.log(`[ShenyuExecutionService] 发送提示词到模型(流式): ${model}`);
     
@@ -269,7 +278,9 @@ const sendModel = async (model: string, prompt: string, messageId: string, conve
       type: 'prompt',
       sender: 'May the 神谕 be with you',
       isShenyu: true,
-      isStreaming: true  // 标记为正在流式生成中
+      isStreaming: true,  // 标记为正在流式生成中
+      promptTitle,        // 添加提示词块标题
+      promptBlockId       // 添加提示词块ID
     };
     
     // 先创建一个空的流式消息，然后随着内容生成逐步更新

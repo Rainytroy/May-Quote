@@ -40,6 +40,8 @@ export interface ShenyuMessage extends MayMessage {
   sender?: string;                 // 消息发送者标识
   originalUserInput?: string;      // 原始用户输入，用于二阶段提示词
   isStreaming?: boolean;           // 标识是否正在流式生成中
+  promptTitle?: string;            // 提示词块对应的卡片标题
+  promptBlockId?: string;          // 提示词块ID
   progress?: {                     // 进度信息，用于process类型消息
     current: number;               // 当前执行到的prompt块索引
     total: number;                 // 总prompt块数

@@ -28,88 +28,99 @@ const PromptMessageBubble: React.FC<PromptMessageBubbleProps> = ({
 }) => {
   return (
     <div className="prompt-message-content">
-      {/* 完全复用May的Markdown渲染逻辑 */}
-      <div className="markdown-body">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          components={{
-            code({className, children, ...props}: any) {
-              const match = /language-(\w+)/.exec(className || '');
-              const inline = !match;
-              return !inline ? (
-                <SyntaxHighlighter
-                  style={atomDark}
-                  language={match![1]}
-                  PreTag="div"
-                  {...props}
-                >
-                  {String(children).replace(/\n$/, '')}
-                </SyntaxHighlighter>
-              ) : (
-                <code className={className} {...props}>
-                  {children}
-                </code>
-              );
-            }
-          }}
-        >
-          {message.content}
-        </ReactMarkdown>
+      {/* 顶部工具栏 - 显示卡片标题 */}
+      {message.promptTitle && (
+        <div className="prompt-toolbar">
+          <div className="prompt-title">
+            {message.promptTitle} {message.promptBlockId && <span style={{ opacity: 0.7 }}>#{message.promptBlockId.replace('promptBlock', '')}</span>}
+          </div>
+        </div>
+      )}
+      
+      {/* 主内容区 - 完全复用May的Markdown渲染逻辑 */}
+      <div className="prompt-content">
+        <div className="markdown-body">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              code({className, children, ...props}: any) {
+                const match = /language-(\w+)/.exec(className || '');
+                const inline = !match;
+                return !inline ? (
+                  <SyntaxHighlighter
+                    style={atomDark}
+                    language={match![1]}
+                    PreTag="div"
+                    {...props}
+                  >
+                    {String(children).replace(/\n$/, '')}
+                  </SyntaxHighlighter>
+                ) : (
+                  <code className={className} {...props}>
+                    {children}
+                  </code>
+                );
+              }
+            }}
+          >
+            {message.content}
+          </ReactMarkdown>
+          
+          {/* 显示加载指示器，仅在流式生成状态下显示，放在内容底部 */}
+          {message.isStreaming && (
+            <span className="typing-indicator" style={{ marginLeft: 'var(--space-xs)' }}>
+              <span className="dot" style={{ 
+                display: 'inline-block', 
+                width: '4px', 
+                height: '4px', 
+                borderRadius: '50%', 
+                backgroundColor: 'var(--text-white)', 
+                margin: '0 2px',
+                opacity: 0.7,
+                animation: 'blink 1s infinite'
+              }}></span>
+              <span className="dot" style={{ 
+                display: 'inline-block', 
+                width: '4px', 
+                height: '4px', 
+                borderRadius: '50%', 
+                backgroundColor: 'var(--text-white)', 
+                margin: '0 2px',
+                opacity: 0.7,
+                animation: 'blink 1s infinite 0.2s'
+              }}></span>
+              <span className="dot" style={{ 
+                display: 'inline-block', 
+                width: '4px', 
+                height: '4px', 
+                borderRadius: '50%', 
+                backgroundColor: 'var(--text-white)', 
+                margin: '0 2px',
+                opacity: 0.7,
+                animation: 'blink 1s infinite 0.4s'
+              }}></span>
+              <style>
+                {`
+                  @keyframes blink {
+                    0%, 100% { opacity: 0.3; }
+                    50% { opacity: 1; }
+                  }
+                `}
+              </style>
+            </span>
+          )}
+        </div>
         
-        {/* 显示加载指示器，仅在流式生成状态下显示，放在内容底部 */}
-        {message.isStreaming && (
-          <span className="typing-indicator" style={{ marginLeft: 'var(--space-xs)' }}>
-            <span className="dot" style={{ 
-              display: 'inline-block', 
-              width: '4px', 
-              height: '4px', 
-              borderRadius: '50%', 
-              backgroundColor: 'var(--text-white)', 
-              margin: '0 2px',
-              opacity: 0.7,
-              animation: 'blink 1s infinite'
-            }}></span>
-            <span className="dot" style={{ 
-              display: 'inline-block', 
-              width: '4px', 
-              height: '4px', 
-              borderRadius: '50%', 
-              backgroundColor: 'var(--text-white)', 
-              margin: '0 2px',
-              opacity: 0.7,
-              animation: 'blink 1s infinite 0.2s'
-            }}></span>
-            <span className="dot" style={{ 
-              display: 'inline-block', 
-              width: '4px', 
-              height: '4px', 
-              borderRadius: '50%', 
-              backgroundColor: 'var(--text-white)', 
-              margin: '0 2px',
-              opacity: 0.7,
-              animation: 'blink 1s infinite 0.4s'
-            }}></span>
-            <style>
-              {`
-                @keyframes blink {
-                  0%, 100% { opacity: 0.3; }
-                  50% { opacity: 1; }
-                }
-              `}
-            </style>
-          </span>
+        {/* 直接使用May的MessageActions组件，只在消息生成完毕后显示 */}
+        {!message.isStreaming && (
+          <MessageActions 
+            message={message}
+            onCopy={(id) => console.log(`复制消息: ${id}`)}
+            onAddToClipboard={(id) => onAddToClipboard && onAddToClipboard(id)}
+            onOpenQuoteDialog={(content) => onOpenQuoteDialog && onOpenQuoteDialog(content)}
+          />
         )}
       </div>
-      
-      {/* 直接使用May的MessageActions组件，只在消息生成完毕后显示 */}
-      {!message.isStreaming && (
-        <MessageActions 
-          message={message}
-          onCopy={(id) => console.log(`复制消息: ${id}`)}
-          onAddToClipboard={(id) => onAddToClipboard && onAddToClipboard(id)}
-          onOpenQuoteDialog={(content) => onOpenQuoteDialog && onOpenQuoteDialog(content)}
-        />
-      )}
     </div>
   );
 };

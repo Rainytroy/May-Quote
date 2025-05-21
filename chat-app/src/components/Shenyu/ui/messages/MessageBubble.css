@@ -7,6 +7,33 @@
   max-width: 800px;
 }
 
+/* 提示词气泡顶部工具栏 */
+.prompt-toolbar {
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 8px 12px;
+  border-top-left-radius: var(--radius-md);
+  border-top-right-radius: var(--radius-md);
+  margin-bottom: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.prompt-title {
+  color: var(--text-white);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90%;
+}
+
+/* 主内容区 */
+.prompt-content {
+  padding: var(--space-sm);
+}
+
 /* 确保加载指示器中的点不换行 */
 .typing-indicator {
   white-space: nowrap !important;
