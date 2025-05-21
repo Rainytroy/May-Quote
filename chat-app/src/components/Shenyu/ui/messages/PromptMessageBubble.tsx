@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { ShenyuMessage } from '../../types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -6,6 +6,10 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import MessageActions from '../../../Export/MessageActions';
 import './MessageBubble.css';
+import { useTextSelection } from '../../../../hooks/useTextSelection';
+import MessageContextMenu from '../../../Chat/MessageContextMenu';
+import { ClipboardItem } from '../../../../types';
+import { generateId } from '../../../../utils/storage-db';
 
 interface PromptMessageBubbleProps {
   message: ShenyuMessage;
@@ -26,8 +30,63 @@ const PromptMessageBubble: React.FC<PromptMessageBubbleProps> = ({
   onAddSelectedTextToClipboard,
   onOpenQuoteDialog
 }) => {
+  // 使用文本选择hook处理文本选择和右键菜单
+  const { 
+    hasSelection, 
+    selectedText, 
+    position, 
+    showContextMenu, 
+    closeContextMenu,
+    isMarkdown,
+    messageId,
+    selectedTextForMenu,
+    messageIdForMenu
+  } = useTextSelection();
+  
+  // 处理选中文本复制
+  const handleCopySelectedText = useCallback(() => {
+    navigator.clipboard.writeText(selectedText)
+      .then(() => {
+        console.log('[ShenyuPrompt] 成功复制选中文本:', selectedText.substring(0, 30) + '...');
+      })
+      .catch(err => {
+        console.error('[ShenyuPrompt] 复制文本失败:', err);
+      });
+  }, [selectedText]);
+  
+  // 处理选中文本添加到剪贴板
+  const handleAddSelectedTextToClipboard = useCallback((item: ClipboardItem) => {
+    if (onAddSelectedTextToClipboard && item.source && item.source.messageId) {
+      console.log('[ShenyuPrompt] 添加选中文本到剪贴板:', item.content.substring(0, 30) + '...');
+      onAddSelectedTextToClipboard(item.content, item.source.messageId);
+    }
+  }, [onAddSelectedTextToClipboard]);
+  
+  // 添加右键菜单上下文处理
+  const handleContextMenu = (e: React.MouseEvent) => {
+    // 不阻止默认行为，让useTextSelection处理
+  };
+  
   return (
-    <div className="prompt-message-content">
+    <div 
+      className="prompt-message-content"
+      id={`message-${message.id}`} // 添加ID以便于useTextSelection识别
+      onContextMenu={handleContextMenu}
+    >
+      {/* 文本选择上下文菜单 */}
+      <MessageContextMenu
+        isOpen={showContextMenu && message.id === messageId}
+        position={position}
+        onClose={closeContextMenu}
+        selectedText={selectedText}
+        isMarkdown={isMarkdown}
+        messageId={message.id}
+        onCopy={handleCopySelectedText}
+        onAddToClipboard={handleAddSelectedTextToClipboard}
+        selectedTextForMenu={selectedTextForMenu}
+        messageIdForMenu={messageIdForMenu}
+        onOpenQuoteDialog={onOpenQuoteDialog}
+      />
       {/* 顶部标题 - 使用简单结构，是markdown-body的兄弟元素 */}
       {message.promptTitle && (
         <div className="prompt-title">
