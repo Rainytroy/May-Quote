@@ -311,7 +311,7 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
           ))}
         </div>
         
-        {/* 提示词块列表 */}
+        {/* 提示词块列表 - 但移除标题 */}
         <div style={{
           display: 'flex',
           flexDirection: 'column',
@@ -319,13 +319,7 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
           marginTop: 'var(--space-lg)',
           marginBottom: 'var(--space-lg)'
         }}>
-          <h2 style={{ 
-            color: 'var(--text-white)', 
-            fontSize: 'var(--font-md)',
-            margin: '0 0 var(--space-sm) 0'
-          }}>
-            提示词块
-          </h2>
+          {/* 这里移除了提示词块标题 */}
           
           {cards.map(card => 
             card.promptBlocks && Object.entries(card.promptBlocks).map(([promptId, promptText]) => (
@@ -494,7 +488,7 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
               </div>
               
               {/* 连接线1 */}
-              <div style={{ display: 'flex', justifyContent: 'center', height: '15px' }}>
+              <div style={{ marginLeft: '15px', height: '15px' }}>
                 <div style={{ borderLeft: '2px dashed #666666', height: '100%' }}></div>
               </div>
               
@@ -514,7 +508,7 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
               </div>
               
               {/* 连接线2 */}
-              <div style={{ display: 'flex', justifyContent: 'center', height: '15px' }}>
+              <div style={{ marginLeft: '15px', height: '15px' }}>
                 <div style={{ borderLeft: '2px dashed #666666', height: '100%' }}></div>
               </div>
               
@@ -534,7 +528,7 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
               </div>
               
               {/* 连接线3 */}
-              <div style={{ display: 'flex', justifyContent: 'center', height: '15px' }}>
+              <div style={{ marginLeft: '15px', height: '15px' }}>
                 <div style={{ borderLeft: '2px dashed #666666', height: '100%' }}></div>
               </div>
               
@@ -561,7 +555,7 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
               </div>
               
               {/* 连接线4 */}
-              <div style={{ display: 'flex', justifyContent: 'center', height: '15px' }}>
+              <div style={{ marginLeft: '15px', height: '15px' }}>
                 <div style={{ borderLeft: '2px dashed #666666', height: '100%' }}></div>
               </div>
               
