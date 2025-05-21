@@ -258,11 +258,12 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
                 <div className="card-admin-inputs">
                   <h4 style={{ 
                     margin: '0 0 var(--space-sm) 0', 
-                    color: 'var(--text-white)',
-                    fontSize: 'var(--font-sm)',
-                    fontWeight: 'bold'
+                    color: '#555555',
+                    fontSize: 'var(--font-xs)', 
+                    fontWeight: 'normal',
+                    textAlign: 'right'
                   }}>
-                    输入字段
+                    在输入框修改内容，就会生成不同的结果
                   </h4>
                   <div style={{
                     display: 'flex',
