@@ -197,6 +197,9 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
         flex: 1,
         overflow: 'auto',
         padding: 'var(--space-md)',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center', // 垂直居中
       }}>
         {/* 卡片列表 */}
         <div style={{
@@ -503,7 +506,7 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
                   <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
                 </svg>
               </div>
-              <div style={{ textAlign: 'left', marginLeft: '10px' }}>在对话选择@神谕，说出你的想法</div>
+              <div style={{ textAlign: 'left', marginLeft: '10px', color: '#444444' }}>在对话选择@神谕，说出你的想法</div>
             </div>
             
             {/* 连接线1 */}
@@ -523,7 +526,7 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
                   <polyline points="8 6 2 12 8 18"></polyline>
                 </svg>
               </div>
-              <div style={{ textAlign: 'left', marginLeft: '10px' }}>当一个代码气泡出现时，这里就会出现卡片</div>
+              <div style={{ textAlign: 'left', marginLeft: '10px', color: '#444444' }}>当一个代码气泡出现时，这里就会出现卡片</div>
             </div>
             
             {/* 连接线2 */}
@@ -543,7 +546,7 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                 </svg>
               </div>
-              <div style={{ textAlign: 'left', marginLeft: '10px' }}>你可以通过对话的方式不断修改它</div>
+              <div style={{ textAlign: 'left', marginLeft: '10px', color: '#444444' }}>你可以通过对话的方式不断修改它</div>
             </div>
             
             {/* 连接线3 */}
@@ -570,7 +573,7 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
                   <line x1="17" y1="16" x2="23" y2="16"></line>
                 </svg>
               </div>
-              <div style={{ textAlign: 'left', marginLeft: '10px' }}>在卡片中填入你需要的参数</div>
+              <div style={{ textAlign: 'left', marginLeft: '10px', color: '#444444' }}>在卡片中填入你需要的参数</div>
             </div>
             
             {/* 连接线4 */}
@@ -589,7 +592,7 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
                   <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                 </svg>
               </div>
-              <div style={{ textAlign: 'left', marginLeft: '10px' }}>然后生成最终的内容</div>
+              <div style={{ textAlign: 'left', marginLeft: '10px', color: '#444444' }}>然后生成最终的内容</div>
             </div>
           </div>
         )}
