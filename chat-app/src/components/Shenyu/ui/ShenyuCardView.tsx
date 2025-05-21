@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Card, GlobalPromptBlocks } from '../../SN43Demo/types';
 import { extractJsonStructureInfo } from '../utils/shenyuSystemPrompt';
 import ShenyuPromptPreviewModal from './ShenyuPromptPreviewModal';
+import { getActiveConversationId } from '../../../utils/db';
+import { executeShenyuAgent } from '../core/ShenyuExecutionService';
 
 interface ShenyuCardViewProps {
   jsonContent?: string;
@@ -34,9 +36,41 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
     };
     
     // 运行事件处理函数
-    const handleRun = () => {
+    const handleRun = async () => {
       console.log('[ShenyuCardView] 接收到运行事件');
-      // TODO: 实现运行功能
+      console.log('[ShenyuCardView] 当前状态:', {
+        cardsCount: cards.length,
+        hasGlobalPromptBlocks: Object.keys(globalPromptBlocks).length > 0,
+        configName
+      });
+      
+      try {
+        // 获取当前活动对话ID
+        const activeConversationId = await getActiveConversationId();
+        if (!activeConversationId) {
+          console.error('[ShenyuCardView] 无法获取当前对话ID');
+          alert('无法获取当前对话ID，请确保至少有一个活动对话');
+          return;
+        }
+        
+        // 调用神谕执行服务
+        const success = await executeShenyuAgent(
+          cards,
+          globalPromptBlocks,
+          configName,
+          activeConversationId
+        );
+        
+        if (success) {
+          console.log('[ShenyuCardView] 神谕执行完成');
+        } else {
+          console.error('[ShenyuCardView] 神谕执行失败');
+          alert('神谕执行失败，请查看控制台了解详情');
+        }
+      } catch (error) {
+        console.error('[ShenyuCardView] 执行出错:', error);
+        alert(`执行出错: ${error instanceof Error ? error.message : String(error)}`);
+      }
     };
     
     // 添加事件监听
@@ -48,7 +82,7 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
       window.removeEventListener('shenyu-view-prompt', handleViewPrompt);
       window.removeEventListener('shenyu-run', handleRun);
     };
-  }, []);
+  }, [cards, globalPromptBlocks, configName]); // 添加依赖，确保每次状态变化时更新事件处理函数
   
   // 保存每个提示词块的折叠状态
   const [collapsedPrompts, setCollapsedPrompts] = useState<Record<string, boolean>>({});

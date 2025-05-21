@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import MessageItem, { Message } from './MessageItem';
 import { useMode } from '../../contexts/ModeContext';
 import ShenyuMessageBubble from '../Shenyu/ui/messages/ShenyuMessageBubble';
-import { ClipboardItem } from '../../types';
+import { ClipboardItem } from '../../types/index';
 import { ShenyuMessage } from '../Shenyu/types';
 
 interface MessageListProps {
@@ -62,6 +62,22 @@ const MessageList: React.FC<MessageListProps> = ({
               key={message.id}
               message={message as ShenyuMessage}
               loading={!!message.loading}
+              onAddToClipboard={onAddToClipboard}
+              onAddSelectedTextToClipboard={(text: string, messageId: string) => {
+                const item: ClipboardItem = {
+                  id: messageId,
+                  content: text,
+                  timestamp: Date.now(),
+                  order: 0, // 默认顺序为0
+                  source: {
+                    messageId,
+                    conversationId: ''
+                  }
+                };
+                onAddSelectedTextToClipboard && onAddSelectedTextToClipboard(item);
+                return Promise.resolve(true);
+              }}
+              onOpenQuoteDialog={onOpenQuoteDialog}
             />
           );
         } else {

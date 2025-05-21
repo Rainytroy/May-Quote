@@ -39,6 +39,14 @@ export interface ShenyuMessage extends MayMessage {
   type?: 'json' | 'prompt' | 'process'; // 消息类型
   sender?: string;                 // 消息发送者标识
   originalUserInput?: string;      // 原始用户输入，用于二阶段提示词
+  isStreaming?: boolean;           // 标识是否正在流式生成中
+  progress?: {                     // 进度信息，用于process类型消息
+    current: number;               // 当前执行到的prompt块索引
+    total: number;                 // 总prompt块数
+    completed: boolean;            // 是否已完成
+    cardBlocks: number;            // 卡片提示词块数量
+    globalBlocks: number;          // 全局提示词块数量
+  };
   shenyuData?: {                   // 神谕特有数据
     isValidJson: boolean;          // 是否为有效JSON
     jsonContent: string | null;    // JSON内容

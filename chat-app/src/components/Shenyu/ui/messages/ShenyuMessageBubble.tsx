@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
 import { ShenyuMessage } from '../../types';
 import JsonMessageBubble from './JsonMessageBubble';
+import ProcessMessageBubble from './ProcessMessageBubble';
+import PromptMessageBubble from './PromptMessageBubble';
 import './MessageBubble.css';
-import { isValidJsonContent } from '../../utils/shenyuSystemPrompt';
 import { SHENYU_AI_NAME } from '../../utils/shenyuSystemPrompt';
 import { formatSmartTime } from '../../../../utils/date-utils';
 
 interface ShenyuMessageBubbleProps {
   message: ShenyuMessage;
   loading?: boolean;
+  onAddToClipboard?: (messageId: string) => void;
+  onAddSelectedTextToClipboard?: (text: string, messageId: string) => Promise<boolean>;
+  onOpenQuoteDialog?: (content: string) => void;
 }
 
 /**
@@ -18,32 +22,84 @@ interface ShenyuMessageBubbleProps {
  */
 const ShenyuMessageBubble: React.FC<ShenyuMessageBubbleProps> = ({ 
   message, 
-  loading = false 
+  loading = false,
+  onAddToClipboard,
+  onAddSelectedTextToClipboard,
+  onOpenQuoteDialog
 }) => {
-  // 用于切换API原始响应和JSON视图
-  const [activeView, setActiveView] = useState<'json' | 'raw'>('json');
+  // 处理添加到剪贴板
+  const handleAddToClipboard = () => {
+    if (onAddToClipboard && message.id) {
+      onAddToClipboard(message.id);
+    }
+  };
+  
+  // 处理选中文本添加到剪贴板
+  const handleAddSelectedTextToClipboard = (text: string, messageId: string) => {
+    if (onAddSelectedTextToClipboard) {
+      return onAddSelectedTextToClipboard(text, messageId);
+    }
+    return Promise.resolve(false);
+  };
+  
+  // 处理引用到新对话
+  const handleOpenQuoteDialog = (content: string) => {
+    if (onOpenQuoteDialog) {
+      onOpenQuoteDialog(content);
+    }
+  };
+
+  // 根据消息类型渲染适当的内容组件
+  const renderContentByType = () => {
+    if (loading) {
+      return (
+        <div className="loading-state">
+          <div className="loading-indicator">
+            <div className="spinner"></div>
+            <span>神谕运行中</span>
+          </div>
+          <div className="loading-hint">可能需要几秒钟</div>
+        </div>
+      );
+    }
+
+    switch (message.type) {
+      case 'process':
+        return <ProcessMessageBubble message={message} />;
+      case 'prompt':
+        return (
+          <PromptMessageBubble 
+            message={message}
+            onAddToClipboard={handleAddToClipboard}
+            onAddSelectedTextToClipboard={handleAddSelectedTextToClipboard}
+            onOpenQuoteDialog={handleOpenQuoteDialog}
+          />
+        );
+      case 'json':
+      default:
+        return <JsonMessageBubble message={message} loading={false} />;
+    }
+  };
 
   return (
     <div 
       id={`message-${message.id}`}
-      className="shenyu-message-item ai" 
+      className="message-item ai"
       style={{
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-start',
         width: '100%',
-        marginBottom: 'var(--space-md)'
+        marginBottom: 'var(--space-md)' // 确保与其他消息间距一致
       }}
     >
-      {/* 消息头部：发送者和时间 */}
+      {/* 消息头部：发送者和时间 - 使用与May一致的样式 */}
       <div 
         className="message-header"
         style={{
           textAlign: 'left',
-          width: '80%', 
-          color: 'var(--text-light-gray)',
-          fontSize: 'var(--font-sm)',
-          marginBottom: 'var(--space-xs)'
+          width: '100%',
+          maxWidth: '80%'
         }}
       >
         {SHENYU_AI_NAME}
@@ -52,57 +108,9 @@ const ShenyuMessageBubble: React.FC<ShenyuMessageBubbleProps> = ({
         </span>
       </div>
       
-      {/* 消息内容 */}
-      <div 
-        className="message-bubble ai"
-        style={{
-          backgroundColor: 'var(--ai-bubble)',
-          color: 'var(--text-white)',
-          padding: 'var(--space-md)',
-          borderRadius: '0px 6px 6px',
-          width: '80%',
-          minWidth: '200px',
-          boxShadow: 'rgba(0, 0, 0, 0.1) 0px 1px 2px',
-          position: 'relative',
-          alignSelf: 'flex-start'
-        }}
-      >
-        {loading ? (
-          // 显示加载状态
-          <div className="loading-state" style={{ 
-            display: 'flex', 
-            flexDirection: 'column',
-            alignItems: 'flex-start',
-            gap: 'var(--space-sm)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              {/* 旋转的绿色圆圈 */}
-              <div style={{
-                width: '16px',
-                height: '16px',
-                borderRadius: '50%',
-                border: '2px solid var(--brand-color)',
-                borderTopColor: 'transparent',
-                marginRight: 'var(--space-xs)',
-                animation: 'spinner 0.8s linear infinite'
-              }}></div>
-              <span>神谕运行中</span>
-              
-              {/* 添加旋转动画的样式 */}
-              <style>{`
-                @keyframes spinner {
-                  0% { transform: rotate(0deg); }
-                  100% { transform: rotate(360deg); }
-                }
-              `}</style>
-            </div>
-            <div style={{ fontSize: 'var(--font-xs)', color: 'var(--text-light-gray)', fontStyle: 'italic' }}>
-              可能需要几秒钟
-            </div>
-          </div>
-        ) : (
-          <JsonMessageBubble message={message} loading={false} />
-        )}
+      {/* 消息内容 - 使用标准的message-bubble类，避免样式冲突 */}
+      <div className="message-bubble ai">
+        {renderContentByType()}
       </div>
     </div>
   );

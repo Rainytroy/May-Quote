@@ -43,8 +43,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   
   const hasApiKey = !!getApiKey();
   
+  // 本地消息状态 - 用于实时更新UI
+  const [localMessages, setLocalMessages] = React.useState<Message[]>([]);
+  
   // 初始消息加载跟踪
   const [initialMessagesLoaded, setInitialMessagesLoaded] = React.useState<boolean>(false);
+  
+  // 当useChat的messages变化时，同步到本地状态
+  React.useEffect(() => {
+    setLocalMessages(messages);
+  }, [messages]);
   
   // 加载初始消息 - 使用setInitialMessages直接设置消息
   React.useEffect(() => {
@@ -54,6 +62,78 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       setInitialMessagesLoaded(true);
     }
   }, [initialMessages, messages.length, initialMessagesLoaded, setInitialMessages]);
+  
+  // 添加神谕消息事件监听器 - 实时更新UI
+  React.useEffect(() => {
+    // 处理神谕消息添加事件
+    const handleShenyuMessageAdded = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { conversationId: eventConversationId, message } = customEvent.detail;
+      
+      // 确保消息属于当前对话
+      if (eventConversationId === conversationId && message) {
+        console.log('[ChatInterface] 收到神谕消息添加事件，立即更新UI:', message.type);
+        
+        // 添加消息到UI
+        setLocalMessages(prev => [...prev, message]);
+      }
+    };
+    
+    // 处理神谕消息更新事件
+    const handleShenyuMessageUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { conversationId: eventConversationId, messageId, message } = customEvent.detail;
+      
+      // 确保消息属于当前对话
+      if (eventConversationId === conversationId && message) {
+        console.log('[ChatInterface] 收到神谕消息更新事件，messageId:', messageId);
+        
+        // 更新消息
+        setLocalMessages((prev: Message[]) => {
+          return prev.map((msg: Message) => {
+            if (msg.id === messageId) {
+              // 保留原有消息的所有属性，但使用新的progress
+              return { ...msg, ...message };
+            }
+            return msg;
+          });
+        });
+      }
+    };
+    
+    // 处理神谕消息流式生成事件 - 用于实时更新提示词块内容
+    const handleShenyuMessageStreaming = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { conversationId: eventConversationId, messageId, content } = customEvent.detail;
+      
+      // 确保消息属于当前对话
+      if (eventConversationId === conversationId && messageId && content) {
+        console.log('[ChatInterface] 收到神谕消息流式更新，messageId:', messageId.substring(0, 8));
+        
+        // 更新流式内容 - 只更新内容，保持其他属性不变
+        setLocalMessages((prev: Message[]) => {
+          return prev.map((msg: Message) => {
+            if (msg.id === messageId) {
+              return { ...msg, content };
+            }
+            return msg;
+          });
+        });
+      }
+    };
+    
+    // 添加事件监听器
+    window.addEventListener('shenyu-message-added', handleShenyuMessageAdded);
+    window.addEventListener('shenyu-message-updated', handleShenyuMessageUpdated);
+    window.addEventListener('shenyu-message-streaming', handleShenyuMessageStreaming);
+    
+    // 清理函数
+    return () => {
+      window.removeEventListener('shenyu-message-added', handleShenyuMessageAdded);
+      window.removeEventListener('shenyu-message-updated', handleShenyuMessageUpdated);
+      window.removeEventListener('shenyu-message-streaming', handleShenyuMessageStreaming);
+    };
+  }, [conversationId]); // 仅依赖conversationId，确保在对话切换时重新设置监听器
   
   // 当对话ID变化时重置加载状态和检查是否有待处理的消息
   React.useEffect(() => {
@@ -223,9 +303,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         </div>
       )}
       
-      {/* 消息列表 */}
+      {/* 消息列表 - 使用localMessages以实时显示神谕消息 */}
       <MessageList 
-        messages={messages}
+        messages={localMessages}
         onContextMenu={handleContextMenu}
         onCopy={handleCopy}
         onQuote={handleQuote}
