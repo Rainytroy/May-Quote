@@ -199,7 +199,7 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
         padding: 'var(--space-md)',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center', // 垂直居中
+        justifyContent: 'flex-start', // 顶部对齐
       }}>
         {/* 卡片列表 */}
         <div style={{
