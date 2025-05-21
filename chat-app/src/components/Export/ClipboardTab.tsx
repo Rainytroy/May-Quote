@@ -42,7 +42,7 @@ const ClipboardTab: React.FC<ClipboardTabProps> = ({
         borderTop: `2px solid ${isActive ? 'var(--brand-color)' : 'transparent'}`,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         fontSize: 'var(--font-sm)',
         position: 'relative',
         userSelect: 'none',

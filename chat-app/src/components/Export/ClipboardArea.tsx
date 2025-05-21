@@ -122,7 +122,27 @@ const ClipboardArea: React.FC<ClipboardAreaProps> = ({
   // 渲染空状态
   if (items.length === 0) {
     return (
-      <div className="empty-state">
+      <div className="empty-state" style={{ textAlign: 'center' }}>
+        {/* 剪贴板图标 */}
+        <div style={{ marginBottom: 'var(--space-lg)' }}>
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            width="80" 
+            height="80" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+            style={{ color: 'var(--text-light-gray)' }}
+          >
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+            <path d="M12 11v6"></path>
+            <path d="M9 14h6"></path>
+          </svg>
+        </div>
         <p>右键点击对话中的消息，或点击消息底部的"添加到剪贴板"按钮，可将内容添加到剪贴板</p>
         <p style={{ 
           marginTop: 'var(--space-md)',
