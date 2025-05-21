@@ -327,7 +327,7 @@ const ApiSettings: React.FC<ApiSettingsProps> = ({ isOpen, onClose, onSave }) =>
           隐藏设置
         </h3>
         
-        <div style={{ marginBottom: 'var(--space-md)', display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
+        <div style={{ marginBottom: 'var(--space-md)', display: 'flex', flexDirection: 'row', gap: 'var(--space-lg)' }}>
           <a 
             href="/?demo=shenyu" 
             target="_blank" 
@@ -355,7 +355,7 @@ const ApiSettings: React.FC<ApiSettingsProps> = ({ isOpen, onClose, onSave }) =>
               padding: 'var(--space-xs) 0'
             }}
           >
-            提示词模板管理
+            @神谕模板管理
           </a>
         </div>
         
