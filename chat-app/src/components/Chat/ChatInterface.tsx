@@ -6,6 +6,9 @@ import { getApiKey } from '../../utils/storage';
 import { Message } from './MessageItem';
 import { ClipboardItem } from '../../types';
 import { generateId } from '../../utils/storage-db';
+import ModeDivider from './ModeDivider';
+import { ModeSwitchEvent } from '../../contexts/ModeContext';
+import { ChatMode } from '../Shenyu/types';
 
 interface ChatInterfaceProps {
   onOpenSettings: () => void;
@@ -79,6 +82,30 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       }
     };
     
+    // 处理模式切换事件 - 添加分割线
+    const handleModeDividerAdded = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { mode, conversationId: eventConversationId, id } = customEvent.detail as ModeSwitchEvent;
+      
+      // 确保属于当前对话
+      if (eventConversationId === conversationId || eventConversationId === 'unknown') {
+        console.log(`[ChatInterface] 收到模式切换事件: ${mode}`);
+        
+        // 创建一个特殊的虚拟消息作为分割线
+        const dividerMessage: Message = {
+          id: `mode-divider-${id}`,
+          role: 'system',
+          content: '',
+          timestamp: Date.now(),
+          mode: mode,
+          isDivider: true // 标记为分割线消息
+        };
+        
+        // 添加到消息列表
+        setLocalMessages(prev => [...prev, dividerMessage]);
+      }
+    };
+    
     // 处理神谕消息更新事件
     const handleShenyuMessageUpdated = (event: Event) => {
       const customEvent = event as CustomEvent;
@@ -122,16 +149,19 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       }
     };
     
+    
     // 添加事件监听器
     window.addEventListener('shenyu-message-added', handleShenyuMessageAdded);
     window.addEventListener('shenyu-message-updated', handleShenyuMessageUpdated);
     window.addEventListener('shenyu-message-streaming', handleShenyuMessageStreaming);
+    window.addEventListener('mode-divider-added', handleModeDividerAdded);
     
     // 清理函数
     return () => {
       window.removeEventListener('shenyu-message-added', handleShenyuMessageAdded);
       window.removeEventListener('shenyu-message-updated', handleShenyuMessageUpdated);
       window.removeEventListener('shenyu-message-streaming', handleShenyuMessageStreaming);
+      window.removeEventListener('mode-divider-added', handleModeDividerAdded);
     };
   }, [conversationId]); // 仅依赖conversationId，确保在对话切换时重新设置监听器
   

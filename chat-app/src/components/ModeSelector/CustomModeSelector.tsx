@@ -30,7 +30,7 @@ const CustomModeSelector: React.FC<CustomModeSelectorProps> = ({
   className = ''
 }) => {
   // 获取模式上下文
-  const { currentMode: contextMode, setMode } = useMode();
+  const { currentMode: contextMode, setMode, addModeDivider } = useMode();
   
   // 使用props的currentMode（如果提供）或者上下文中的currentMode
   const effectiveCurrentMode = propCurrentMode || contextMode;
@@ -73,15 +73,28 @@ const CustomModeSelector: React.FC<CustomModeSelectorProps> = ({
 
   // 处理选项选择 - 现在连接到ModeContext执行实际功能
   const handleSelect = (mode: ChatMode) => {
-    setSelectedMode(mode);
-    setIsOpen(false);
-    
-    // 调用上下文的setMode进行实际模式切换
-    setMode(mode);
-    
-    // 如果提供了onChange回调，也调用它
-    if (onChange) {
-      onChange(mode);
+    // 只有当选择了不同模式时才执行操作
+    if (mode !== selectedMode) {
+      setSelectedMode(mode);
+      setIsOpen(false);
+      
+      // 调用上下文的setMode进行实际模式切换
+      setMode(mode);
+      
+      // 尝试获取当前对话ID - 从URL中提取
+      const urlParams = new URLSearchParams(window.location.search);
+      const conversationId = urlParams.get('id') || 'unknown';
+      
+      // 添加模式分割线
+      addModeDivider(mode, conversationId);
+      
+      // 如果提供了onChange回调，也调用它
+      if (onChange) {
+        onChange(mode);
+      }
+    } else {
+      // 如果选择了当前已选模式，只关闭下拉菜单
+      setIsOpen(false);
     }
   };
 

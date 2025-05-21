@@ -15,6 +15,8 @@ export interface Message {
   content: string;
   timestamp: number;
   loading?: boolean;
+  mode?: 'may' | 'shenyu';  // 模式信息，用于分割线
+  isDivider?: boolean;      // 标记是否为分割线消息
 }
 
 interface MessageItemProps {

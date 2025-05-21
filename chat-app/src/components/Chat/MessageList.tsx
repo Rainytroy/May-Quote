@@ -4,6 +4,7 @@ import { useMode } from '../../contexts/ModeContext';
 import ShenyuMessageBubble from '../Shenyu/ui/messages/ShenyuMessageBubble';
 import { ClipboardItem } from '../../types/index';
 import { ShenyuMessage } from '../Shenyu/types';
+import ModeDivider from './ModeDivider';
 
 interface MessageListProps {
   messages: Message[];
@@ -52,6 +53,13 @@ const MessageList: React.FC<MessageListProps> = ({
   return (
     <div className="message-list">
       {messages.map((message) => {
+        // 检查是否为分割线消息
+        if (message.isDivider && message.mode) {
+          return (
+            <ModeDivider key={message.id} mode={message.mode} />
+          );
+        }
+        
         // 检查是否为神谕消息
         const isShenyuMessage = 'isShenyu' in message && message.isShenyu;
         
