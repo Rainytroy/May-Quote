@@ -3,7 +3,7 @@ import { useReference } from '../../contexts/ReferenceContext';
 import ReferenceTag from '../Reference/ReferenceTag';
 import ModeSelector from '../ModeSelector';
 import { useMode } from '../../contexts/ModeContext';
-import { getShenyuSystemPrompt, triggerDebugEvent } from '../Shenyu/utils/shenyuSystemPrompt';
+import { getShenyuSystemPromptSync, triggerDebugEvent } from '../Shenyu/utils/shenyuSystemPrompt';
 import { ChatMode } from '../Shenyu/types';
 
 interface InputAreaProps {
@@ -57,7 +57,7 @@ const InputArea: React.FC<InputAreaProps> = ({
         const originalUserInput = fullPrompt;
         
         // 获取神谕系统提示词
-        const systemPrompt = getShenyuSystemPrompt(fullPrompt);
+        const systemPrompt = getShenyuSystemPromptSync(fullPrompt);
         
         // 记录请求信息到调试工具
         triggerDebugEvent({

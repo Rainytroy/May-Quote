@@ -7,7 +7,7 @@ import { Message } from '../sharedTypes'; // 导入扩展后的Message类型
 import { generateId } from '../utils/storage-db';
 import { useMode } from '../contexts/ModeContext';
 import { 
-  getShenyuSystemPrompt, 
+  getShenyuSystemPromptSync, 
   logPromptStructure, 
   isValidJsonContent,
   triggerDebugEvent
@@ -105,7 +105,7 @@ export function useChat(
       // 处理神谕模式的提示词 - 使用消息附带的模式而不是React状态
       if (effectiveMode === 'shenyu') {
         // 获取系统提示词
-        const shenyuPrompt = getShenyuSystemPrompt(content);
+        const shenyuPrompt = getShenyuSystemPromptSync(content);
         
         // 修改用户消息，将提示词模板直接添加到用户消息中
         // 找到最后一条用户消息（就是当前发送的消息）

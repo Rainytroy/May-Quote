@@ -327,7 +327,7 @@ const ApiSettings: React.FC<ApiSettingsProps> = ({ isOpen, onClose, onSave }) =>
           隐藏设置
         </h3>
         
-        <div style={{ marginBottom: 'var(--space-md)' }}>
+        <div style={{ marginBottom: 'var(--space-md)', display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
           <a 
             href="/?demo=shenyu" 
             target="_blank" 
@@ -341,6 +341,21 @@ const ApiSettings: React.FC<ApiSettingsProps> = ({ isOpen, onClose, onSave }) =>
             }}
           >
             神谕调试实验室
+          </a>
+          
+          <a 
+            href="/?template-manager" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{
+              color: 'var(--brand-color)',
+              textDecoration: 'none',
+              fontSize: 'var(--font-sm)',
+              display: 'inline-block',
+              padding: 'var(--space-xs) 0'
+            }}
+          >
+            提示词模板管理
           </a>
         </div>
         

@@ -5,6 +5,7 @@
  */
 
 import { SHENYU_PROMPT_TEMPLATE, SHENYU_PHASE2_TEMPLATE, SHENYU_AI_NAME } from './promptTemplates';
+import { getActiveTemplate, initTemplateDb } from '../../../utils/templateDbService';
 
 // 重新导出AI名称，保持向后兼容性
 export { SHENYU_AI_NAME };
@@ -17,6 +18,11 @@ export const SHENYU_SYSTEM_PROMPT = SHENYU_PROMPT_TEMPLATE;
 
 // 调试模式标志
 export const DEBUG_SHENYU_MODE = true; // 生产环境应设为false
+
+// 初始化模板数据库
+initTemplateDb().catch(err => {
+  console.error('初始化模板数据库失败:', err);
+});
 
 /**
  * 替换提示词中的占位符
@@ -36,7 +42,34 @@ export function replacePromptPlaceholders(
  * @param userInput 用户输入
  * @returns 完整的系统提示词
  */
-export function getShenyuSystemPrompt(userInput: string): string {
+export async function getShenyuSystemPrompt(userInput: string): Promise<string> {
+  try {
+    // 尝试从数据库获取激活的模板
+    const activeTemplate = await getActiveTemplate();
+    
+    // 如果找到激活的模板，使用它的内容
+    if (activeTemplate) {
+      console.log(`[ShenyuPrompt] 使用模板: ${activeTemplate.name} (${activeTemplate.id})`);
+      return replacePromptPlaceholders(activeTemplate.content, userInput);
+    }
+    
+    // 如果没有找到激活的模板，使用标准模板
+    console.log('[ShenyuPrompt] 未找到激活的模板，使用标准模板');
+    return replacePromptPlaceholders(SHENYU_SYSTEM_PROMPT, userInput);
+  } catch (error) {
+    // 发生错误时使用标准模板
+    console.error('[ShenyuPrompt] 获取激活模板失败，使用标准模板:', error);
+    return replacePromptPlaceholders(SHENYU_SYSTEM_PROMPT, userInput);
+  }
+}
+
+/**
+ * 同步版本的获取神谕模式下的系统提示词
+ * 用于向后兼容，总是使用标准模板
+ * @param userInput 用户输入
+ * @returns 完整的系统提示词
+ */
+export function getShenyuSystemPromptSync(userInput: string): string {
   return replacePromptPlaceholders(SHENYU_SYSTEM_PROMPT, userInput);
 }
 
