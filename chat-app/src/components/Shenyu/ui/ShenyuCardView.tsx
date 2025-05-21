@@ -458,30 +458,25 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
           ))}
         </div>
 
-        {/* 空状态标题 - 移到卡片外部 */}
+        {/* 空状态标题和提示 */}
         {cards.length === 0 && (
-          <p style={{ 
-            fontSize: 'var(--font-md)', 
-            marginBottom: 'var(--space-md)',
-            textAlign: 'left',
-            color: '#666666'
-          }}>
-            现在还没有开始构造卡片，请按照以下步骤操作：
-          </p>
-        )}
+          <>
+            <p style={{ 
+              fontSize: 'var(--font-md)', 
+              marginBottom: 'var(--space-sm)',
+              textAlign: 'left',
+              color: '#666666'
+            }}>
+              现在还没有开始构造卡片，请按照以下步骤操作：
+            </p>
 
-        {/* 空状态提示卡片 */}
-        {cards.length === 0 && (
-          <div style={{
-            textAlign: 'center',
-            padding: 'var(--space-xl)',
-            color: '#666666',
-            backgroundColor: 'var(--main-bg)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px dashed var(--border-color)'
-          }}>
-            <div style={{ marginBottom: 'var(--space-lg)' }}>
-              
+            <div style={{
+              textAlign: 'center',
+              padding: 'var(--space-md)',
+              color: '#666666',
+              backgroundColor: 'var(--main-bg)',
+              borderRadius: 'var(--radius-md)'
+            }}>
               {/* 步骤1 */}
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
                 <div style={{ 
@@ -582,7 +577,7 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
                 <div style={{ textAlign: 'left', marginLeft: '10px' }}>然后生成最终的内容</div>
               </div>
             </div>
-          </div>
+          </>
         )}
       </div>
     </div>
