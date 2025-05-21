@@ -258,7 +258,7 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
                 <div className="card-admin-inputs">
                   <h4 style={{ 
                     margin: '0 0 var(--space-sm) 0', 
-                    color: '#555555',
+                    color: '#666666',
                     fontSize: 'var(--font-xs)', 
                     fontWeight: 'normal',
                     textAlign: 'right'
