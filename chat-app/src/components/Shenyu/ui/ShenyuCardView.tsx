@@ -288,8 +288,7 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
                         >
                           <div style={{
                             color: '#888888',
-                            minWidth: '120px',
-                            whiteSpace: 'nowrap'
+                            width: '25%'
                           }}>
                             {labelText || key}:
                           </div>
