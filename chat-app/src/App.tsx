@@ -11,7 +11,6 @@ import { ClipboardItem } from './types';
 import { exportAsMarkdown, exportAsPDF } from './utils/export-utils';
 import { ReferenceProvider } from './contexts/ReferenceContext';
 import { ModeProvider } from './contexts/ModeContext';
-import DebugToggleButton from './components/Shenyu/ui/debug/DebugToggleButton';
 import ShenyuDebugPanel from './components/Shenyu/ui/debug/ShenyuDebugPanel';
 import './styles/global.css'; // 引入全局样式
 
@@ -221,12 +220,6 @@ function App() {
         {/* 顶部导航 */}
         <nav className="navbar">
           <div className="logo">May</div>
-          
-          {/* 调试按钮 - 在Logo后面添加 */}
-          <DebugToggleButton
-            isActive={isDebugPanelOpen}
-            onClick={() => setIsDebugPanelOpen(!isDebugPanelOpen)}
-          />
           
           {/* 开发者信息 */}
           <a
