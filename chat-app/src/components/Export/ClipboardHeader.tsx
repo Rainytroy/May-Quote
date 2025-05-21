@@ -110,12 +110,12 @@ const ClipboardHeader: React.FC<ClipboardHeaderProps> = ({
         }}
       >
         <div className="toolbar-title">
-          {activeTabId === 'clipboard' ? `剪贴板内容 (${itemCount})` : '神谕'}
+          {activeTabId === 'clipboard' ? `剪贴板内容 (${itemCount})` : '卡片生成区'}
         </div>
         
         {/* 工具栏操作按钮 - 根据当前标签页显示不同内容 */}
         {activeTabId === 'clipboard' ? (
-          <div className="toolbar-actions" style={{ display: 'flex', gap: 'var(--space-xs)' }}>
+          <div className="toolbar-actions" style={{ display: 'flex', gap: 'var(--space-md)' }}>
             {/* 更多按钮 - 剪贴板标签页 */}
             <div style={{ position: 'relative' }}>
               <button
@@ -262,7 +262,7 @@ const ClipboardHeader: React.FC<ClipboardHeaderProps> = ({
           </div>
         ) : (
           // 神谕标签页按钮
-          <div className="toolbar-actions" style={{ display: 'flex', gap: 'var(--space-xs)' }}>
+          <div className="toolbar-actions" style={{ display: 'flex', gap: 'var(--space-md)' }}>
             {/* 查看提示词按钮 */}
             <button
               onClick={handleViewPrompt}
@@ -276,7 +276,8 @@ const ClipboardHeader: React.FC<ClipboardHeaderProps> = ({
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 'var(--space-xs)'
+                gap: 'var(--space-xs)',
+                height: '28px'
               }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -300,7 +301,8 @@ const ClipboardHeader: React.FC<ClipboardHeaderProps> = ({
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 'var(--space-xs)'
+                gap: 'var(--space-xs)',
+                height: '28px'
               }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
