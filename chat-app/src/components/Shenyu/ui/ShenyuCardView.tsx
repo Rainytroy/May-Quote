@@ -100,6 +100,12 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
       console.log('[ShenyuCardView] jsonContent为空，重置卡片');
       setCards([]);
       setGlobalPromptBlocks({});
+      
+      // 发送卡片状态变化事件，通知工具栏禁用按钮
+      window.dispatchEvent(new CustomEvent('shenyu-cards-change', { 
+        detail: { hasCards: false } 
+      }));
+      
       return;
     }
     
@@ -111,6 +117,11 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
       // 设置卡片
       const cardsArray = Array.isArray(parsedJson.cards) ? parsedJson.cards : [];
       setCards(cardsArray);
+      
+      // 发送卡片状态变化事件，通知工具栏更新按钮状态
+      window.dispatchEvent(new CustomEvent('shenyu-cards-change', { 
+        detail: { hasCards: cardsArray.length > 0 } 
+      }));
       
       // 设置全局提示词块
       const globalBlocks = parsedJson.globalPromptBlocks && typeof parsedJson.globalPromptBlocks === 'object' ? 

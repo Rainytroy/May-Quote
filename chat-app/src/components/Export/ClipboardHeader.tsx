@@ -33,6 +33,8 @@ const ClipboardHeader: React.FC<ClipboardHeaderProps> = ({
   // 更多操作菜单状态
   const [showMoreMenu, setShowMoreMenu] = React.useState(false);
   const [showPromptPreview, setShowPromptPreview] = React.useState(false);
+  // 神谕卡片状态
+  const [hasShenyuCards, setHasShenyuCards] = React.useState(false);
   
   // 创建点击外部关闭菜单的效果
   React.useEffect(() => {
@@ -59,6 +61,24 @@ const ClipboardHeader: React.FC<ClipboardHeaderProps> = ({
       document.removeEventListener('click', handleClickOutside);
     };
   }, [showMoreMenu]);
+  
+  // 监听神谕卡片状态
+  React.useEffect(() => {
+    // 设置卡片状态事件处理函数
+    const handleShenyuCardsChange = (event: CustomEvent) => {
+      setHasShenyuCards(event.detail?.hasCards || false);
+    };
+    
+    // 添加全局事件监听
+    window.addEventListener('shenyu-cards-change', handleShenyuCardsChange as EventListener);
+    
+    // 组件初始化时默认禁用按钮
+    setHasShenyuCards(false);
+    
+    return () => {
+      window.removeEventListener('shenyu-cards-change', handleShenyuCardsChange as EventListener);
+    };
+  }, []);
   
   // 向外部发送查看提示词事件
   const handleViewPrompt = () => {
@@ -263,9 +283,10 @@ const ClipboardHeader: React.FC<ClipboardHeaderProps> = ({
         ) : (
           // 神谕标签页按钮
           <div className="toolbar-actions" style={{ display: 'flex', gap: 'var(--space-md)' }}>
-            {/* 查看提示词按钮 */}
+            {/* 查看提示词按钮 - 禁用状态依赖于是否有卡片 */}
             <button
-              onClick={handleViewPrompt}
+              onClick={hasShenyuCards ? handleViewPrompt : undefined}
+              disabled={!hasShenyuCards}
               style={{ 
                 backgroundColor: 'var(--secondary-bg)',
                 color: 'var(--text-white)',
@@ -273,11 +294,12 @@ const ClipboardHeader: React.FC<ClipboardHeaderProps> = ({
                 borderRadius: 'var(--radius-sm)',
                 padding: 'var(--space-xs) var(--space-sm)',
                 fontSize: 'var(--font-xs)',
-                cursor: 'pointer',
+                cursor: hasShenyuCards ? 'pointer' : 'not-allowed',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 'var(--space-xs)',
-                height: '28px'
+                height: '28px',
+                opacity: hasShenyuCards ? 1 : 0.5
               }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -287,9 +309,10 @@ const ClipboardHeader: React.FC<ClipboardHeaderProps> = ({
               查看提示词
             </button>
             
-            {/* 运行按钮 */}
+            {/* 运行按钮 - 禁用状态依赖于是否有卡片 */}
             <button 
-              onClick={handleRun}
+              onClick={hasShenyuCards ? handleRun : undefined}
+              disabled={!hasShenyuCards}
               style={{ 
                 backgroundColor: 'var(--brand-color)',
                 color: 'var(--text-dark)',
@@ -298,11 +321,12 @@ const ClipboardHeader: React.FC<ClipboardHeaderProps> = ({
                 padding: 'var(--space-xs) var(--space-sm)',
                 fontSize: 'var(--font-xs)',
                 fontWeight: 'bold',
-                cursor: 'pointer',
+                cursor: hasShenyuCards ? 'pointer' : 'not-allowed',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 'var(--space-xs)',
-                height: '28px'
+                height: '28px',
+                opacity: hasShenyuCards ? 1 : 0.5
               }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
