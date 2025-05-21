@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShenyuMessage } from '../../types';
 import JsonMessageBubble from './JsonMessageBubble';
 import ProcessMessageBubble from './ProcessMessageBubble';
 import PromptMessageBubble from './PromptMessageBubble';
 import './MessageBubble.css';
 import { SHENYU_AI_NAME } from '../../utils/shenyuSystemPrompt';
+import { SHENYU_PROMPT_TEMPLATE } from '../../utils/promptTemplates';
 import { formatSmartTime } from '../../../../utils/date-utils';
 
 interface ShenyuMessageBubbleProps {
@@ -27,6 +28,37 @@ const ShenyuMessageBubble: React.FC<ShenyuMessageBubbleProps> = ({
   onAddSelectedTextToClipboard,
   onOpenQuoteDialog
 }) => {
+  // 用于存储从debug事件获取的API请求内容
+  const [apiRequestContent, setApiRequestContent] = useState<string>('');
+  
+  // 监听shenyu-debug事件，获取实际的API请求内容
+  useEffect(() => {
+    const handleDebugEvent = (event: CustomEvent) => {
+      const { detail } = event;
+      if (detail && detail.fullPayload) {
+        try {
+          // 从调试事件中提取完整的API请求内容
+          // 将fullPayload转换为可读的字符串格式
+          const formattedPayload = detail.fullPayload.map((msg: any) => {
+            return `${msg.role}:\n${msg.content.substring(0, 300)}${msg.content.length > 300 ? '...' : ''}`;
+          }).join('\n\n');
+          
+          console.log('[ShenyuMessageBubble] 接收到debug事件，更新API请求内容');
+          setApiRequestContent(formattedPayload);
+        } catch (error) {
+          console.error('[ShenyuMessageBubble] 处理debug事件出错:', error);
+        }
+      }
+    };
+    
+    // 添加调试事件监听器
+    window.addEventListener('shenyu-debug' as any, handleDebugEvent as any);
+    
+    return () => {
+      // 移除调试事件监听器
+      window.removeEventListener('shenyu-debug' as any, handleDebugEvent as any);
+    };
+  }, []);
   // 处理添加到剪贴板
   const handleAddToClipboard = () => {
     if (onAddToClipboard && message.id) {
@@ -51,14 +83,41 @@ const ShenyuMessageBubble: React.FC<ShenyuMessageBubbleProps> = ({
 
   // 根据消息类型渲染适当的内容组件
   const renderContentByType = () => {
+    // 添加调试日志
+    console.log('[ShenyuMessageBubble] 渲染消息:', {
+      id: message.id,
+      type: message.type,
+      loading,
+      hasApiPrompt: !!message.apiPrompt,
+      apiPromptLength: message.apiPrompt?.length,
+      apiPromptPreview: message.apiPrompt ? `${message.apiPrompt.substring(0, 50)}...` : 'undefined'
+    });
+    
     if (loading) {
+      // 直接使用提示词模板，这样滚动内容会展示实际的系统提示词
+      const displayText = SHENYU_PROMPT_TEMPLATE;
+      
+      console.log('[ShenyuMessageBubble] 使用提示词模板作为滚动文本');
+      
       return (
         <div className="loading-state">
           <div className="loading-indicator">
             <div className="spinner"></div>
-            <span>神谕运行中</span>
+            <span>神谕运行中
+              <span className="typing-indicator">
+                <span className="dot"></span>
+                <span className="dot"></span>
+                <span className="dot"></span>
+              </span>
+            </span>
           </div>
-          <div className="loading-hint">可能需要几秒钟</div>
+          <div className="loading-hint">
+            <div className="prompt-scroll-container">
+              <div className="prompt-scroll-text">
+                {displayText}
+              </div>
+            </div>
+          </div>
         </div>
       );
     }

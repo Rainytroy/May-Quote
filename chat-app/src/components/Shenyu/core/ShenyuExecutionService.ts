@@ -107,8 +107,16 @@ export const executeShenyuAgent = async (
       return false;
     }
     
+    // 合并所有提示词块，按顺序执行
+    const allPromptBlocks = [...processResult.cardBlocks, ...processResult.globalBlocks];
+    
     // 创建process类型消息 - 使用uuidv4，TypeScript会隐式将其视为any类型
     const processMessageId = uuidv4();
+    // 收集所有提示词内容，用于显示在loading状态
+    const allPromptsText = allPromptBlocks.map(block => 
+      `${block.cardTitle || '神谕提示词'} > ${block.blockId}: ${block.processed.substring(0, 100)}...`
+    ).join(' | ');
+    
     const processMessage: ShenyuMessage = {
       id: processMessageId,
       role: 'assistant',
@@ -117,6 +125,7 @@ export const executeShenyuAgent = async (
       type: 'process',
       sender: 'May the 神谕 be with you',
       isShenyu: true, // 标记为神谕消息，确保使用正确的渲染组件
+      apiPrompt: allPromptsText, // 添加提交给API的实际prompt内容
       progress: {
         current: 0,
         total: totalBlocks,
@@ -133,8 +142,6 @@ export const executeShenyuAgent = async (
     const model = getModel();
     console.log('[ShenyuExecutionService] 当前使用模型:', model);
     
-    // 合并所有提示词块，按顺序执行
-    const allPromptBlocks = [...processResult.cardBlocks, ...processResult.globalBlocks];
     let currentBlock = 0;
     
     // 按顺序处理每个提示词块
@@ -269,6 +276,9 @@ const sendModel = async (
       return "错误：未设置API密钥";
     }
     
+    // 为流式消息也添加apiPrompt内容
+    console.log(`[ShenyuExecutionService] 发送提示词到模型，内容预览:`, prompt.substring(0, 100) + '...');
+    
     // 创建初始的流式提示词消息
     const streamingMessage: ShenyuMessage = {
       id: messageId,
@@ -280,7 +290,8 @@ const sendModel = async (
       isShenyu: true,
       isStreaming: true,  // 标记为正在流式生成中
       promptTitle,        // 添加提示词块标题
-      promptBlockId       // 添加提示词块ID
+      promptBlockId,      // 添加提示词块ID
+      apiPrompt: prompt   // 将prompt内容也添加到apiPrompt字段
     };
     
     // 先创建一个空的流式消息，然后随着内容生成逐步更新
@@ -312,8 +323,17 @@ const sendModel = async (
     const updatedMessage = {
       ...streamingMessage,
       content: finalContent,
-      isStreaming: false
+      isStreaming: false,
+      // 确保apiPrompt字段被保留
+      apiPrompt: streamingMessage.apiPrompt || prompt
     };
+    
+    // 打印最终消息内容，确认apiPrompt是否存在
+    console.log('[ShenyuExecutionService] 最终消息内容:', {
+      id: updatedMessage.id,
+      hasApiPrompt: !!updatedMessage.apiPrompt,
+      apiPromptLength: updatedMessage.apiPrompt?.length
+    });
     
     // 更新消息的最终状态
     await updatePromptMessage(conversationId, messageId, updatedMessage);

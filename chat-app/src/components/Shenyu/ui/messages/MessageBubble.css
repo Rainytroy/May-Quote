@@ -266,3 +266,96 @@
 .shenyu-dot:nth-child(3) {
   animation-delay: 0.4s;
 }
+
+/* 神谕加载状态样式 */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.loading-indicator .spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--brand-color);
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 动画点效果 */
+.typing-indicator {
+  display: inline-flex;
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
+.typing-indicator .dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: currentColor;
+  margin: 0 2px;
+  opacity: 0.7;
+  animation: blink 1s infinite;
+}
+
+.typing-indicator .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* 提示词滚动效果 */
+.loading-hint {
+  font-size: var(--font-xs);
+  color: rgba(255, 255, 255, 0.6);
+  max-width: 100%;
+}
+
+.prompt-scroll-container {
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  /* 增加一些padding来提高可读性 */
+  padding: 2px 0;
+}
+
+.prompt-scroll-text {
+  white-space: nowrap;
+  display: inline-block;
+  text-align: left;
+  animation: scroll-text 42s linear infinite;
+  /* 防止文本过小难以阅读 */
+  letter-spacing: 0.2px;
+  /* 如果文本内容超过容器，确保它能在容器内滚动 */
+  max-width: none;
+  position: relative;
+}
+
+@keyframes scroll-text {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+/* 停止滚动的状态 */
+.prompt-scroll-container.stopped .prompt-scroll-text {
+  animation-play-state: paused;
+}

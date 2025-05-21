@@ -42,6 +42,7 @@ export interface ShenyuMessage extends MayMessage {
   isStreaming?: boolean;           // 标识是否正在流式生成中
   promptTitle?: string;            // 提示词块对应的卡片标题
   promptBlockId?: string;          // 提示词块ID
+  apiPrompt?: string;              // 提交给API的实际prompt内容，用于loading动画
   progress?: {                     // 进度信息，用于process类型消息
     current: number;               // 当前执行到的prompt块索引
     total: number;                 // 总prompt块数
