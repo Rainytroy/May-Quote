@@ -28,14 +28,14 @@ const PromptMessageBubble: React.FC<PromptMessageBubbleProps> = ({
 }) => {
   return (
     <div className="prompt-message-content">
-      {/* 顶部标题 - 扁平化结构 */}
+      {/* 顶部标题 - 使用简单结构，是markdown-body的兄弟元素 */}
       {message.promptTitle && (
         <div className="prompt-title">
           {message.promptTitle} {message.promptBlockId && <span style={{ opacity: 0.7 }}>#{message.promptBlockId.replace('promptBlock', '')}</span>}
         </div>
       )}
       
-      {/* 主内容区 - Markdown渲染 */}
+      {/* 主内容区 - 维持原有简单结构 */}
       <div className="markdown-body">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}

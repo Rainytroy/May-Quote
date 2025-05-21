@@ -1,10 +1,75 @@
 /* 神谕消息气泡样式 */
 
-/* 提示词气泡固定宽度样式 */
+/* 提示词气泡宽度样式 */
 .prompt-message-content {
-  width: 80%;
+  width: 100%;
   min-width: 150px;
-  max-width: 800px;
+  max-width: none; /* 移除宽度限制 */
+}
+
+/* 确保markdown内容填充气泡宽度 */
+.prompt-message-content .markdown-body {
+  width: 100%;
+  max-width: 100%;
+  display: block;
+  box-sizing: border-box;
+}
+
+/* 修复表格布局问题 */
+.prompt-message-content .markdown-body table {
+  width: 100%;
+  max-width: 100%;
+  table-layout: fixed; /* 固定表格布局 */
+  border-collapse: collapse;
+  display: table; /* 强制为表格显示 */
+  margin-bottom: 16px;
+}
+
+.prompt-message-content .markdown-body table th,
+.prompt-message-content .markdown-body table td {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  padding: 6px 13px;
+  box-sizing: border-box;
+}
+
+/* 确保表格头部和内容也是100%宽度 */
+.prompt-message-content .markdown-body thead,
+.prompt-message-content .markdown-body tbody,
+.prompt-message-content .markdown-body tr {
+  width: 100%;
+  display: table-row-group;
+  box-sizing: border-box;
+}
+
+.prompt-message-content .markdown-body tr {
+  display: table-row;
+}
+
+/* 确保markdown内部的元素也不会超出容器 */
+.prompt-message-content .markdown-body > * {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto; /* 对于代码块等宽内容，允许滚动而不是缩小 */
+}
+
+/* 确保段落和其他内容元素完全展开 */
+.prompt-message-content .markdown-body p,
+.prompt-message-content .markdown-body div,
+.prompt-message-content .markdown-body ul,
+.prompt-message-content .markdown-body ol,
+.prompt-message-content .markdown-body blockquote,
+.prompt-message-content .markdown-body h1,
+.prompt-message-content .markdown-body h2,
+.prompt-message-content .markdown-body h3,
+.prompt-message-content .markdown-body h4,
+.prompt-message-content .markdown-body h5,
+.prompt-message-content .markdown-body h6 {
+  width: 100%;
+  box-sizing: border-box;
+  word-break: break-word;
+  max-width: 100%;
 }
 
 /* 提示词气泡顶部标题 */
@@ -17,7 +82,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 90%;
+  max-width: 100%;
 }
 
 /* 确保加载指示器中的点不换行 */
