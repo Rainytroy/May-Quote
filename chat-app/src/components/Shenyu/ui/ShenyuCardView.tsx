@@ -469,20 +469,115 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
           <div style={{
             textAlign: 'center',
             padding: 'var(--space-xl)',
-            color: 'var(--text-light-gray)',
+            color: '#666666',
             backgroundColor: 'var(--main-bg)',
             borderRadius: 'var(--radius-md)',
             border: '1px dashed var(--border-color)'
           }}>
-            <div style={{ 
-              fontSize: 'var(--font-lg)', 
-              marginBottom: 'var(--space-md)',
-              opacity: 0.5
-            }}>
-              ✨
-            </div>
-            <div>
-              当前没有神谕卡片数据，请先发送神谕消息
+            <div style={{ marginBottom: 'var(--space-lg)' }}>
+              <p style={{ fontSize: 'var(--font-md)', marginBottom: 'var(--space-md)' }}>
+                现在还没有开始构造卡片，请按照以下步骤操作：
+              </p>
+              
+              {/* 步骤1 */}
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                <div style={{ 
+                  width: '30px', 
+                  display: 'flex', 
+                  justifyContent: 'center'
+                }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                  </svg>
+                </div>
+                <div style={{ textAlign: 'left', marginLeft: '10px' }}>在对话选择@神谕，说出你的想法</div>
+              </div>
+              
+              {/* 连接线1 */}
+              <div style={{ display: 'flex', justifyContent: 'center', height: '15px' }}>
+                <div style={{ borderLeft: '2px dashed #666666', height: '100%' }}></div>
+              </div>
+              
+              {/* 步骤2 */}
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                <div style={{ 
+                  width: '30px', 
+                  display: 'flex', 
+                  justifyContent: 'center'
+                }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="16 18 22 12 16 6"></polyline>
+                    <polyline points="8 6 2 12 8 18"></polyline>
+                  </svg>
+                </div>
+                <div style={{ textAlign: 'left', marginLeft: '10px' }}>当一个代码气泡出现时，这里就会出现卡片</div>
+              </div>
+              
+              {/* 连接线2 */}
+              <div style={{ display: 'flex', justifyContent: 'center', height: '15px' }}>
+                <div style={{ borderLeft: '2px dashed #666666', height: '100%' }}></div>
+              </div>
+              
+              {/* 步骤3 */}
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                <div style={{ 
+                  width: '30px', 
+                  display: 'flex', 
+                  justifyContent: 'center'
+                }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </div>
+                <div style={{ textAlign: 'left', marginLeft: '10px' }}>你可以通过对话的方式不断修改它</div>
+              </div>
+              
+              {/* 连接线3 */}
+              <div style={{ display: 'flex', justifyContent: 'center', height: '15px' }}>
+                <div style={{ borderLeft: '2px dashed #666666', height: '100%' }}></div>
+              </div>
+              
+              {/* 步骤4 */}
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                <div style={{ 
+                  width: '30px', 
+                  display: 'flex', 
+                  justifyContent: 'center'
+                }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="4" y1="21" x2="4" y2="14"></line>
+                    <line x1="4" y1="10" x2="4" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12" y2="3"></line>
+                    <line x1="20" y1="21" x2="20" y2="16"></line>
+                    <line x1="20" y1="12" x2="20" y2="3"></line>
+                    <line x1="1" y1="14" x2="7" y2="14"></line>
+                    <line x1="9" y1="8" x2="15" y2="8"></line>
+                    <line x1="17" y1="16" x2="23" y2="16"></line>
+                  </svg>
+                </div>
+                <div style={{ textAlign: 'left', marginLeft: '10px' }}>在卡片中填入你需要的参数</div>
+              </div>
+              
+              {/* 连接线4 */}
+              <div style={{ display: 'flex', justifyContent: 'center', height: '15px' }}>
+                <div style={{ borderLeft: '2px dashed #666666', height: '100%' }}></div>
+              </div>
+              
+              {/* 步骤5 */}
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <div style={{ 
+                  width: '30px', 
+                  display: 'flex', 
+                  justifyContent: 'center'
+                }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                  </svg>
+                </div>
+                <div style={{ textAlign: 'left', marginLeft: '10px' }}>然后生成最终的内容</div>
+              </div>
             </div>
           </div>
         )}
