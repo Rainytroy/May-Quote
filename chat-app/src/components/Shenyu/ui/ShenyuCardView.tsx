@@ -286,7 +286,7 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
                           }}
                         >
                           <div style={{
-                            color: '#666666',
+                            color: '#888888',
                             minWidth: '120px',
                             whiteSpace: 'nowrap'
                           }}>
@@ -479,7 +479,7 @@ const ShenyuCardView: React.FC<ShenyuCardViewProps> = ({
               fontSize: 'var(--font-md)', 
               margin: '0 0 var(--space-md) 0',
               textAlign: 'left',
-              color: '#666666',
+              color: '#888888',
               fontWeight: 'normal'
             }}>
               现在还没有开始构造卡片，请按照以下步骤操作：
