@@ -329,22 +329,6 @@ const ApiSettings: React.FC<ApiSettingsProps> = ({ isOpen, onClose, onSave }) =>
         
         <div style={{ marginBottom: 'var(--space-md)' }}>
           <a 
-            href="/?demo=plugin" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            style={{
-              color: 'var(--brand-color)',
-              textDecoration: 'none',
-              fontSize: 'var(--font-sm)',
-              display: 'inline-block',
-              padding: 'var(--space-xs) 0',
-              marginRight: 'var(--space-md)'
-            }}
-          >
-            打开插件调试页面
-          </a>
-          
-          <a 
             href="/?demo=shenyu" 
             target="_blank" 
             rel="noopener noreferrer"
@@ -356,7 +340,7 @@ const ApiSettings: React.FC<ApiSettingsProps> = ({ isOpen, onClose, onSave }) =>
               padding: 'var(--space-xs) 0'
             }}
           >
-            打开神谕模式
+            神谕调试实验室
           </a>
         </div>
         
