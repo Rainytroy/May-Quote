@@ -23,12 +23,21 @@ const ModeDivider: React.FC<ModeDividerProps> = ({ mode }) => {
       style={{
         width: '100%',
         textAlign: 'center',
-        color: 'var(--text-light-gray)',
-        margin: '16px 0',
-        fontSize: 'var(--font-sm)'
+        color: 'var(--ai-bubble)',
+        margin: '16px 0'
       }}
     >
-      {`-------------------${modeText}-------------------- ${description}`}
+      <div style={{ 
+        fontSize: 'var(--font-sm)'
+      }}>
+        {`—————————— ${modeText} ——————————`}
+      </div>
+      <div style={{ 
+        fontSize: 'var(--font-xs)',
+        marginTop: '4px'
+      }}>
+        {description}
+      </div>
     </div>
   );
 };
