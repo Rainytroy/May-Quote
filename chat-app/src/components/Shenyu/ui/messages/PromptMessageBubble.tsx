@@ -113,8 +113,8 @@ const PromptMessageBubble: React.FC<PromptMessageBubbleProps> = ({
         <MessageActions 
           message={message}
           onCopy={(id) => console.log(`复制消息: ${id}`)}
-          onAddToClipboard={(id) => onAddToClipboard && onAddToClipboard(id)}
-          onOpenQuoteDialog={(content) => onOpenQuoteDialog && onOpenQuoteDialog(content)}
+          onAddToClipboard={onAddToClipboard || (() => console.log('添加到剪贴板功能未传入'))}
+          onOpenQuoteDialog={onOpenQuoteDialog}
         />
       )}
     </div>

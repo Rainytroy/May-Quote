@@ -54,8 +54,38 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   
   // 当useChat的messages变化时，同步到本地状态
   React.useEffect(() => {
+    console.log('[ChatInterface] messages数据更新，同步到本地状态...');
     setLocalMessages(messages);
   }, [messages]);
+  
+  // 添加新的useEffect，监听模式变化并确保神谕消息持久存在
+  React.useEffect(() => {
+    // 确保神谕消息在模式切换后依然显示
+    const handleModeChange = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { mode } = customEvent.detail;
+      
+      console.log(`[ChatInterface] 监听到模式变化: ${mode}，检查本地消息状态...`);
+      
+      // 当模式切换时，从数据库重新获取完整对话
+      if (conversationId) {
+        console.log(`[ChatInterface] 模式变化后，重新获取完整对话: ${conversationId}`);
+        // 延迟执行，确保模式切换完成后的操作
+        setTimeout(() => {
+          // 不赋值给messages，而是直接更新UI
+          setInitialMessagesLoaded(false); // 重置加载状态，触发重新加载
+        }, 100);
+      }
+    };
+    
+    // 添加模式变化事件监听器
+    window.addEventListener('mode-divider-added', handleModeChange);
+    
+    // 清理函数
+    return () => {
+      window.removeEventListener('mode-divider-added', handleModeChange);
+    };
+  }, [conversationId, setInitialMessagesLoaded]);
   
   // 加载初始消息 - 使用setInitialMessages直接设置消息
   React.useEffect(() => {
