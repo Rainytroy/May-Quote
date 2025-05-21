@@ -23,7 +23,7 @@ const ModeDivider: React.FC<ModeDividerProps> = ({ mode }) => {
       style={{
         width: '100%',
         textAlign: 'center',
-        color: 'var(--ai-bubble)',
+        color: 'var(--text-white)',
         margin: '16px 0'
       }}
     >
