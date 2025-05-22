@@ -1,6 +1,6 @@
 {
   "name": "chat-app",
-  "version": "0.7.3",
+  "version": "0.9.999",
   "private": true,
   "license": "GPL-3.0-or-later",
   "dependencies": {
